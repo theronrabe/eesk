@@ -1,0 +1,311 @@
+///////////////////////////////////////////////////////////////
+//Example Program
+///////////////////////////////////////////////////////////////
+
+Start	//this is actually a label for myProgram to return to
+State myProgram
+
+	[
+	int I
+	int O
+	]
+
+	{
+		State isGo [] { I# > 2 };
+		Vary by isGo [O+X] [int y] { y is 3; O+X + y#; };
+		Vary by Click [I] [] { I + 1 };
+	
+		Function foo [int arg0 int arg1] [int bar float bat] {
+			//do stuff
+			bar = foo(1 2);
+		};
+	
+		Begin
+	
+		O+IMG = loadImg("");
+	
+	};
+
+////////////////////////////////////////////
+//How to generate bytecode? Grammar forms:
+////////////////////////////////////////////
+
+Data Directives:
+	if {condition} {statement} {else}
+		PUSH else	;address after statement
+		...	;compiled condition
+		BNE	;continue or break to else
+		...	;compiled statement
+		PUSH end	;address after else
+		JMP	;to end of statement
+		...	;compiled else
+	
+	while {condition} {loop}
+		PUSH end	;address after loop
+		...	;compiled condition
+		BNE	;continue or break
+		...	;compiled loop
+		PUSH begin	;address before loop
+		JMP		;iterate loop
+
+	State <name> {data} {statement}
+		.blkw	;return of {statement}
+	<-	.blkw	;<name> pointer to {statement}
+			--store <name> in symbol table
+			--[ start counting argument words
+		...	;compiled {data}
+			--] stop counting argument words
+			--set <name> to this address
+	->	POPTO*	--one for each member of [data]		//ONLY IF STATES TAKE ARGUMENTS
+		PUSH	<name-1>	--PUSH RESULT ADDRESS!
+		...	;compiled {statement}
+			--{statement} left result on stack
+		POP	;store result
+		JMP	;back to return address
+
+		
+	Vary {condition} {address} {statement}
+		BREAK	--jump to this at BNE. Not first instruction of vary!
+	<-->	PUSH	<Vary-1>	;PUSH the address of above BREAK for BNE
+		...	;compiled {condition}
+			--leaves state 0/1 on stack for BNE
+		BNE	;BREAK if condition wasn't met, else continue
+		...	;compiled {address}
+			--{address} statement should have left return address on stack
+		...	;compiled {statement}
+		POP	;{address} and {statement} result already left on stack
+		BREAK	;lets call-list know Vary has finished
+
+	Function <name> [parameters] {data} {statement}
+		.blkw	;word for {statement} return
+	<-	.blkw	;<name> pointer to {statement}
+			--store <name> in symbol table
+			--push name address to compiler's name stack
+			--[ start counting argument words
+		...	;compiled parameters
+			--] stop counting argument words
+		...	;compiled {data}
+	->	POPTO*	--fill parameters with arguments
+		PUSH <name-1>	;sets return storage address
+		...	;compiled statement
+			--pop name from compiler's name stack
+		POP	;store result
+		JMP	;back to return address
+
+	( {args}
+		CLR	;this will be taken care of at compile time, no need for address on stack
+			--push address of <call> symbol onto compiler's call stack
+			--push onto compiler's brace stack
+		...	;compiled args
+
+	)
+		OP*	;one for each item on argument-statement's operator stack
+			--pop from compiler's brace stack
+		PUSH <X>	;where X is address of "PUSH <name-1>" (return address below)
+		PUSH <call>	;where call is popped from compiler's call stack
+		CONT	;get address pointed to by this function pointer
+		JMP	;to call address
+		PUSH <call-1>	;put result on stack
+			--finished compiling statement (statement was arguments for the function)
+	
+	by <call>
+			--syntactic sugar for symbol()
+			--push address of <call> symbol onto compiler's call stack	//WTF was I thinking? It gets popped right away!
+		PUSH <X>	;where x is address of "PUSH <name-1>" (return address below)
+		PUSH <call>	;where call is popped from compiler's call stack
+		CONT	;get address pointed to by this function pointer
+		JMP	;to call address
+		PUSH <call-1>	;put result on stack
+			--end of statement
+
+	int <name>
+	char <name>
+	pnt <name>
+	obj <name>
+			--these all just set aside memory and fill the symbol table
+
+	%number%
+		PUSH number	;put on stack
+
+	'char'
+		PUSH char	;put address on stack
+
+	<symbol>
+		PUSH <symbol>	;get address from symbol table
+
+	<undeclaredSymbol>
+			--add symbol to symbol table
+		PUSH PC	;put lable on the stack
+
+	Begin
+		RUN	;start executing
+
+	:
+		CLR	;useful for removing new labels from the stack
+
+	[
+			--push location counter to compiler's brace stack
+	]
+		OP*	--one for each item on statement's operator stack
+			--pop from compiler's brace stack
+			--if compiler's brace stack is empty, statement is done compiling
+	{
+			--push location counter onto compiler's brace stack
+	}
+		OP*	--one for each item on statement's operator stack
+			--pop from compiler's brace stack
+			--NOT end of statement
+	;
+		OP*	--one for each item on statement's operator stack
+			--if compiler's brace stack is empty, statement is done compiling
+
+	#
+		CONT	;replace address with its contents
+	
+	!
+		NOT	;not top of stack immediately
+
+	is = < >
+		OP*	--one for each item on statement's operator stack (build dst)
+		OP	;the one just used
+			--add POP to statement's operator stack
+	+ - * % / & |
+			--add operation to statement's operator stack
+
+	"
+		PUSH PC+2	;remember where the string starts (after the JMP)
+		JMP	;to end of string
+			--set aside memory for each character
+	
+////////////////////////////////////////////
+//Notes regarding the virtual machine
+////////////////////////////////////////////
+
+32 bit. This leaves instructions with a lot of unused bits,
+but works well for integers, floating points, and addresses.
+
+Architecture features:
+	PC	;program counter
+
+Operations:
+	RUN	;execution mode begins
+	VARY	;add address to call list
+	HALT	;stops execution
+	PUSH address
+	POPTO address
+	CLR	;removes top of stack
+	POP	;moves contents into address
+	JMP	;sets PC
+	BRN	;branch to arg1 if arg0
+	BNE	;branch to arg1 if not arg0
+	BREAK	;end of Vary, also end of Running state
+	CONT	;replaces address with its contents
+	ADD	;integer addition
+	SUB	;integer subtraction
+	MUL	;integer multiplication
+	DIV	;integer division
+	MOD	;modulo
+	NULL	;do nothing
+	AND	;bitwise and
+	OR	;bitwise or
+	NOT	;logical not
+
+///////////////////////////////////////////////////////////
+//Compiler Notes
+///////////////////////////////////////////////////////////
+
+After everything is compiled, don't forget to PUSH and VARY
+all the addresses that need to be in the call list.
+
+Primary function is of the form:
+	int compileStatement(int locationCounter);
+
+which should return how many words it compiled, that way,
+[] are treated just like {} and it's easy to count what's
+between them for passing arguments.
+
+Symbol table also store keywords.
+
+This function uses a few stacks for parsing:
+	braceStack	//keeps track of embedded {} statements
+	callStack	//keeps track of embedded () calls
+	nameStack	//keeps track of embedded Function definitions
+			//whenever you push the nameStack, add a new Symbol tree layer
+
+	operationStack	//keeps track of sequential operations
+			//you need one of these for each statement
+
+Symbol Table:
+	Node:
+		String token
+		int address;
+		Node *left
+		Node *right
+		Node *parent
+	
+	AddSymbol(Node, token):
+		start with head, recurse to left/right by comparison
+
+	AddSymbolLayer(Node, token):
+		create a new head Node, from token, whose parent is the old head Node
+	
+	RemoveSymbolLayer(Node):
+		set head Node to head Node's parent, and free the old head Node
+
+	SearchSymbol(Node, token):
+		if not found in this layer, check parent layer	
+		remember that this layer is the current layer
+Stacks:
+	Structure:
+		array[0..MAX]
+		int top
+	Functions:
+		Push(Stack, data)
+		Pop(Stack)
+
+Other useful functions for compilation algorithm:
+	compileState(Stream)
+	compileVary(Stream)
+	compileFunction(Stream)
+	compileStatement(Stream)
+		//each of these return the amount they incremented the location counter
+
+General algorithm:
+
+	compileStatement(input stream, output stream) {
+		switch(getIncomingToken())
+			case state: ...
+			case vary: ...
+			case function: ...
+			case ...
+				basically, produce the assembly from above,
+				counting how many words are produced.
+		return words produced
+	}
+
+//////////////////////////////////////////////////////////////////////////////////
+//Tokenizer
+//////////////////////////////////////////////////////////////////////////////////
+
+Whitespace are the only delimiting characters
+
+When the source file is loaded, turn all the tabs and linefeeds into spaces.
+Then, trim all comments.
+
+Needed functions:
+	getNextToken(Stream):
+		if alphabetic, set state to alphabetic
+		if numeric, set state to numeric
+		if symbol, return symbol
+
+		while next character is member of state
+			add character to return string
+
+		return collected characters
+
+
+/////////////////////////////////////////
+//TO DO:
+/////////////////////////////////////////
+
+done -Add support for strings
