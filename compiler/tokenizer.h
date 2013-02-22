@@ -14,7 +14,7 @@ void trimComments(char *src) {
 	int comment = 0;
 
 	for(i=0;i<strlen(src);i++) {
-		if(src[i] == '$') { src[i] = ' '; comment = 1; }
+		if(src[i] == '#') { src[i] = ' '; comment = 1; }
 		if(src[i] == '\n') { comment = 0; }
 
 		if(comment) {
@@ -69,8 +69,9 @@ int getToken(char *token, char *src, int *loc) {
 				token[i] = src[*loc+ws+i];
 				++i;
 			}
-		} else if(numeric(src[*loc+ws])) {
+		} else if(numeric(src[*loc+ws]) || (src[*loc+ws] == '-' && numeric(src[*loc+ws+1]))) {
 			while(numeric(src[*loc+ws+i])) {
+			/////////////FIXING NEGATIVE NUMBER TOKENS
 				token[i] = src[*loc+ws+i];
 				++i;
 			}

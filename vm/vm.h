@@ -51,3 +51,4 @@ void quit(int *MEM, Stack *STACK, int address);
 
 int PC = 0, SP = 0;
 int LEN = 0;
+int verboseFlag = 0;

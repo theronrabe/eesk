@@ -26,23 +26,27 @@ int *load(char *fn) {
 	fclose(fp);
 
 	//Grab transfer address
-	PC = ret[(i/4)-1];
-	printf("Transferring to: %d\n", PC);
+	//PC = ret[(i/4)-1];
+	PC = ret[ i/sizeof(int)-1 ];
+	//printf("Transferring to: %d\n", PC);
 
 
-	for(j=0;j<=i/4;j++) {
-		//printf("%d:\t%d\n", j, ret[j]);
+	if(verboseFlag) {
+		for(j=0;j<=i/4;j++) {
+			printf("%d:\t%d\n", j, ret[j]);
+		}
 	}
 
 	return ret;
 }
 
 void main(int argc, char **argv) {
+	if(argc>2) verboseFlag = 1;
+
 	Stack *STACK = stackCreate(128);
 	CallList *CALLS = NULL;
 	int *MEM = load(argv[1]);
-	
-printf("executing machine\n");
+
 	execute(MEM, STACK, CALLS, PC);
 	
 	stackFree(STACK);
@@ -86,19 +90,19 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 			//Machine Control
 			case(HALT):
 				quit(MEM, STACK, PC);
-				printf("%d:\tHALT\n", PC);
+				if(verboseFlag) printf("%p:\tHALT\n", &MEM[PC]);
 			case(VARY):
 				callAdd(CALLS, stackPop(STACK));
 				++PC;
 				break;
 			case(JMP):
 				PC = stackPop(STACK);
-				printf("JMP\t%d\n", PC);
+				if(verboseFlag) printf("JMP\t%p\n", &MEM[PC]);
 				break;
 			case(BRN):
 				if(stackPop(STACK)) {
 					PC = stackPop(STACK);
-					printf("JMP\t%d\n", PC);
+					if(verboseFlag) printf("BRN\t%p\n", &MEM[PC]);
 				} else {
 					stackPop(STACK);
 					++PC;
@@ -107,7 +111,7 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 			case(BNE):
 				if(!stackPop(STACK)) {
 					PC = stackPop(STACK);
-					printf("JMP\t%d\n", PC);
+					if(verboseFlag) printf("BNE\t%p\n", &MEM[PC]);
 				} else {
 					stackPop(STACK);
 					++PC;
@@ -117,82 +121,82 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				break;
 			case(PRNT):
 				tempVal = stackPop(STACK);
-				printf("\n%d:\tPRINTS:\t%d\n\n", PC, tempVal);
+				printf("\n%p:\tPRINTS:\t%d\n\n", &MEM[PC], tempVal);
 				++PC;
 				break;
 
 			//Stack Control
 			case(PUSH):
 				stackPush(STACK, MEM[PC+1]);
-				printf("%d:\tPUSH:\t%d\n", PC, MEM[PC+1]);
+				if(verboseFlag) printf("%p:\tPUSH:\t%d\n", &MEM[PC], MEM[PC+1]);
 				PC += 2;
 				break;
 			case(POPTO):
 				MEM[MEM[PC+1]] = stackPop(STACK);
 				PC += 2;
-				printf("%d:\tPOPTO\t%d\n", PC, MEM[PC-1]);
+				if(verboseFlag) printf("%p:\tPOPTO\t%d\n", &MEM[PC], MEM[PC-1]);
 				break;
 			case(POP):
 				tempVal = stackPop(STACK);
 				tempAddr = stackPop(STACK);
 				MEM[tempAddr] = tempVal;
-				printf("%d:\tPOP\n", PC);
+				if(verboseFlag) printf("%p:\tPOP\n", &MEM[PC]);
 				++PC;
 				break;
 			case(CONT):
 				tempAddr = stackPop(STACK);
 				stackPush(STACK, MEM[tempAddr]);
-				printf("%d:\tCONT:\t%d\n", PC, MEM[tempAddr]);
+				if(verboseFlag) printf("%p:\tCONT:\t%d\n", &MEM[PC], MEM[tempAddr]);
 				++PC;
 				break;
 			case(CLR):
 				stackPop(STACK);
-				printf("%d:\tCLR\n", PC);
+				if(verboseFlag) printf("%p:\tCLR\n", &MEM[PC]);
 				++PC;
 				break;
 
 			//Data Manipulation
 			case(ADD):
 				stackPush(STACK, stackPop(STACK) + stackPop(STACK));
-				printf("%d:\tADD\n", PC);
+				if(verboseFlag) printf("%p:\tADD\n", &MEM[PC]);
 				++PC;
 				break;
 			case(SUB):
 				tempVal = stackPop(STACK);
 				stackPush(STACK, stackPop(STACK) - tempVal);
-				printf("%d:\tSUB\n", PC);
+				if(verboseFlag) printf("%p:\tSUB\n", &MEM[PC]);
 				++PC;
 				break;
 			case(MUL):
 				stackPush(STACK, stackPop(STACK) * stackPop(STACK));
-				printf("%d:\tMUL\n", PC);
+				if(verboseFlag) printf("%p:\tMUL\n", &MEM[PC]);
 				++PC;
 				break;
 			case(DIV):
 				tempVal = stackPop(STACK);
 				stackPush(STACK, stackPop(STACK) / tempVal);
-				printf("%d:\tDIV\n", PC);
+				if(verboseFlag) printf("%p:\tDIV\n", &MEM[PC]);
 				++PC;
 				break;
 			case(MOD):
 				tempVal = stackPop(STACK);
 				stackPush(STACK, stackPop(STACK) % tempVal);
-				printf("%d:\tMOD\n", PC);
+				if(verboseFlag) printf("%p:\tMOD\n", &MEM[PC]);
 				++PC;
 				break;
 			case(AND):
 				stackPush(STACK, stackPop(STACK) & stackPop(STACK));
-				printf("%d:\tAND\n", PC);
+				if(verboseFlag) printf("%p:\tAND\n", &MEM[PC]);
 				++PC;
 				break;
 			case(OR):
 				stackPush(STACK, stackPop(STACK) | stackPop(STACK));
-				printf("%d:\tOR\n", PC);
+				if(verboseFlag) printf("%p:\tOR\n", &MEM[PC]);
 				++PC;
 				break;
 			case(NOT):
 				stackPush(STACK, !stackPop(STACK));
-				printf("%d:\tNOT\n", PC);
+				if(verboseFlag) printf("%p:\tNOT\n", &MEM[PC]);
 				++PC;
 				break;
 
@@ -204,7 +208,7 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				tempFloat2 = *(float * )&tempVal;
 
 				stackPush(STACK, tempFloat1 + tempFloat2);
-				printf("%d:\tFADD\n", PC);
+				if(verboseFlag) printf("%p:\tFADD\n", &MEM[PC]);
 				++PC;
 				break;
 			case(FSUB):
@@ -214,7 +218,7 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				tempFloat2 = *(float *)&tempVal;
 
 				stackPush(STACK, tempFloat1 - tempFloat2);
-				printf("%d:\tFSUB\n", PC);
+				if(verboseFlag) printf("%p:\tFSUB\n", &MEM[PC]);
 				++PC;
 				break;
 			case(FMUL):
@@ -224,7 +228,7 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				tempFloat2 = *(float *) &tempVal;
 
 				stackPush(STACK, tempFloat1 * tempFloat2);
-				printf("%d:\tFMUL\n", PC);
+				if(verboseFlag) printf("%p:\tFMUL\n", &MEM[PC]);
 				++PC;
 				break;
 			case(FDIV):
@@ -234,7 +238,7 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				tempFloat2 = *(float *)&tempVal;
 
 				stackPush(STACK, tempFloat1 / tempFloat2);
-				printf("%d:\tFDIV\n", PC);
+				if(verboseFlag) printf("%p:\tFDIV\n", &MEM[PC]);
 				++PC;
 				break;
 
@@ -243,19 +247,19 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				tempVal = stackPop(STACK);
 				tempAddr = stackPop(STACK);
 				stackPush(STACK, tempAddr > tempVal);
-				printf("%d:\tGT\n", PC);
+				if(verboseFlag) printf("%p:\tGT\n", &MEM[PC]);
 				++PC;
 				break;
 			case(LT):
 				tempVal = stackPop(STACK);
 				tempAddr = stackPop(STACK);
 				stackPush(STACK, tempAddr < tempVal);
-				printf("%d:\tLT\n", PC);
+				if(verboseFlag) printf("%p:\tLT\n", &MEM[PC]);
 				++PC;
 				break;
 			case(EQ):
 				stackPush(STACK, stackPop(STACK) == stackPop(STACK));
-				printf("%d:\tEQ\n", PC);
+				if(verboseFlag) printf("%p:\tEQ\n", &MEM[PC]);
 				++PC;
 				break;
 		}

@@ -355,7 +355,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				tokVal = tableLookup(symbols, tok);
 
 				if(tokVal == -1) {
-					if(numeric(tok[0])) {
+					if(numeric(tok[0]) || (tok[0] == '-' && numeric(tok[1]))) {
 						//this is a numeric literal
 						if(isFloat(tok)) {
 							tempFloat = atof(tok);
@@ -365,7 +365,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						}
 					} else {
 						//this is an undeclared symbol
-						if(dst) tableAddSymbol(symbols, tok, *LC);
+						tableAddSymbol(symbols, tok, *LC);
 						writeObj(dst, PUSH, LC);	writeObj(dst, *LC, LC);		//push new label's address
 					}
 				} else {
@@ -386,7 +386,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 void writeObj(FILE *fn, int val, int *LC) {
 	if (fn) {
 		fwrite(&val, sizeof(int), 1, fn);
-		printf("%d:%d\n", *LC, val);
+	//	printf("%d:%d\n", *LC, val);
 	}
 	(*LC)++;
 }
@@ -426,7 +426,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "End", k_halt);
 	tableAddSymbol(ret, ":", k_clr);
 	tableAddSymbol(ret, ";", k_endStatement);
-	tableAddSymbol(ret, "#", k_cont);
+	tableAddSymbol(ret, "$", k_cont);
 	tableAddSymbol(ret, "!", k_not);
 	tableAddSymbol(ret, "=", k_is);
 	tableAddSymbol(ret, "==", k_eq);
