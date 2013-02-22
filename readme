@@ -6,44 +6,44 @@ Theron Rabe. 2013.
 
 A programming language designed with the following features in mind:
 
-	-Concise, C-like, low-level control
-	-Recursive grammar, similar to Lisp
-	-Free syntax
-		-if an eesk program can compile, so should any subset of that program, without error.
-	-Predictable machine code generation
-		-For now, bytecode is generated for a virtual machine. Should be easy to adapt compiler
-		to cross-assemble bytecode to machine code, though.
+-Concise, C-like, low-level control
+-Recursive grammar, similar to Lisp
+-Free syntax
+	-if an eesk program can compile, so should any subset of that program, without error.
+-Predictable machine code generation
+	-For now, bytecode is generated for a virtual machine. Should be easy to adapt compiler
+	to cross-assemble bytecode to machine code, though.
 
 
 
-	#Example Program. Theron Rabe. 2013.
-	{
-		int X
-		int Y
-		
-		#
-		#This function doubles the first input and adds it to the second input.
-		#
-		Function twoXplusY {int A int B} {
-			Function add {int X int Y} {} {
-				return X$ + Y$;
-			}
-		}{
-			return add[2*A$; B$];
-		}
+#Example Program. Theron Rabe. 2013.
+{
+	int X
+	int Y
 	
-	Begin
-		
-		X = 7;
-		Y = 1;
-	
-		if {(X<10) | (X>20)} {
-			print twoXplusY[X$ Y$];
-		}{
-			print -1;
+	#
+	#This function doubles the first input and adds it to the second input.
+	#
+	Function twoXplusY {int A int B} {
+		Function add {int X int Y} {} {
+			return X$ + Y$;
 		}
-	End
+	}{
+		return add[2*A$; B$];
 	}
+
+Begin
+	
+	X = 34;
+	Y = 3;
+
+	if {(X$ < 10) | (X$ > 20)} {
+		twoXplusY[X$ Y$];
+	}{
+		-1;
+	}
+End
+}
 
 The example eesk program above (found in example.ee), is lengthy, round-about way of doing some
 basic arithmetic on a couple of integers.
