@@ -1,7 +1,5 @@
 /*
-Theron Rabe
 vm.c
-2/10/2013
 
 	This program acts as a 32-bit, zero-address, address-addressable virtual machine. "Registers" for the machine can be accessed as negative addresses.
 	The program counter is located at address -1.
@@ -9,6 +7,22 @@ vm.c
 	The machine has three basic states, read, execute, and vary. Execution state doesn't begin until a RUN opcode is executed. Variation loop begins
 	once the VARY opcode has been reached. Once in variation state, functions stored in a call list are continuously executed until a HALT opcode has
 	been encountered.
+
+Copyright 2013 Theron Rabe
+This file is part of Eesk.
+
+    Eesk is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Eesk is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "vm.h"
 

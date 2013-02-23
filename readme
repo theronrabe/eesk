@@ -2,22 +2,23 @@
 Eesk
 
 Theron Rabe. 2013.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 
 A programming language designed with the following features in mind:
 
 -Concise, C-like, low-level control
 -Recursive grammar, similar to Lisp
 -Free syntax
-	-if an eesk program can compile, so should nearly any subset of that program, without error.
+	-if an eesk program can compile, so should nearly any subset of that program,
+	without error.
 -Predictable machine code generation
-	-For now, bytecode is generated for a virtual machine. Should be easy to adapt compiler
-	to cross-assemble bytecode to machine code, though.
+	-For now, bytecode is generated for a virtual machine. Should be easy to adapt
+	compiler to cross-assemble bytecode to machine code, though.
 -Compiles in as few passes as possible.
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
 #Example Program. Theron Rabe. 2013.
 {
 	int X
@@ -46,26 +47,34 @@ Begin
 	}
 End
 }
-//////////////////////////////////////////////////////////////////////////////////////
 
-The example eesk program above (found in example.ee), is a lengthy, round-about way of doing some
-basic arithmetic on a couple of integers. To compile this file, execute the command:
+/////////////////////////////////////////////////////////////////////////////////////
+How to use Eesk
+/////////////////////////////////////////////////////////////////////////////////////
+The example eesk program above (found in example.ee), is a lengthy, round-about way
+of doing some basic arithmetic on a couple of integers. To compile this file, execute
+the command:
 	./ee example.ee
-The code will then be compiled to bytecode stored in the file e.out, which can be executed by:
+
+The code will then be compiled to bytecode stored in the file e.out, which can be
+executed by:
 	./eesk e.out
+or
 	./eesk e.out -v		(for verbose mode)
 
-//////////////////////////////////////////////////////////////////////////////////////
-Disection of an eesk program:
+/////////////////////////////////////////////////////////////////////////////////////
+Disection of basic Eesk constructs
+/////////////////////////////////////////////////////////////////////////////////////
 	#	Indicates a comment.
 
-	{}	Group statements. Any code contained within braces is its own valid program,
-		and could consist of any valid eesk code without invalidating the syntax.
+	{}	Group statements. Any code contained within braces is its own
+		valid program, and could consist of any valid eesk code without
+		invalidating the syntax.
 
 	()	Prioritize instructions. Otherwise operations are right-associative.
 
 	int, char, pnt, etc...
-		Sets aside an integer in memory and gives it a name.
+		Sets aside memory and gives it a name.
 
 	Begin	This marks the first instruction to be executed.
 
@@ -75,6 +84,9 @@ Disection of an eesk program:
 		Functions return some value when called upon. They take parameters,
 		a private data section (which can contain more functions), and a
 		group of instructions that can be executed.
+	
+	return
+		Prematurely ends a function with the given result.
 
 	...[arguments]
 		Brackets are used to call a function stored at the preceding token's
@@ -91,6 +103,8 @@ Disection of an eesk program:
 	while {condition} {instructions}
 		As long as the condition section evaluates to non-zero, the
 		instruction section will continue to iterate.
-		the condition is false.
+	
+	...:
+		Designates a label.
 
 ////////////////////////////////////////////////////////////////////////////////////////

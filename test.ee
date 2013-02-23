@@ -1,0 +1,29 @@
+#Example Program. Theron Rabe. 2013.
+{
+	int X
+	int Y
+	
+	#
+	#This function doubles the first input and adds it to the second input.
+	#
+	Function twoXplusY {int A int B} {
+		Function add {int X int Y} {} {
+			return X$ + Y$;
+		}
+	}{
+		return add[2*A$; B$];
+	}
+
+Begin
+	
+	X = 34;
+	Y = 3;
+
+	if {(X$ < 10) | (X$ > 20)} {
+		twoXplusY[X$ Y$];
+	}{
+		-1;
+	}
+End
+}
+

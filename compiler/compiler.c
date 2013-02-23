@@ -1,7 +1,5 @@
 /*
-Theron Rabe
 compiler.c
-2/11/2013
 
 	This is the compiler.
 	
@@ -9,12 +7,28 @@ compiler.c
 		introduce arrays
 		introduce strings of characters
 		introduce private/public directive
+
+Copyright 2013 Theron Rabe
+This file is part of Eesk.
+
+    Eesk is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Eesk is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "compiler.h"
 
 void main(int argc, char **argv) {
 	char *src = loadFile(argv[1]);
-	FILE *dst = fopen("b.out", "w");
+	FILE *dst = fopen("e.out", "w");
 	char token[32];
 	Table *keyWords = prepareKeywords();
 	Table *symbols = tableCreate();
