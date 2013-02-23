@@ -8,9 +8,9 @@ A programming language designed with the following features in mind:
 
 -Concise, C-like, low-level control
 -Recursive grammar, similar to Lisp
+-Weakly typed
 -Free syntax
-	-if an eesk program can compile, so should nearly any subset of that program,
-	without error.
+	-Errors should be nearly unheard of.
 -Predictable machine code generation
 	-For now, bytecode is generated for a virtual machine. Should be easy to
 	adapt compiler to cross-assemble bytecode to machine code, though.
@@ -21,14 +21,14 @@ A programming language designed with the following features in mind:
 ///////////////////////////////////////////////////////////////////////////////////////
 #Example Program. Theron Rabe. 2013.
 {
-	int X
-	int Y
+	X
+	Y
 	
 	#
 	#This function doubles the first input and adds it to the second input.
 	#
-	Function twoXplusY {int A int B} {
-		Function add {int X int Y} {} {
+	Function twoXplusY {A B} {
+		Function add {also X also Y} {} {
 			return X$ + Y$;
 		}
 	}{
