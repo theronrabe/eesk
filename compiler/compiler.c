@@ -3,9 +3,7 @@ compiler.c
 
 	This is the compiler.
 	
-	TODO:	introduce arrays
-		introduce strings of characters
-		introduce private/public directive
+	TODO:	introduce private/public directive
 
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
@@ -248,20 +246,32 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, PRTF);
 				break;
+			case(k_prtc):
+				fillOperations(dst, LC, operationStack);
+				stackPush(operationStack, PRTC);
+				break;
+			case(k_prts):
+				fillOperations(dst, LC, operationStack);
+				stackPush(operationStack, PRTS);
+				break;
+			case(k_goto):
+				stackPush(operationStack, JMP);
+				break;
 			case(k_singleQuote):
 				tokLen = getToken(tok, src, SC);
 				writeObj(dst, PUSH, LC);	writeObj(dst, tok[0], LC);
 				break;
 			case(k_doubleQuote):
-				writeObj(dst, PUSH, LC);	writeObj(dst, *LC+2, LC);	//push start of string
+				writeObj(dst, PUSH, LC);	writeObj(dst, *LC+4, LC);	//push start of string
 
 				DC[0] = getQuote(tok, src, SC);
-				writeObj(dst, PUSH, LC);	writeObj(dst, *LC+DC[0], LC);	//push end of string
+				writeObj(dst, PUSH, LC);	writeObj(dst, *LC+DC[0]+2, LC);	//push end of string
 				writeObj(dst, JMP, LC);						//skip over string leaving it on stack
 				
 				for(i=0;i<DC[0];i++) {
-					writeObj(dst, tok[i], LC);				//a word for each character
+					writeObj(dst, (int)tok[i], LC);				//a word for each character
 				}
+				printf("found quote: %s\n", tok);
 				break;
 			case(k_vary):
 				writeObj(dst, VARY, LC);
@@ -289,8 +299,16 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				break;
 			case(k_pnt):
 				tokLen = getToken(tok, src, SC);
-				if(dst) tableAddSymbol(symbols, tok, *LC);
-				writeObj(dst, 0, LC);
+				if(numeric(tok[0])) {
+					DC[0] = atoi(tok);
+					for(i=0;i<DC[0];i++)
+						writeObj(dst, DC[0], LC);
+					tokLen = getToken(tok, src, SC);
+					if(dst) tableAddSymbol(symbols, tok, *LC-DC[0]);
+				} else {
+					if(dst) tableAddSymbol(symbols, tok, *LC);
+					writeObj(dst, 0, LC);
+				}
 				break;
 			case(k_float):
 				stackPush(operationStack, DTOF);
@@ -390,10 +408,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						}
 					} else {
 						//this is an undeclared symbol
-						//symbol now refers to PUSH's operand, not PUSH itself, so that "int" and "float" can
-						//do typecasting, and variables are declared this way.
 						if(dst) tableAddSymbol(symbols, tok, *LC);
-						//writeObj(dst, PUSH, LC);	
 						writeObj(dst, *LC, LC);		//push new label's address
 					}
 				} else {
@@ -443,14 +458,17 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "}", k_cBrace);
 	tableAddSymbol(ret, "(", k_oParen);
 	tableAddSymbol(ret, ")", k_cParen);
-	tableAddSymbol(ret, "print", k_prnt);
+	tableAddSymbol(ret, "printd", k_prnt);
 	tableAddSymbol(ret, "printf", k_prtf);
+	tableAddSymbol(ret, "printc", k_prtc);
+	tableAddSymbol(ret, "prints", k_prts);
+	tableAddSymbol(ret, "goto", k_goto);
 	tableAddSymbol(ret, "\'", k_singleQuote);
 	tableAddSymbol(ret, "\"", k_doubleQuote);
 	tableAddSymbol(ret, "by", k_by);
 	tableAddSymbol(ret, "int", k_int);
 	tableAddSymbol(ret, "char", k_char);
-	tableAddSymbol(ret, "also", k_pnt);
+	tableAddSymbol(ret, "given", k_pnt);
 	tableAddSymbol(ret, "float", k_float);
 	tableAddSymbol(ret, "Begin", k_begin);
 	tableAddSymbol(ret, "End", k_halt);

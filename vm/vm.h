@@ -58,6 +58,10 @@ typedef enum {
 	FMUL,
 	FDIV,
 
+	//string manipulation
+	PRTC,
+	PRTS,
+
 	//comparison
 	GT,
 	LT,

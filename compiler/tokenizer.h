@@ -85,11 +85,10 @@ int getToken(char *token, char *src, int *loc) {
 			}
 		} else if(numeric(src[*loc+ws]) || (src[*loc+ws] == '-' && numeric(src[*loc+ws+1]))) {
 			while(numeric(src[*loc+ws+i])) {
-			/////////////FIXING NEGATIVE NUMBER TOKENS
 				token[i] = src[*loc+ws+i];
 				++i;
 			}
-		} else if(symbolic(src[*loc+ws+i])) {
+		} else if(symbolic(src[*loc+ws])) {
 			while(symbolic(src[*loc+ws+i])) {
 				token[i] = src[*loc+ws+i];
 				++i;
@@ -113,5 +112,6 @@ int getQuote(char *tok, char *src, int *SC) {
 	}
 	tok[i++] = '\0';
 
+	*SC += i;
 	return i;
 }

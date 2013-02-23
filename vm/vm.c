@@ -92,6 +92,7 @@ void varyMachine(int *MEM, Stack *STACK, CallList *CALLS) {
 
 void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 	int tempVal, tempAddr;
+	int i;
 	float tempFloat1, tempFloat2, floatResult;
 
 	PC = address;
@@ -135,7 +136,7 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				break;
 			case(PRNT):
 				tempVal = stackPop(STACK);
-				printf("\n%p:\tPRINTS:\t%d\n\n", &MEM[PC], tempVal);
+				printf("%p:\tPRINTS:\t%d\n", &MEM[PC], tempVal);
 				++PC;
 				break;
 
@@ -231,7 +232,7 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 			case(PRTF):
 				tempVal = stackPop(STACK);
 				tempFloat1 = *(float *) &tempVal;
-				printf("\n%p:\tPRINTS:\t%f\n\n", &MEM[PC], tempFloat1);
+				printf("%p:\tPRINTS:\t%f\n", &MEM[PC], tempFloat1);
 				++PC;
 				break;
 			case(FADD):
@@ -276,6 +277,23 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 
 				stackPush(STACK, *(int *)&floatResult);
 				if(verboseFlag) printf("%p:\tFDIV\n", &MEM[PC]);
+				++PC;
+				break;
+
+			//string manipulation
+			case(PRTC):
+				tempVal = stackPop(STACK);
+				printf("%p:\tPRINTS:\t%c\n", &MEM[PC], tempVal);
+				++PC;
+				break;
+			case(PRTS):
+				tempAddr = stackPop(STACK);
+				tempVal = 0;
+				while(MEM[tempAddr+tempVal]) {
+					printf("%c", MEM[tempAddr+tempVal]);
+					++tempVal;
+				}
+				printf("\n");
 				++PC;
 				break;
 

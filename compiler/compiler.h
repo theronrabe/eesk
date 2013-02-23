@@ -70,8 +70,12 @@ typedef enum {
 	FMUL,
 	FDIV,
 
+	//string manipulation
+	PRTC,	//29
+	PRTS,
+
 	//comparison
-	GT,	//29
+	GT,	//31
 	LT,
 	EQ,
 
@@ -83,7 +87,7 @@ typedef enum {
 	k_oBracket, k_cBracket,
 	k_oBrace, k_cBrace,
 	k_oParen, k_cParen,
-	k_prnt, k_prtf,
+	k_prnt, k_prtf, k_prtc, k_prts, k_goto,
 	k_singleQuote, k_doubleQuote,
 	k_vary,
 	k_by,
