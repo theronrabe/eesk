@@ -92,7 +92,7 @@ void varyMachine(int *MEM, Stack *STACK, CallList *CALLS) {
 
 void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 	int tempVal, tempAddr;
-	int tempFloat1, tempFloat2;
+	float tempFloat1, tempFloat2, floatResult;
 
 	PC = address;
 	while(MEM[PC] != BREAK) {
@@ -215,13 +215,30 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				break;
 
 			//Float manipulation
+			case(FTOD):
+				tempVal = stackPop(STACK);
+				tempFloat1 = *(float *)&tempVal;
+				tempVal = (int) tempFloat1;
+
+				stackPush(STACK, tempVal);
+				break;
+			case(DTOF):
+				tempFloat1 = (float) stackPop(STACK);
+				stackPush(STACK, *(int *) &tempFloat1);
+				break;
+			case(PRTF):
+				tempVal = stackPop(STACK);
+				tempFloat1 = *(float *) &tempVal;
+				printf("PRINTS:\t%f\n", tempFloat1);
+				break;
 			case(FADD):
 				tempVal = stackPop(STACK);
 				tempFloat1 = *(float *) &tempVal;
 				tempVal = stackPop(STACK);
 				tempFloat2 = *(float * )&tempVal;
+				floatResult = tempFloat1 + tempFloat2;
 
-				stackPush(STACK, tempFloat1 + tempFloat2);
+				stackPush(STACK, *(int *)&floatResult);
 				if(verboseFlag) printf("%p:\tFADD\n", &MEM[PC]);
 				++PC;
 				break;
@@ -230,8 +247,9 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				tempFloat1 = *(float *)&tempVal;
 				tempVal = stackPop(STACK);
 				tempFloat2 = *(float *)&tempVal;
+				floatResult = tempFloat2 - tempFloat1;
 
-				stackPush(STACK, tempFloat1 - tempFloat2);
+				stackPush(STACK, *(int *)&floatResult);
 				if(verboseFlag) printf("%p:\tFSUB\n", &MEM[PC]);
 				++PC;
 				break;
@@ -240,8 +258,9 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				tempFloat1 = *(float *) &tempVal;
 				tempVal = stackPop(STACK);
 				tempFloat2 = *(float *) &tempVal;
+				floatResult = tempFloat1 * tempFloat2;
 
-				stackPush(STACK, tempFloat1 * tempFloat2);
+				stackPush(STACK, *(int *)&floatResult);
 				if(verboseFlag) printf("%p:\tFMUL\n", &MEM[PC]);
 				++PC;
 				break;
@@ -250,8 +269,9 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				tempFloat1 = *(float *)&tempVal;
 				tempVal = stackPop(STACK);
 				tempFloat2 = *(float *)&tempVal;
+				floatResult = tempFloat2 / tempFloat1;
 
-				stackPush(STACK, tempFloat1 / tempFloat2);
+				stackPush(STACK, *(int *)&floatResult);
 				if(verboseFlag) printf("%p:\tFDIV\n", &MEM[PC]);
 				++PC;
 				break;

@@ -281,10 +281,10 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				endOfStatement = 1;
 				break;
 			case(k_int):
-				tokLen = getToken(tok, src, SC);
-				if(dst) tableAddSymbol(symbols, tok, *LC);
-				writeObj(dst, 0, LC);
-				//stackPush(operationStack, FTOD);
+				//tokLen = getToken(tok, src, SC);
+				//if(dst) tableAddSymbol(symbols, tok, *LC);
+				//writeObj(dst, 0, LC);
+				stackPush(operationStack, FTOD);
 				break;
 			case(k_char):
 				tokLen = getToken(tok, src, SC);
@@ -394,7 +394,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						//symbol now refers to PUSH's operand, not PUSH itself, so that "int" and "float" can
 						//do typecasting, and variables are declared this way.
 						if(dst) tableAddSymbol(symbols, tok, *LC);
-						writeObj(dst, PUSH, LC);	
+						//writeObj(dst, PUSH, LC);	
 						writeObj(dst, *LC, LC);		//push new label's address
 					}
 				} else {

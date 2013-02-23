@@ -50,6 +50,9 @@ typedef enum {
 	NOT,
 
 	//float manipulation
+	FTOD,
+	DTOF,
+	PRTF,
 	FADD,
 	FSUB,
 	FMUL,

@@ -62,13 +62,16 @@ typedef enum {
 	NOT,
 
 	//float manipulation
-	FADD,	//22
+	FTOD,	//22
+	DTOF,
+	PRTF,
+	FADD,
 	FSUB,
 	FMUL,
 	FDIV,
 
 	//comparison
-	GT,	//26
+	GT,	//29
 	LT,
 	EQ,
 
@@ -80,7 +83,7 @@ typedef enum {
 	k_oBracket, k_cBracket,
 	k_oBrace, k_cBrace,
 	k_oParen, k_cParen,
-	k_prnt,
+	k_prnt, k_prtf,
 	k_singleQuote, k_doubleQuote,
 	k_vary,
 	k_by,
