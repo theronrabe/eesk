@@ -1,13 +1,13 @@
 #Example Program. Theron Rabe. 2013.
 {
-	int X
-	int Y
+	X
+	Y
 	
 	#
 	#This function doubles the first input and adds it to the second input.
 	#
-	Function twoXplusY {int A int B} {
-		Function add {int X int Y} {} {
+	Function twoXplusY {A B} {
+		Function add {also X also Y} {} {
 			return X$ + Y$;
 		}
 	}{

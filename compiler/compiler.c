@@ -3,8 +3,7 @@ compiler.c
 
 	This is the compiler.
 	
-	TODO:	introduce floats
-		introduce arrays
+	TODO:	introduce arrays
 		introduce strings of characters
 		introduce private/public directive
 
@@ -281,10 +280,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				endOfStatement = 1;
 				break;
 			case(k_int):
-				tokLen = getToken(tok, src, SC);
-				if(dst) tableAddSymbol(symbols, tok, *LC);
-				writeObj(dst, 0, LC);
-				//stackPush(operationStack, FTOD);
+				stackPush(operationStack, FTOD);
 				break;
 			case(k_char):
 				tokLen = getToken(tok, src, SC);
@@ -295,6 +291,9 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				tokLen = getToken(tok, src, SC);
 				if(dst) tableAddSymbol(symbols, tok, *LC);
 				writeObj(dst, 0, LC);
+				break;
+			case(k_float):
+				stackPush(operationStack, DTOF);
 				break;
 			case(k_begin):
 				//writeObj(dst, RUN, LC);
@@ -394,7 +393,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						//symbol now refers to PUSH's operand, not PUSH itself, so that "int" and "float" can
 						//do typecasting, and variables are declared this way.
 						if(dst) tableAddSymbol(symbols, tok, *LC);
-						writeObj(dst, PUSH, LC);	
+						//writeObj(dst, PUSH, LC);	
 						writeObj(dst, *LC, LC);		//push new label's address
 					}
 				} else {
@@ -451,7 +450,8 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "by", k_by);
 	tableAddSymbol(ret, "int", k_int);
 	tableAddSymbol(ret, "char", k_char);
-	tableAddSymbol(ret, "pnt", k_pnt);
+	tableAddSymbol(ret, "also", k_pnt);
+	tableAddSymbol(ret, "float", k_float);
 	tableAddSymbol(ret, "Begin", k_begin);
 	tableAddSymbol(ret, "End", k_halt);
 	tableAddSymbol(ret, ":", k_clr);

@@ -221,15 +221,18 @@ void execute(int *MEM, Stack *STACK, CallList *CALLS, int address) {
 				tempVal = (int) tempFloat1;
 
 				stackPush(STACK, tempVal);
+				++PC;
 				break;
 			case(DTOF):
 				tempFloat1 = (float) stackPop(STACK);
 				stackPush(STACK, *(int *) &tempFloat1);
+				++PC;
 				break;
 			case(PRTF):
 				tempVal = stackPop(STACK);
 				tempFloat1 = *(float *) &tempVal;
-				printf("PRINTS:\t%f\n", tempFloat1);
+				printf("\n%p:\tPRINTS:\t%f\n\n", &MEM[PC], tempFloat1);
+				++PC;
 				break;
 			case(FADD):
 				tempVal = stackPop(STACK);
