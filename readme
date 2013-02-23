@@ -9,13 +9,15 @@ A programming language designed with the following features in mind:
 -Concise, C-like, low-level control
 -Recursive grammar, similar to Lisp
 -Free syntax
-	-if an eesk program can compile, so should any subset of that program, without error.
+	-if an eesk program can compile, so should nearly any subset of that program, without error.
 -Predictable machine code generation
 	-For now, bytecode is generated for a virtual machine. Should be easy to adapt compiler
 	to cross-assemble bytecode to machine code, though.
+-Compiles in as few passes as possible.
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////
 #Example Program. Theron Rabe. 2013.
 {
 	int X
@@ -44,6 +46,51 @@ Begin
 	}
 End
 }
+//////////////////////////////////////////////////////////////////////////////////////
 
-The example eesk program above (found in example.ee), is lengthy, round-about way of doing some
-basic arithmetic on a couple of integers.
+The example eesk program above (found in example.ee), is a lengthy, round-about way of doing some
+basic arithmetic on a couple of integers. To compile this file, execute the command:
+	./ee example.ee
+The code will then be compiled to bytecode stored in the file e.out, which can be executed by:
+	./eesk e.out
+	./eesk e.out -v		(for verbose mode)
+
+//////////////////////////////////////////////////////////////////////////////////////
+Disection of an eesk program:
+	#	Indicates a comment.
+
+	{}	Group statements. Any code contained within braces is its own valid program,
+		and could consist of any valid eesk code without invalidating the syntax.
+
+	()	Prioritize instructions. Otherwise operations are right-associative.
+
+	int, char, pnt, etc...
+		Sets aside an integer in memory and gives it a name.
+
+	Begin	This marks the first instruction to be executed.
+
+	End	Stops the program from executing.
+
+	Function {parameters} {data} {instructions}
+		Functions return some value when called upon. They take parameters,
+		a private data section (which can contain more functions), and a
+		group of instructions that can be executed.
+
+	...[arguments]
+		Brackets are used to call a function stored at the preceding token's
+		address. Everything between them is passed to the function as
+		arguments.
+	
+	$	Gets the contents from a memory location.
+
+	if {condition} {trueSection} {falseSection}
+		Has three sections: a condition, a group of statements to run
+		if the condition is true, and a group of statements to run if
+		it evaluates to false.
+	
+	while {condition} {instructions}
+		As long as the condition section evaluates to non-zero, the
+		instruction section will continue to iterate.
+		the condition is false.
+
+////////////////////////////////////////////////////////////////////////////////////////
