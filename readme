@@ -73,8 +73,8 @@ Disection of basic Eesk constructs
 
 	()	Prioritize instructions. Otherwise operations are right-associative.
 
-	int, char, pnt, etc...
-		Sets aside memory and gives it a name.
+	int, float, char
+		converts the following data to this type.
 
 	Begin	This marks the first instruction to be executed.
 
@@ -104,7 +104,16 @@ Disection of basic Eesk constructs
 		As long as the condition section evaluates to non-zero, the
 		instruction section will continue to iterate.
 	
-	...:
+	:...
 		Designates a label.
+	
+	also
+		creates a new symbol from an old token.
+	
+	+ - * / %
+		integer arithmetic
+
+	++ -- ** //
+		floating point arithmetic
 
 ////////////////////////////////////////////////////////////////////////////////////////
