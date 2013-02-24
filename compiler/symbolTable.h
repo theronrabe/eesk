@@ -30,22 +30,44 @@ typedef struct Table {
 	struct Table *left;
 	struct Table *right;
 	struct Table *parent;
+	struct Table *layerRoot;
 } Table;
+
+Table *tableCreate();
+//void publicize(Table *node);
+Table *tableAddSymbol(Table *T, char *token, int val);
+
 
 Table *tableCreate() {
 	Table *ret = malloc(sizeof(Table));
 	ret->token = malloc(sizeof(char) * 32);
 	strcpy(ret->token, "Eesk");
+	ret->parent = NULL;
+	ret->right = NULL;
+	ret->left = NULL;
+	ret->layerRoot = ret;
+	ret->val = 0;
 	return ret;
 }
 
-void tableAddSymbol(Table *T, char *token, int address) {
+void publicize(Table *node) {
+	char publicToken[128];
+	if(node->parent) {
+		strcpy(publicToken, node->parent->token);
+		strcat(publicToken, ".");
+		strcat(publicToken, node->token);
+		node = tableAddSymbol(node->parent, publicToken, node->val);
+		publicize(node);
+	}
+}
+
+Table *tableAddSymbol(Table *T, char *token, int address) {
 	int cmp;
 
 	if(!T->token) {
 		cmp = 1;
 	} else {
-	//	printf("into node %s, with token %s\n", T->token, token);
+		//printf("into node %s, with token %s\n", T->token, token);
 		cmp = strcmp(token, T->token);
 	}
 	
@@ -54,20 +76,21 @@ void tableAddSymbol(Table *T, char *token, int address) {
 	} else if(cmp < 0) {
 		if(T->left) {
 			tableAddSymbol(T->left, token, address);
-			return;
 		} else {
 			T->left = malloc(sizeof(Table));
 			T->left->token = malloc(sizeof(char)*32);
 			strcpy(T->left->token, token);
 			T->left->val = address;
 			T->left->parent = T->parent;
+			T->left->left = NULL;
+			T->left->right = NULL;
+			T->left->layerRoot = T->layerRoot;
 			//printf("Inserting symbol %s as %d on left\n", token, address);
-			return;
+			return T->left;
 		}
 	} else if(cmp > 0) {
 		if(T->right) {
 			tableAddSymbol(T->right, token, address);
-			return;
 		} else {
 			T->right = malloc(sizeof(Table));
 			T->right->token = malloc(sizeof(char)*32);
@@ -76,25 +99,25 @@ void tableAddSymbol(Table *T, char *token, int address) {
 			T->right->parent = T->parent;
 			T->right->left = NULL;
 			T->right->right = NULL;
+			T->right->layerRoot = T->layerRoot;
 			//printf("Inserting symbol %s as %d on right\n", token, address);
-			return;
+			return T->right;
 		}
 	}
 }
 
-Table *tableAddLayer(Table *T) {
+Table *tableAddLayer(Table *T, char *token) {
 	//Probably gonna have to change the way this works, seeing as adding another layer
 	//doesn't always mean adding another symbol
 	Table *ret = malloc(sizeof(Table));
 	ret->parent = T;
+
 	ret->token = malloc(sizeof(char)*32);
 	ret->right = NULL;
 	ret->left = NULL;
+	ret->layerRoot = ret;
 
-	strcpy(ret->token, "eeskN");
-	ret->token[4] = layerChar++;
-	
-	//strcpy(ret->token, token);
+	strcpy(ret->token, token);
 	//ret->address = address;
 
 	return ret;
@@ -116,7 +139,7 @@ Table *tableRemoveLayer(Table *T) {
 		tableRemoveLayer(right);
 	}
 
-	return ret;
+	return ret->layerRoot;
 }
 
 int tableLookup(Table *T, char *token) {

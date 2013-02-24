@@ -3,8 +3,6 @@ compiler.c
 
 	This is the compiler.
 	
-	TODO:	introduce private/public directive
-
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
 
@@ -65,6 +63,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	float tempFloat;
 	int tokVal;
 	int tokLen;
+	Table *tempTable;
 	Stack *operationStack = stackCreate(32);
 	Stack *braceStack = stackCreate(32);
 
@@ -119,7 +118,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				stackPush(nameStack, nameAddr);
 				tokLen = getToken(tok, src, SC);
 				tableAddSymbol(symbols, tok, nameAddr);
-				symbols = tableAddLayer(symbols);
+				symbols = tableAddLayer(symbols, tok);
 	
 				//count data section
 				fakeSC = *SC;
@@ -143,7 +142,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				nameAddr = *LC;
 				stackPush(nameStack, nameAddr);
 				stackPush(varyStack, nameAddr);
-				symbols = tableAddLayer(symbols);
+				symbols = tableAddLayer(symbols, tok);
 				
 				writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr-1, LC);	//PUSH BNE address
 				compileStatement(keyWords, symbols, src, SC, dst, LC);		//compiled address
@@ -162,8 +161,9 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				nameAddr = *LC;
 				stackPush(nameStack, *LC);
 				tokLen = getToken(tok, src, SC);
-				tableAddSymbol(symbols, tok, nameAddr);
-				symbols = tableAddLayer(symbols);
+				symbols = tableAddSymbol(symbols, tok, nameAddr);	//change to this scope
+				if(publicFlag) { publicize(symbols); publicFlag = 0; }
+				symbols = tableAddLayer(symbols, tok);
 	
 				//count length of parameters and data sections
 				fakeSC = *SC;
@@ -271,7 +271,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				for(i=0;i<DC[0];i++) {
 					writeObj(dst, (int)tok[i], LC);				//a word for each character
 				}
-				printf("found quote: %s\n", tok);
 				break;
 			case(k_vary):
 				writeObj(dst, VARY, LC);
@@ -304,9 +303,14 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					for(i=0;i<DC[0];i++)
 						writeObj(dst, DC[0], LC);
 					tokLen = getToken(tok, src, SC);
-					if(dst) tableAddSymbol(symbols, tok, *LC-DC[0]);
+					if(dst) {
+						tempTable = tableAddSymbol(symbols, tok, *LC-DC[0]);
+					}
 				} else {
-					if(dst) tableAddSymbol(symbols, tok, *LC);
+					if(dst) {
+						tempTable = tableAddSymbol(symbols, tok, *LC);
+						if(publicFlag) publicize(tempTable);
+					}
 					writeObj(dst, 0, LC);
 				}
 				break;
@@ -328,6 +332,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				break;
 			case(k_endStatement):
 				fillOperations(dst, LC, operationStack);
+				publicFlag = 0;
 				//endOfStatement = !(braceStack->sp);
 				break;
 			case(k_cont):
@@ -389,6 +394,12 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				stackPush(operationStack, JMP);
 				stackPush(operationStack, POP);
 				break;
+			case(k_public):
+				publicFlag = 1;
+				break;
+			case(k_private):
+				publicFlag = 0;
+				break;
 			default:
 				//this is either a declared symbol or not
 				tokVal = tableLookup(symbols, tok);
@@ -408,8 +419,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						}
 					} else {
 						//this is an undeclared symbol
-						if(dst) tableAddSymbol(symbols, tok, *LC);
-						writeObj(dst, *LC, LC);		//push new label's address
+						tempTable = tableAddSymbol(symbols, tok, *LC);
+						writeObj(dst, PUSH, LC);	writeObj(dst, *LC, LC);		//push new label's address
 					}
 				} else {
 					//this is a declared symbol
@@ -429,7 +440,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 void writeObj(FILE *fn, int val, int *LC) {
 	if (fn) {
 		fwrite(&val, sizeof(int), 1, fn);
-		printf("%d:%d\n", *LC, val);
+		//printf("%d:%d\n", *LC, val);
 	}
 	(*LC)++;
 }

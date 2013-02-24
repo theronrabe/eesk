@@ -22,6 +22,7 @@ This file is part of Eesk.
 #include <stdio.h>
 
 int transferAddress;
+char publicFlag = 0;
 Stack *callStack;
 Stack *nameStack;
 Stack *varyStack;	//stores all the addresses to vary to

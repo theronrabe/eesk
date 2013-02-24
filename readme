@@ -28,7 +28,7 @@ A programming language designed with the following features in mind:
 	#This function doubles the first input and adds it to the second input.
 	#
 	Function twoXplusY {given A given B} {
-		Function add {given X given Y} {} {
+		public Function add {given X given Y} {} {
 			return X$ + Y$;
 		}
 	}{
@@ -43,7 +43,7 @@ Begin
 	if {(X$ < 10) | (X$ > 20)} {
 		twoXplusY[X$ Y$];
 	}{
-		-1;
+		twoXplusY.add[X$ Y$];
 	}
 End
 }
@@ -107,6 +107,9 @@ Disection of basic Eesk constructs
 	:...
 		Designates a label.
 	
+	public/private
+		set the scope for new symbols
+
 	given
 		creates a new symbol in the current scope.
 	
