@@ -21,14 +21,14 @@ A programming language designed with the following features in mind:
 ///////////////////////////////////////////////////////////////////////////////////////
 #Example Program. Theron Rabe. 2013.
 {
-	X
-	Y
+	given X
+	given Y
 	
 	#
 	#This function doubles the first input and adds it to the second input.
 	#
-	Function twoXplusY {A B} {
-		Function add {also X also Y} {} {
+	Function twoXplusY {given A given B} {
+		Function add {given X given Y} {} {
 			return X$ + Y$;
 		}
 	}{
@@ -107,8 +107,8 @@ Disection of basic Eesk constructs
 	:...
 		Designates a label.
 	
-	also
-		creates a new symbol from an old token.
+	given
+		creates a new symbol in the current scope.
 	
 	+ - * / %
 		integer arithmetic
