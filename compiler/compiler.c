@@ -292,9 +292,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				stackPush(operationStack, FTOD);
 				break;
 			case(k_char):
-				tokLen = getToken(tok, src, SC);
-				if(dst) tableAddSymbol(symbols, tok, *LC);
-				writeObj(dst, 0, LC);
+				stackPush(operationStack, FTOD);
 				break;
 			case(k_pnt):
 				tokLen = getToken(tok, src, SC);
