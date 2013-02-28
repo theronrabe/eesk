@@ -1,30 +1,23 @@
 ///////////////////////////////////////////////////////////////
 //Example Program
 ///////////////////////////////////////////////////////////////
-
-Start	//this is actually a label for myProgram to return to
-State myProgram
-
-	[
-	int I
-	int O
-	]
-
-	{
-		State isGo [] { I# > 2 };
-		Vary by isGo [O+X] [int y] { y is 3; O+X + y#; };
-		Vary by Click [I] [] { I + 1 };
-	
-		Function foo [int arg0 int arg1] [int bar float bat] {
-			//do stuff
-			bar = foo(1 2);
-		};
-	
-		Begin
-	
-		O+IMG = loadImg("");
-	
-	};
+{
+	given dataPointer;
+	collect data {
+		private given x;
+		public Function incX {} {} { 
+			return x$ + 1;
+		}
+		public Function init {given xInit} {} {
+			x = xInit$;
+		}
+	}
+Begin
+	dataPointer = new data$;
+	data.init@dataPointer[0];
+	data.incX@dataPointer[];
+End
+}
 
 ////////////////////////////////////////////
 //How to generate bytecode? Grammar forms:
@@ -48,34 +41,6 @@ Data Directives:
 		PUSH begin	;address before loop
 		JMP		;iterate loop
 
-	State <name> {data} {statement}
-		.blkw	;return of {statement}
-	<-	.blkw	;<name> pointer to {statement}
-			--store <name> in symbol table
-			--[ start counting argument words
-		...	;compiled {data}
-			--] stop counting argument words
-			--set <name> to this address
-	->	POPTO*	--one for each member of [data]		//ONLY IF STATES TAKE ARGUMENTS
-		PUSH	<name-1>	--PUSH RESULT ADDRESS!
-		...	;compiled {statement}
-			--{statement} left result on stack
-		POP	;store result
-		JMP	;back to return address
-
-		
-	Vary {condition} {address} {statement}
-		BREAK	--jump to this at BNE. Not first instruction of vary!
-	<-->	PUSH	<Vary-1>	;PUSH the address of above BREAK for BNE
-		...	;compiled {condition}
-			--leaves state 0/1 on stack for BNE
-		BNE	;BREAK if condition wasn't met, else continue
-		...	;compiled {address}
-			--{address} statement should have left return address on stack
-		...	;compiled {statement}
-		POP	;{address} and {statement} result already left on stack
-		BREAK	;lets call-list know Vary has finished
-
 	Function <name> [parameters] {data} {statement}
 		.blkw	;word for {statement} return
 	<-	.blkw	;<name> pointer to {statement}
@@ -91,6 +56,15 @@ Data Directives:
 			--pop name from compiler's name stack
 		POP	;store result
 		JMP	;back to return address
+	
+	Collect <name> {data}
+			--store name in symbol table, along with the SOURCE counter (so we can come back here)
+			--fake compile data section, and continue
+	
+	Spill <collect> <name>
+			--add table layer for name scope
+			--go to collect's SC with current LC and compileStatement
+
 
 	( {args}
 		CLR	;this will be taken care of at compile time, no need for address on stack

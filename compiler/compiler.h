@@ -23,12 +23,14 @@ This file is part of Eesk.
 
 int transferAddress;
 char publicFlag = 0;
+char literalFlag = 0;
 Stack *callStack;
 Stack *nameStack;
 Stack *varyStack;	//stores all the addresses to vary to
 
 int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC);
 void writeObj(FILE *fn, int val, int *LC);
+int writeAddressCalculation(FILE *fn, char *token, Table *symbols, int *LC);
 Table *prepareKeywords();
 void fillOperations(FILE *dst, int *LC, Stack *operationStack);
 void fillVary(FILE *dst, int *LC);
@@ -36,13 +38,9 @@ void fillVary(FILE *dst, int *LC);
 typedef enum {
 	//machine control
 	HALT,
-	RUN,
-	VARY,
 	JMP,
 	BRN,
 	BNE,
-	BREAK,
-	SKIP,
 	PRNT,
 
 	//stack control
@@ -82,16 +80,12 @@ typedef enum {
 
 	//language keywords
 	k_if, k_while,
-	k_State,
-	k_VaryForm,	//VaryForm = high level
 	k_Function,
 	k_oBracket, k_cBracket,
 	k_oBrace, k_cBrace,
 	k_oParen, k_cParen,
 	k_prnt, k_prtf, k_prtc, k_prts, k_goto,
 	k_singleQuote, k_doubleQuote,
-	k_vary,
-	k_by,
 	k_int, k_char, k_pnt, k_float,
 	k_begin, k_halt,
 	k_clr, k_endStatement, k_cont, k_not,
@@ -100,5 +94,6 @@ typedef enum {
 	k_add, k_sub, k_mul, k_div, k_mod, k_and, k_or,
 	k_fadd, k_fsub, k_fmul, k_fdiv,
 	k_return,
-	k_public, k_private, k_child
+	k_public, k_private, k_literal, k_collect,
+	k_child
 } OPCODE;
