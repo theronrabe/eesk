@@ -2,6 +2,7 @@
 compiler.c
 
 	This is the compiler.
+	WHY WON'T LONGS WORK FOR WORD SIZE?
 
 	TODO:
 		-structures
@@ -63,11 +64,11 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	int fakeSC;
 	char tok[256];	//needs to be big in case of string
 	char prevTok[24];
-	int nameAddr;
-	int DC[3];	//data counters
+	long nameAddr;
+	long DC[3];	//data counters
 	int i;
 	float tempFloat;
-	int tokVal;
+	long tokVal;
 	int tokLen;
 	Table *tempTable;
 	Stack *operationStack = stackCreate(32);
@@ -373,12 +374,12 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						tempFloat = atof(tok);
 						if(!literalFlag) writeObj(dst, PUSH, LC);	//writeObj(dst, tempFloat, LC);
 						if(dst) {
-							fwrite(&tempFloat, sizeof(int), 1, dst);
+							fwrite(&tempFloat, sizeof(long), 1, dst);
 							*LC++;
 						}
 					} else {
 						if(!literalFlag) writeObj(dst, PUSH, LC);
-						writeObj(dst, atoi(tok), LC);	//push its value
+						writeObj(dst, atol(tok), LC);	//push its value
 					}
 				} else {
 					writeAddressCalculation(dst, tok, symbols, LC);
@@ -393,10 +394,10 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	return *LC - oldLC;
 }
 
-void writeObj(FILE *fn, int val, int *LC) {
+void writeObj(FILE *fn, long val, int *LC) {
 	if (fn) {
-		fwrite(&val, sizeof(int), 1, fn);
-		printf("%d:%d\n", *LC, val);
+		fwrite(&val, sizeof(long), 1, fn);
+		//printf("%x:%ld\n", *LC, val);
 	}
 	(*LC)++;
 }
@@ -405,12 +406,12 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 	int oldLC = *LC;
 	int val;
 
-	printf("calculating address from token %s\n", token);
+	//printf("calculating address from token %s\n", token);
 	char *piece0 = strtok(token, "@");
 	char *piece1 = strtok(NULL, "@");
 
 	if(piece1) {
-		printf("%s plus %s$\n", piece0, piece1);
+		//printf("%s plus %s$\n", piece0, piece1);
 		writeObj(dst, PUSH, LC);	writeObj(dst, tableLookup(symbols, piece0), LC);
 		writeObj(dst, PUSH, LC);	writeObj(dst, tableLookup(symbols, piece1), LC);
 		writeObj(dst, CONT, LC);
@@ -420,7 +421,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 		if(val == -1) {
 			tableAddSymbol(symbols, piece0, *LC);
 		}
-		printf("value %d calculated from %s\n", val, piece0);
+		//printf("value %d calculated from %s\n", val, piece0);
 		if(!literalFlag) writeObj(dst, PUSH, LC);
 		writeObj(dst, tableLookup(symbols, piece0), LC);
 	}
