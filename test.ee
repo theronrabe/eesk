@@ -1,0 +1,25 @@
+{
+	collect data {
+		public given a;
+		public given b;
+
+		public Function test {} {} {
+			return a$ + b$;
+		}
+		public Function setA {given i} {} {
+			a = i$;
+			return a$;
+		}
+	}
+
+	given myData;
+Begin
+	myData = new data;
+
+	data.setA@myData[5];
+	data.b@myData = 3;
+	data.test@myData[];
+
+	free myData$;
+End
+}

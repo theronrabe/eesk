@@ -7,10 +7,7 @@ Copyright 2013 Theron Rabe.
 A programming language designed with the following features in mind:
 
 -Concise, C-like, low-level control
--Recursive grammar, similar to Lisp
--Weakly typed
--Free syntax
-	-Errors should be nearly unheard of.
+-No implicit type conversion
 -Predictable machine code generation
 	-For now, bytecode is generated for a virtual machine. Should be easy to
 	adapt compiler to cross-assemble bytecode to machine code, though.
@@ -109,6 +106,9 @@ Disection of basic Eesk constructs
 	
 	public/private
 		set the scope for new symbols
+
+	\...\
+		Literally defines a section of memory.
 
 	given
 		creates a new symbol in the current scope.

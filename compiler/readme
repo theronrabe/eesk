@@ -155,7 +155,7 @@ Data Directives:
 //Notes regarding the virtual machine
 ////////////////////////////////////////////
 
-32 bit. This leaves instructions with a lot of unused bits,
+64 bit. This leaves instructions with a lot of unused bits,
 but works well for integers, floating points, and addresses.
 
 Architecture features:
