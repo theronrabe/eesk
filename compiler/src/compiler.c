@@ -395,13 +395,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				break;
 			default:
 				//this is either an intended symbol or a number
-				/*
-				if(tableLookup(symbols, tok)) {
-					tokVal = tableLookup(symbols, tok)->val;
-				} else {
-					tokVal = -1;
-				}
-				*/
 
 				if(numeric(tok[0]) || (tok[0] == '-' && numeric(tok[1]))) {
 					//this is a numeric literal
@@ -417,7 +410,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						writeObj(dst, atol(tok), LC);	//push its value
 					}
 				} else {
-					printf("calculating address for symbol %s\n", tok);
 					writeAddressCalculation(dst, tok, symbols, LC);
 				}
 				break;
@@ -440,7 +432,6 @@ void writeObj(FILE *fn, long val, int *LC) {
 
 int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 	int oldLC = *LC;
-	//printf("calculating address from token %s\n", token);
 	char *piece0 = strtok(token, "@");
 	char *piece1 = strtok(NULL, "@");
 	Table *sym = tableLookup(symbols, piece0);
@@ -448,20 +439,16 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 	if(sym == NULL) {
 		tableAddSymbol(symbols, piece0, *LC);
 		sym = tableLookup(symbols, piece0);
-		printf("CULPRIT INDICATOR: %s\n", piece0);
 	}
 
 	if(piece1) {
-		//printf("%s plus %s$\n", piece0, piece1);
 		writeObj(dst, RPUSH, LC);	writeObj(dst, tableLookup(symbols, piece1)->val - *LC + 1, LC);
 		writeObj(dst, CONT, LC);
 		writeObj(dst, PUSH, LC);	writeObj(dst, sym->val, LC);
 		writeObj(dst, ADD, LC);
 	} else {
-		//printf("value %d calculated from %s\n", val, piece0);
 		if(!literalFlag)
 			writeObj(dst, RPUSH, LC);
-		if((sym->val - *LC + 1) == 0) printf("CULPRIT\n");
 		writeObj(dst, sym->val - *LC + 1, LC);
 	}
 
