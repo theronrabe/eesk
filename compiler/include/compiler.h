@@ -101,5 +101,6 @@ typedef enum {
 	k_return,
 	k_public, k_private, k_literal, k_collect,
 	k_child,
-	k_alloc, k_new, k_free
+	k_alloc, k_new, k_free,
+	k_include
 } OPCODE;

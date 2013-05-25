@@ -52,6 +52,7 @@ void main(int argc, char **argv) {
 	compileStatement(keyWords, symbols, src, &SC, dst, &LC);
 	writeObj(dst, transferAddress, &LC);
 
+	free(src);
 	fclose(dst);
 }
 
@@ -393,6 +394,16 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_free):
 				stackPush(operationStack, FREE);
 				break;
+			case(k_include):
+				getToken(tok, src, SC);
+				printf("INCLUDING FILE: %s\n", tok);
+				char *inc = loadFile(tok);
+				trimComments(inc);
+				fakeSC = 0;
+				compileStatement(keyWords, symbols, inc, &fakeSC, dst, LC);
+				free(inc);
+				endOfStatement = 1;
+				break;
 			default:
 				//this is either an intended symbol or a number
 
@@ -517,6 +528,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "alloc", k_alloc);
 	tableAddSymbol(ret, "new", k_new);
 	tableAddSymbol(ret, "free", k_free);
+	tableAddSymbol(ret, "include", k_include);
 
 	return ret;
 }
