@@ -332,6 +332,9 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				if(verboseFlag) printf("%lx:\tFREE\n", PC);
 				++PC;
 				break;
+			default:
+				printf("Unknown opcode: %lx\n at %lx", MEM[PC], PC);
+				exit(1);
 		}
 	}
 }

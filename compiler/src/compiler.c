@@ -436,7 +436,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 void writeObj(FILE *fn, long val, int *LC) {
 	if (fn) {
 		fwrite(&val, sizeof(long), 1, fn);
-		//printf("%x:%ld\n", *LC, val);
+		printf("%x:%lx\n", *LC, val);
 	}
 	(*LC)++;
 }
@@ -501,7 +501,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "float", k_float);
 	tableAddSymbol(ret, "Begin", k_begin);
 	tableAddSymbol(ret, "End", k_halt);
-	tableAddSymbol(ret, ":", k_clr);
+	tableAddSymbol(ret, ",", k_clr);
 	tableAddSymbol(ret, ";", k_endStatement);
 	tableAddSymbol(ret, "$", k_cont);
 	tableAddSymbol(ret, "!", k_not);
