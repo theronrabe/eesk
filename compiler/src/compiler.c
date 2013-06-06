@@ -62,7 +62,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 	while(!endOfStatement && tokLen != -1) {
 		tokLen = getToken(tok, src, SC);
-//printf("token:\t%s\n", tok);
+printf("token:\t%s\n", tok);
 		tempTable = tableLookup(keyWords, tok);
 		if(tempTable) {
 			tokVal = tempTable->val;
@@ -289,6 +289,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					}
 				} else {
 					tempTable = tableAddSymbol(symbols, tok, *LC);
+		printf("HERE tempTable = %p\n", tempTable);
 					if(publicFlag) publicize(tempTable);
 					writeObj(dst, 0, LC);
 				}

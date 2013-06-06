@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 	compileStatement(keyWords, symbols, src, &SC, dst, &LC);
 	writeObj(dst, transferAddress, &LC);
 
-	fclose(dst);
 	free(src);
+	fclose(dst);
 	return 0;
 }

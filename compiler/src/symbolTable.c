@@ -37,13 +37,15 @@ Table *tableCreate() {
 }
 
 void publicize(Table *node) {
-	char publicToken[128];
-	if(node->parent) {
-		strcpy(publicToken, node->parent->token);
-		strcat(publicToken, ".");
-		strcat(publicToken, node->token);
-		node = tableAddSymbol(node->parent, publicToken, node->val);
-		publicize(node);
+	if(node) {
+		char publicToken[128];
+		if(node->parent) {
+			strcpy(publicToken, node->parent->token);
+			strcat(publicToken, ".");
+			strcat(publicToken, node->token);
+			node = tableAddSymbol(node->parent, publicToken, node->val);
+			publicize(node);
+		}
 	}
 }
 
@@ -59,6 +61,7 @@ Table *tableAddSymbol(Table *T, char *token, int address) {
 	
 	if(!cmp) {
 		T->val = address;
+		return T;
 	} else if(cmp < 0) {
 		if(T->left) {
 			tableAddSymbol(T->left, token, address);
@@ -90,7 +93,6 @@ Table *tableAddSymbol(Table *T, char *token, int address) {
 			return T->right;
 		}
 	}
-	return NULL;	//this should be unreachable
 }
 
 Table *tableAddLayer(Table *T, char *token) {
