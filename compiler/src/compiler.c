@@ -289,7 +289,6 @@ printf("token:\t%s\n", tok);
 					}
 				} else {
 					tempTable = tableAddSymbol(symbols, tok, *LC);
-		printf("HERE tempTable = %p\n", tempTable);
 					if(publicFlag) publicize(tempTable);
 					writeObj(dst, 0, LC);
 				}
