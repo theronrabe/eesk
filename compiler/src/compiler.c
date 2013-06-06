@@ -14,8 +14,9 @@ compiler.c
 			-dynamically allocated objects need to know relative addresses
 			-switch to relative addressing for the sake of calling functions in dynamically allocated memory
 		-"including" other source files
+			DONE
 		-setable initial memory size for VM
-		-cross assembler for bytecode->x86_64
+		-cross assembler for bytecode->target_platform
 		-standard library
 	
 Copyright 2013 Theron Rabe
@@ -35,34 +36,21 @@ This file is part of Eesk.
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <compiler.h>
-
-void main(int argc, char **argv) {
-	char *src = loadFile(argv[1]);
-	FILE *dst = fopen("e.out", "w");
-	char token[32];
-	Table *keyWords = prepareKeywords();
-	Table *symbols = tableCreate();
-	int SC = 0, LC = 0;
-	
-	callStack = stackCreate(32);
-	nameStack = stackCreate(32);
-
-	trimComments(src);
-	
-	compileStatement(keyWords, symbols, src, &SC, dst, &LC);
-	writeObj(dst, transferAddress, &LC);
-
-	free(src);
-	fclose(dst);
-}
+#include <stdio.h>
+#include <stdlib.h>
+#include <fileIO.h>
+#include <tokenizer.h>
+#include <symbolTable.h>
 
 int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC) {
+	publicFlag = 0;
+	literalFlag = 0;
+
 	int endOfStatement = 0;
 	int oldLC = *LC;
 	int fakeLC = 0;
 	int fakeSC;
 	char tok[256];	//needs to be big in case of string
-	char prevTok[24];
 	long nameAddr;
 	long DC[3];	//data counters
 	int i;
@@ -71,7 +59,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	int tokLen;
 	Table *tempTable;
 	Stack *operationStack = stackCreate(32);
-	Stack *braceStack = stackCreate(32);
 
 	while(!endOfStatement && tokLen != -1) {
 		tokLen = getToken(tok, src, SC);
@@ -104,6 +91,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				compileStatement(keyWords, symbols, src, SC, dst, LC);		//compiled else
 				break;
+
+
 			case(k_while):
 				//get beginning address
 				nameAddr = *LC;
@@ -120,6 +109,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);			//begin address
 				writeObj(dst, JMP, LC);								//iterate
 				break;
+
 
 			case(k_Function):
 				writeObj(dst, 0, LC);						//result location
@@ -156,24 +146,30 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				stackPop(nameStack);
 				symbols = tableRemoveLayer(symbols);
 				break;
+
+
 			case(k_oBrace):
-				//stackPush(braceStack, *LC);
-				//compileStatement(keyWords, symbols, src, SC, dst, LC);
+				//This seemingly important symbol literally does nothing.
 				break;
+
+
 			case(k_cBrace):
 				fillOperations(dst, LC, operationStack);
-				//stackPop(braceStack);
-				endOfStatement = 1; //!(braceStack->sp);
-				break;
-			case(k_oParen):
-				//stackPush(braceStack, *LC);
-				compileStatement(keyWords, symbols, src, SC, dst, LC);
-				break;
-			case(k_cParen):
-				fillOperations(dst, LC, operationStack);
-				//stackPop(braceStack);
 				endOfStatement = 1;
 				break;
+
+
+			case(k_oParen):
+				compileStatement(keyWords, symbols, src, SC, dst, LC);
+				break;
+
+
+			case(k_cParen):
+				fillOperations(dst, LC, operationStack);
+				endOfStatement = 1;
+				break;
+
+
 			case(k_oBracket):
 				//writeObj(dst, CONT, LC);					//get call address
 				writeObj(dst, PUSH, LC);		writeObj(dst, *LC+3, LC);	//jump over word of call data
@@ -181,7 +177,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					nameAddr = *LC;
 					writeObj(dst, 0, LC);	//storage for call address
 				writeObj(dst, POPTO, LC);	writeObj(dst, nameAddr - *LC + 1, LC);
-
 	
 				fakeSC = *SC;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC);		//compiled argument section
@@ -214,39 +209,50 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				writeObj(dst, PUSH, LC);	writeObj(dst, 1, LC);		//push function pointer
 				writeObj(dst, SUB, LC);						//combine base and offset to get result address
 				writeObj(dst, CONT, LC);
-				//writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr-1, LC);	//return here, put result on stack
-				//writeObj(dst, CONT, LC);
-				//writeObj(dst, PUSH, LC);	writeObj(dst, 1, LC);		//get callAddress-1 (its result location)
-				//writeObj(dst, SUB, LC);
-				//writeObj(dst, CONT, LC);
 				break;
+
+
 			case(k_cBracket):
 				fillOperations(dst, LC, operationStack);
 				endOfStatement = 1;
 				break;
+
+
 			case(k_prnt):
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, PRNT);
 				break;
+
+
 			case(k_prtf):
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, PRTF);
 				break;
+
+
 			case(k_prtc):
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, PRTC);
 				break;
+
+
 			case(k_prts):
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, PRTS);
 				break;
+
+
 			case(k_goto):
 				stackPush(operationStack, JMP);
 				break;
+
+
 			case(k_singleQuote):
 				tokLen = getToken(tok, src, SC);
 				writeObj(dst, PUSH, LC);	writeObj(dst, tok[0], LC);
 				break;
+
+
 			case(k_doubleQuote):
 				writeObj(dst, PUSH, LC);	writeObj(dst, *LC+4, LC);	//push start of string
 
@@ -258,12 +264,18 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					writeObj(dst, (int)tok[i], LC);				//a word for each character
 				}
 				break;
+
+
 			case(k_int):
 				stackPush(operationStack, FTOD);
 				break;
+
+
 			case(k_char):
 				stackPush(operationStack, FTOD);
 				break;
+
+
 			case(k_pnt):
 				tokLen = getToken(tok, src, SC);
 				if(numeric(tok[0])) {
@@ -276,97 +288,149 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						tempTable = tableAddSymbol(symbols, tok, *LC-DC[0]-1);
 					}
 				} else {
-					//if(dst) {
-						tempTable = tableAddSymbol(symbols, tok, *LC);
-						if(publicFlag) publicize(tempTable);
-					//}
+					tempTable = tableAddSymbol(symbols, tok, *LC);
+					if(publicFlag) publicize(tempTable);
 					writeObj(dst, 0, LC);
 				}
 				break;
+
+
 			case(k_float):
 				stackPush(operationStack, DTOF);
 				break;
+
+
 			case(k_begin):
 				transferAddress = *LC;
 				break;
+
+
 			case(k_halt):
 				writeObj(dst, HALT, LC);
 				break;
+
+
 			case(k_clr):
 				writeObj(dst, CLR, LC);
 				break;
+
+
 			case(k_endStatement):
 				fillOperations(dst, LC, operationStack);
 				publicFlag = 0;
 				break;
+
+
 			case(k_cont):
 				writeObj(dst, CONT, LC);
 				break;
+
+
 			case(k_not):
 				writeObj(dst, NOT, LC);
 				break;
+
+
 			case(k_is):
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, POP);
 				break;
+
+
 			case(k_eq):
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, EQ);
 				break;
+
+
 			case(k_gt):
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, GT);
 				break;
+
+
 			case(k_lt):
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, LT);
 				break;
+
+
 			case(k_add):
 				stackPush(operationStack, ADD);
 				break;
+
+
 			case(k_sub):
 				stackPush(operationStack, SUB);
 				break;
+
+
 			case(k_mul):
 				stackPush(operationStack, MUL);
 				break;
+
+
 			case(k_div):
 				stackPush(operationStack, DIV);
 				break;
+
+
 			case(k_mod):
 				stackPush(operationStack, MOD);
 				break;
+
+
 			case(k_and):
 				stackPush(operationStack, AND);
 				break;
+
+
 			case(k_or):
 				stackPush(operationStack, OR);
 				break;
+
+
 			case(k_fadd):
 				stackPush(operationStack, FADD);
 				break;
+
+
 			case(k_fsub):
 				stackPush(operationStack, FSUB);
 				break;
+
+
 			case(k_fmul):
 				stackPush(operationStack, FMUL);
 				break;
+
+
 			case(k_fdiv):
 				stackPush(operationStack, FDIV);
 				break;
+
+
 			case(k_return):
 				stackPush(operationStack, JMP);
 				stackPush(operationStack, POP);
 				break;
+
+
 			case(k_public):
 				publicFlag = 1;
 				break;
+
+
 			case(k_private):
 				publicFlag = 0;
 				break;
+
+
 			case(k_literal):
 				literalFlag = !literalFlag;
 				break;
+
+
 			case(k_collect):
 				//set the scope
 				tokLen = getToken(tok, src, SC);
@@ -386,14 +450,23 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				//clean up
 				symbols = tableRemoveLayer(symbols);
 				break;
+
+
 			case(k_alloc):
+				stackPush(operationStack, ALOC);
 				break;
+
+
 			case(k_new):
 				stackPush(operationStack, NEW);
 				break;
+
+
 			case(k_free):
 				stackPush(operationStack, FREE);
 				break;
+
+
 			case(k_include):
 				getToken(tok, src, SC);
 				printf("INCLUDING FILE: %s\n", tok);
@@ -404,6 +477,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				free(inc);
 				endOfStatement = 1;
 				break;
+
+
 			default:
 				//this is either an intended symbol or a number
 
@@ -414,7 +489,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						if(!literalFlag) writeObj(dst, PUSH, LC);	//writeObj(dst, tempFloat, LC);
 						if(dst) {
 							fwrite(&tempFloat, sizeof(long), 1, dst);
-							*LC++;
+							++(*LC);
 						}
 					} else {
 						if(!literalFlag) writeObj(dst, PUSH, LC);
@@ -428,7 +503,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	}
 	
 	stackFree(operationStack);
-	stackFree(braceStack);
 
 	return *LC - oldLC;
 }
@@ -469,7 +543,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 void fillOperations(FILE *dst, int *LC, Stack *operationStack) {
 	int op;
 
-	while(op = stackPop(operationStack)) {
+	while((op = stackPop(operationStack))) {
 		if(op == -1) break;
 		writeObj(dst, op, LC);
 	}

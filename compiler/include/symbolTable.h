@@ -19,6 +19,9 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef _symbolTable.h_
+#define _symbolTable.h_ 
+
 #include <string.h>
 
 typedef struct Table {
@@ -37,3 +40,5 @@ Table *tableAddSymbol(Table *T, char *token, int val);
 Table *tableAddLayer(Table *T, char *token);
 Table *tableRemoveLayer(Table *T);
 Table *tableLookup(Table *T, char *token);
+
+#endif

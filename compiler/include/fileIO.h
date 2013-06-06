@@ -19,19 +19,9 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <stdio.h>
+#ifndef _fileIO.h_
+#define _fileIO.h_ 
 
-char *loadFile(char *fn) {
-	FILE *fp;
-	char *ret = NULL;
-	int i=0;
+char *loadFile(char *fn);
 
-	fp = fopen(fn, "rt");
-	fseek(fp, 0, SEEK_END);
-	i = ftell(fp);
-	rewind(fp);
-	ret = (char *)malloc(sizeof(char) * (i));
-	fread(ret,sizeof(char),i,fp);
-	fclose(fp);
-	return ret;
-}
+#endif

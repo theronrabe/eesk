@@ -20,6 +20,7 @@ This file is part of Eesk.
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <symbolTable.h>
+#include <stdlib.h>
 
 char layerChar = '0';
 
@@ -89,6 +90,7 @@ Table *tableAddSymbol(Table *T, char *token, int address) {
 			return T->right;
 		}
 	}
+	return NULL;	//this should be unreachable
 }
 
 Table *tableAddLayer(Table *T, char *token) {
@@ -176,4 +178,5 @@ Table *tableLookup(Table *T, char *token) {
 			}
 		}
 	}
+	return NULL;	//this should be unreachable
 }

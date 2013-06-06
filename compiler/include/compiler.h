@@ -15,15 +15,18 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "tokenizer.h"
-#include "stack.h"
-#include "symbolTable.h"
-#include "fileIO.h"
+#ifndef _compiler.h_
+#define _compiler.h_ 
+
+#include <tokenizer.h>
+#include <stack.h>
+#include <symbolTable.h>
+#include <fileIO.h>
 #include <stdio.h>
 
 int transferAddress;
-char publicFlag = 0;
-char literalFlag = 0;
+char publicFlag;
+char literalFlag;
 Stack *callStack;
 Stack *nameStack;
 Stack *varyStack;	//stores all the addresses to vary to
@@ -104,3 +107,5 @@ typedef enum {
 	k_alloc, k_new, k_free,
 	k_include
 } OPCODE;
+
+#endif

@@ -1,8 +1,7 @@
 /*
-tokenizer.h
+fileIO.c
 
-	This acts as the tokenizer for a compiler. While ignoring whitespace delimeters, it groups characters into alphabetics, numerics, and symbols,
-	then returns that token.
+	Does some basic file IO work that I seem to use too often to rewrite.
 
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
@@ -20,15 +19,21 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _tokenizer.h_
-#define _tokenizer.h_
+#include <fileIO.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-void trimComments(char *src);
-int isFloat(char *tok);
-int symbolic(char c);
-int alphabetic(char c);
-int getQuote(char *tok, char *src, int *SC);
-int numeric(char c);
-int getToken(char *token, char *src, int *loc);
+char *loadFile(char *fn) {
+	FILE *fp;
+	char *ret = NULL;
+	int i=0;
 
-#endif
+	fp = fopen(fn, "rt");
+	fseek(fp, 0, SEEK_END);
+	i = ftell(fp);
+	rewind(fp);
+	ret = (char *)malloc(sizeof(char) * (i));
+	fread(ret,sizeof(char),i,fp);
+	fclose(fp);
+	return ret;
+}

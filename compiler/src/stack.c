@@ -1,8 +1,6 @@
 /*
-tokenizer.h
-
-	This acts as the tokenizer for a compiler. While ignoring whitespace delimeters, it groups characters into alphabetics, numerics, and symbols,
-	then returns that token.
+stack.c
+	An array-based integer stack implementation.
 
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
@@ -20,15 +18,28 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _tokenizer.h_
-#define _tokenizer.h_
+#include <stack.h>
 
-void trimComments(char *src);
-int isFloat(char *tok);
-int symbolic(char c);
-int alphabetic(char c);
-int getQuote(char *tok, char *src, int *SC);
-int numeric(char c);
-int getToken(char *token, char *src, int *loc);
+Stack *stackCreate(int size) {
+	Stack *ret = malloc(sizeof(Stack));
+	ret->array = malloc(sizeof(int) * size);
+	ret->sp = 0;
+	return ret;
+}
 
-#endif
+void stackFree(Stack *st) {
+	free(st->array);
+	free(st);
+}
+
+void stackPush(Stack *st, int val) {
+	st->array[st->sp++] = val;
+}
+
+int stackPop(Stack *st) {
+	if(st->sp) {
+		return st->array[--st->sp];
+	} else {
+		return -1;
+	}
+}
