@@ -1,5 +1,5 @@
 {
-	collect data {
+	Collection data {
 		public given a;
 		public given b;
 
@@ -16,7 +16,7 @@
 Begin
 	myData = new data;
 
-	data.setA@myData[5];
+	data.setA@myData[5]:
 	data.b@myData = 3;
 	data.test@myData[];
 

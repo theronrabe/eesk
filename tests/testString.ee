@@ -1,0 +1,6 @@
+{
+	message: \"Hello, World!"\
+Begin
+	prints message$;
+End
+}
