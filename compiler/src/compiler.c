@@ -1,26 +1,11 @@
 /*
 compiler.c
 
-	This is the compiler.
+	This is the compiler. It basically works as a large finite state machine, where each iteration of the compileStatement
+	function corresponds to a new token-decided state. Any state has the potential to write pneumonic machine code to the
+	output file using the writeObj function, or oftentimes recurse into compiling a substatement, then advancing to the
+	next state.
 
-	TODO:
-		-structures
-			DONE	-collect should store its length in a word of memory (for "new"-ing later)
-			DONE	-everything after "collect" token should be addressed relative to that location
-			DONE	-write calculateAddress(char *token) to solve for dot operator
-			-check readme for info on implementing this with dynamic memory allocation
-		-dynamic memory allocation in VM
-			DONE	-"new" should push to STACK the address to a chunk of memory of size by popping STACK.
-			-dynamically allocated objects need to know relative addresses
-			-switch to relative addressing for the sake of calling functions in dynamically allocated memory
-		-"including" other source files
-			DONE
-		-native function calling
-			-tilde symbol (~) prefixes native calls. Ex: ~printf@stdio["Hello, World!"];
-		-setable initial memory size for VM
-		-cross assembler for bytecode->target_platform
-		-standard library
-	
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
 
@@ -49,19 +34,19 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	literalFlag = 0;
 	nativeFlag = 0;
 
-	int endOfStatement = 0;
-	int oldLC = *LC;
-	int fakeLC = 0;
-	int fakeSC;
-	char tok[256];	//needs to be big in case of string
-	long nameAddr;
-	long DC[3];	//data counters
-	int i;
-	double tempFloat;
-	long tokVal;
-	int tokLen;
-	Table *tempTable;
-	Stack *operationStack = stackCreate(32);
+	int endOfStatement = 0;		//tells us whether or not to unstack operators
+	int oldLC = *LC;		//for measuring output progress
+	int fakeLC = 0;			//for measuring relative addresses sub-statement
+	int fakeSC;			//for measuring relative addresses on sub-statement
+	char tok[256];i			//needs to be big in case of string
+	long nameAddr;			//for marking important working addresses
+	long DC[3];			//data counters
+	int i;				//iterator
+	double tempFloat;		//for working floating point values
+	long tokVal;			//value of current token
+	int tokLen;			//length of current token
+	Table *tempTable;		//for working symbol tables
+	Stack *operationStack = stackCreate(32);	//for stacking operators
 
 	while(!endOfStatement && tokLen != -1) {
 		tokLen = getToken(tok, src, SC);
@@ -299,7 +284,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_pnt):
 				tokLen = getToken(tok, src, SC);
-				if(numeric(tok[0])) {
+				if(numeric(tok[0])) {		//is this an array?
+					//create a symbol and some memory
 					DC[0] = atoi(tok);
 					writeObj(dst, *LC, LC);
 					for(i=0;i<DC[0];i++)
@@ -309,6 +295,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						tempTable = tableAddSymbol(symbols, tok, *LC-DC[0]-1);
 					}
 				} else {
+					//create a symbol and a word
 					tempTable = tableAddSymbol(symbols, tok, *LC);
 					if(publicFlag) publicize(tempTable);
 					writeObj(dst, 0, LC);
@@ -337,6 +324,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_endStatement):
+				//unstack operators and reset flags
 				fillOperations(dst, LC, operationStack);
 				publicFlag = 0;
 				nativeFlag = 0;
@@ -525,6 +513,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_label):
+				//create a symbol referring to this location
 				tokLen = getToken(tok, src, SC);
 				tempTable = tableAddSymbol(symbols, tok, *LC);
 				if(publicFlag) publicize(tempTable);
@@ -561,6 +550,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 }
 
 void writeObj(FILE *fn, long val, int *LC) {
+	//writes a word into the output file
 	if (fn) {
 		fwrite(&val, sizeof(long), 1, fn);
 		printf("%x:%lx\n", *LC, val);
@@ -569,26 +559,27 @@ void writeObj(FILE *fn, long val, int *LC) {
 }
 
 int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
+	//this function figures out what address a non-keyword token should correlate to
+	//and writes that address to the output file
 	int oldLC = *LC;
 	char *piece0 = strtok(token, "@");
 	char *piece1 = strtok(NULL, "@");
 
 	Table *sym = tableLookup(symbols, piece0);
 	
-	if(sym == NULL) {
+	if(sym == NULL) {	//does the symbol not exist yet?
 		tableAddSymbol(symbols, piece0, *LC);
 		sym = tableLookup(symbols, piece0);
 		if(publicFlag) publicize(sym);
 	}
 	
-	if(piece1) {
+	if(piece1) {	//is this a compound symbol?
 		writeObj(dst, RPUSH, LC);	writeObj(dst, tableLookup(symbols, piece1)->val - *LC + 1, LC);
 		writeObj(dst, CONT, LC);
 		writeObj(dst, PUSH, LC);	writeObj(dst, sym->val, LC);
 		writeObj(dst, ADD, LC);
 	} else {
-		if(!literalFlag)
-			writeObj(dst, RPUSH, LC);
+		if(!literalFlag) writeObj(dst, RPUSH, LC);
 		writeObj(dst, sym->val - *LC + 1, LC);
 	}
 
@@ -596,6 +587,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 }
 
 void fillOperations(FILE *dst, int *LC, Stack *operationStack) {
+	//unstacks operators
 	int op;
 
 	while((op = stackPop(operationStack))) {
