@@ -1,0 +1,13 @@
+Compiler to-do list:
+	-characters currently consume a full 64-bit word. They should only each consume one byte.
+		-This should be done not only to preserve memory, but also to keep strings consistent with C strings.
+	-Accommodate new instruction for turning MEM indices into absolute addresses in compiler.h (LOC)
+	-Write LOC instructions whenever a pointer is pushed (and not immediately CONTed) when nativeFlag is raised.
+
+Virtual Machine to-do list:
+	-Rewrite character operations to still work on new character size.
+	-Implement new instruction for turning MEM indices into absolute addresses (LOC)
+
+Eesk Environment to-do list:
+	-choose a file extension for Eesk header files
+	-make header files to link the standard C library.
