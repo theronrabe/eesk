@@ -1,17 +1,7 @@
 /*
 vm.c
 
-	TODO:
-		change to 64-bit word size (for the sake of pointers)
-		change default addressing mode to relative
-		add direct addressing mode
-
-	This program acts as a 32-bit, zero-address, address-addressable virtual machine. "Registers" for the machine can be accessed as negative addresses.
-	The program counter is located at address -1.
-
-	The machine has three basic states, read, execute, and vary. Execution state doesn't begin until a RUN opcode is executed. Variation loop begins
-	once the VARY opcode has been reached. Once in variation state, functions stored in a call list are continuously executed until a HALT opcode has
-	been encountered.
+	This program acts as a 64-bit, zero-address, address-addressable virtual machine.
 
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
@@ -31,6 +21,9 @@ This file is part of Eesk.
 */
 #include <vm.h>
 #include <stdlib.h>
+#include <ffi.h>
+#include <string.h>
+#include <dlfcn.h>
 
 long *load(char *fn) {
 	FILE *fp;
@@ -85,6 +78,7 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 	long tempVal, tempAddr;
 	int i;
 	float tempFloat1, tempFloat2, floatResult;
+	char string[256];
 
 	PC = address;
 	while(1) {
@@ -116,6 +110,18 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 					stackPop(STACK);
 					++PC;
 				}
+				break;
+			case(NTV):
+				//call string of format: "foo(pif)@bar.so:v" takes parameters pointer, integer, float, and returns void on stack
+				i=0;
+				tempAddr = stackPop(STACK);
+				do {
+					string[i] = (char) MEM[tempAddr + i];
+					++i;
+				} while(string[i-1]);
+
+				nativeCall(string, STACK);
+				++PC;
 				break;
 			case(PRNT):
 				tempVal = stackPop(STACK);
@@ -221,7 +227,7 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 			case(PRTF):
 				tempVal = stackPop(STACK);
 				tempFloat1 = *(float *) &tempVal;
-				printf("%lx:\tPRINTS:\t%f\n", PC, tempFloat1);
+				printf("%lx:\tPRINTS:\t%lf\n", PC, tempFloat1);
 				++PC;
 				break;
 			case(FADD):
@@ -337,4 +343,104 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				exit(1);
 		}
 	}
+}
+
+void nativeCall(char *cs, Stack *STACK) {
+	char *functionName, *parameters, *libName, *returnType;
+	int i;
+	long result = -1;
+	ffi_type *ret;
+
+	//format reminder: "foo(sid)@bar.so:f"
+	functionName = strtok(cs, "()@:");
+	parameters = strtok(NULL, "()@:");
+	libName = strtok(NULL, "()@:");
+	returnType = strtok(NULL, "()@:");
+
+	//printf("func: %s\nparam: %s\nlib: %s\nret: %s\n", functionName, parameters, libName, returnType);
+
+	//find parameter count and types
+	int argc = strlen(parameters);
+	ffi_type **types = malloc(sizeof(ffi_type*) * argc);
+	void **argv = malloc(sizeof(void*) * argc);
+	long *args = malloc(sizeof(void*) * argc);
+	for(i=0;i<argc;i++) {
+		switch(parameters[i]) {
+			case('i'):
+				types[i] = &ffi_type_sint64;
+				break;
+			case('f'):
+				types[i] = &ffi_type_double;
+				break;
+			case('p'):
+				types[i] = &ffi_type_pointer;
+				break;
+			case('c'):
+				types[i] = &ffi_type_uchar;
+				break;
+		}
+		//printf("argument %d is type %p\n", i, types[i]);
+	}
+
+	//pop parameter values from stack
+	for(i=0;i<argc;i++) {
+		args[i] = stackPop(STACK);
+		argv[i] = &args[i];
+		//printf("argument %d is value %lx at address %p\n", i, args[i], argv[i]);
+	}
+
+	//resolve return type
+	switch(returnType[0]) {
+		case('i'):
+			ret = &ffi_type_sint64;
+			break;
+		case('f'):
+			ret = &ffi_type_double;
+			break;
+		case('p'):
+			ret = &ffi_type_pointer;
+			break;
+		case('c'):
+			ret = &ffi_type_uchar;
+			break;
+		case('v'):
+			ret = &ffi_type_void;
+			break;
+	}
+
+	//make call
+	printf("Calling %s in %s with %d args: %lx\n", functionName, libName, argc, args[0]);
+	void *handle = dlopen(libName, RTLD_LAZY);
+	if(!handle) printf("Error opening shared library: %s\n", dlerror());
+	void (*function)() = dlsym(handle, functionName);
+	printf(dlerror());
+
+	ffi_cif cif;
+	if(ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argc, ret, types) == FFI_OK) {
+	printf("result before: %lx\n", result);
+		if(returnType[0] != 'v') {
+			ffi_call(&cif, function, &result, argv);
+		} else {
+			ffi_call(&cif, function, NULL, argv);
+		}
+	printf("result after: %lx\n", result);
+	} else {
+		printf("Failure in CIF preparation.\n");
+	}
+
+	//push result to stack
+	if(returnType[0] != 'v') {
+		stackPush(STACK, result);
+	}
+	printf("Returning from native call with value %lx\n", result);
+
+	//clean up
+	//free(functionName);
+	//free(parameters);
+	//free(libName);
+	free(types);
+	free(argv);
+	free(args);
+	//free(returnType);
+	dlclose(handle);
 }

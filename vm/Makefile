@@ -5,6 +5,7 @@ FLAGS        = -std=gnu99 -Iinclude
 CFLAGS       = -pedantic -Wall -Wextra -march=native -ggdb3
 DEBUGFLAGS   = -O0 -D _DEBUG
 RELEASEFLAGS = -O2 -D NDEBUG -combine -fwhole-program
+POSTFLAGS    = -ldl -lffi
  
 TARGET  = eesk
 SOURCES = $(shell echo src/*.c)
@@ -19,7 +20,7 @@ BINDIR = $(PREFIX)/bin
 all: $(TARGET)
  
 $(TARGET): $(OBJECTS) $(COMMON)
-	$(CC) $(FLAGS) $(CFLAGS) $(DEBUGFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CC) $(FLAGS) $(CFLAGS) $(DEBUGFLAGS) -o $(TARGET) $(OBJECTS) $(POSTFLAGS)
 
 release: $(SOURCES) $(HEADERS) $(COMMON)
 	$(CC) $(FLAGS) $(CFLAGS) $(RELEASEFLAGS) -o $(TARGET) $(SOURCES)

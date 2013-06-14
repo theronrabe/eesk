@@ -27,6 +27,7 @@ This file is part of Eesk.
 int transferAddress;
 char publicFlag;
 char literalFlag;
+char nativeFlag;
 Stack *callStack;
 Stack *nameStack;
 Stack *varyStack;	//stores all the addresses to vary to
@@ -43,10 +44,11 @@ typedef enum {
 	JMP,
 	BRN,
 	BNE,
+	NTV,
 	PRNT,
 
 	//stack control
-	PUSH,	//5
+	PUSH,	//6
 	RPUSH,
 	POPTO,
 	POP,
@@ -102,10 +104,12 @@ typedef enum {
 	k_add, k_sub, k_mul, k_div, k_mod, k_and, k_or,
 	k_fadd, k_fsub, k_fmul, k_fdiv,
 	k_return,
-	k_public, k_private, k_literal, k_collect,
+	k_public, k_private, k_literal, k_collect, k_field,
 	k_child,
 	k_alloc, k_new, k_free,
-	k_include
+	k_include,
+	k_native,
+	k_label,
 } OPCODE;
 
 #endif

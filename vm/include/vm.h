@@ -26,6 +26,7 @@ typedef enum {
 	JMP,
 	BRN,
 	BNE,
+	NTV,
 	PRNT,
 
 	//stack control
@@ -73,6 +74,7 @@ typedef enum {
 long *load(char *fn);
 void execute(long *MEM, Stack *STACK, CallList *CALLS, long address);
 void quit(long *MEM, Stack *STACK, long address);
+void nativeCall(char *cs, Stack *STACK);
 
 long PC = 0, SP = 0;
 int LEN = 0;
