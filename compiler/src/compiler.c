@@ -57,7 +57,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	long nameAddr;
 	long DC[3];	//data counters
 	int i;
-	float tempFloat;
+	double tempFloat;
 	long tokVal;
 	int tokLen;
 	Table *tempTable;
@@ -540,8 +540,9 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						tempFloat = atof(tok);
 						if(!literalFlag) writeObj(dst, PUSH, LC);	//writeObj(dst, tempFloat, LC);
 						if(dst) {
-							fwrite(&tempFloat, sizeof(long), 1, dst);
-							++(*LC);
+							//fwrite(&tempFloat, sizeof(long), 1, dst);
+							writeObj(dst, *(long *) &tempFloat, LC);
+							//++(*LC);
 						}
 					} else {
 						if(!literalFlag) writeObj(dst, PUSH, LC);

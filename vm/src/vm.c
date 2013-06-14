@@ -77,7 +77,7 @@ void quit(long *MEM, Stack *STACK, long PC) {
 void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 	long tempVal, tempAddr;
 	int i;
-	float tempFloat1, tempFloat2, floatResult;
+	double tempFloat1, tempFloat2, floatResult;
 	char string[256];
 
 	PC = address;
@@ -213,21 +213,21 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 			//Float manipulation
 			case(FTOD):
 				tempVal = stackPop(STACK);
-				tempFloat1 = *(float *)&tempVal;
+				tempFloat1 = *(float *) &tempVal;
 				tempVal = (long) tempFloat1;
 
 				stackPush(STACK, tempVal);
 				++PC;
 				break;
 			case(DTOF):
-				tempFloat1 = (float) stackPop(STACK);
+				tempFloat1 = (double) stackPop(STACK);
 				stackPush(STACK, *(long *) &tempFloat1);
 				++PC;
 				break;
 			case(PRTF):
 				tempVal = stackPop(STACK);
-				tempFloat1 = *(float *) &tempVal;
-				printf("%lx:\tPRINTS:\t%lf\n", PC, tempFloat1);
+				tempFloat1 = *(double *) &tempVal;
+				printf("%lx:\tPRINTS:\t%lf from value %lx\n", PC, tempFloat1, tempVal);
 				++PC;
 				break;
 			case(FADD):
@@ -348,7 +348,7 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 void nativeCall(char *cs, Stack *STACK) {
 	char *functionName, *parameters, *libName, *returnType;
 	int i;
-	long result = -1;
+	void *result = -1;
 	ffi_type *ret;
 
 	//format reminder: "foo(sid)@bar.so:f"
@@ -357,13 +357,12 @@ void nativeCall(char *cs, Stack *STACK) {
 	libName = strtok(NULL, "()@:");
 	returnType = strtok(NULL, "()@:");
 
-	//printf("func: %s\nparam: %s\nlib: %s\nret: %s\n", functionName, parameters, libName, returnType);
 
 	//find parameter count and types
 	int argc = strlen(parameters);
 	ffi_type **types = malloc(sizeof(ffi_type*) * argc);
 	void **argv = malloc(sizeof(void*) * argc);
-	long *args = malloc(sizeof(void*) * argc);
+	void **args = malloc(sizeof(void*) * argc);
 	for(i=0;i<argc;i++) {
 		switch(parameters[i]) {
 			case('i'):
@@ -379,14 +378,12 @@ void nativeCall(char *cs, Stack *STACK) {
 				types[i] = &ffi_type_uchar;
 				break;
 		}
-		//printf("argument %d is type %p\n", i, types[i]);
 	}
 
 	//pop parameter values from stack
 	for(i=0;i<argc;i++) {
 		args[i] = stackPop(STACK);
 		argv[i] = &args[i];
-		//printf("argument %d is value %lx at address %p\n", i, args[i], argv[i]);
 	}
 
 	//resolve return type
@@ -409,7 +406,6 @@ void nativeCall(char *cs, Stack *STACK) {
 	}
 
 	//make call
-	printf("Calling %s in %s with %d args: %lx\n", functionName, libName, argc, args[0]);
 	void *handle = dlopen(libName, RTLD_LAZY);
 	if(!handle) printf("Error opening shared library: %s\n", dlerror());
 	void (*function)() = dlsym(handle, functionName);
@@ -417,13 +413,11 @@ void nativeCall(char *cs, Stack *STACK) {
 
 	ffi_cif cif;
 	if(ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argc, ret, types) == FFI_OK) {
-	printf("result before: %lx\n", result);
 		if(returnType[0] != 'v') {
 			ffi_call(&cif, function, &result, argv);
 		} else {
 			ffi_call(&cif, function, NULL, argv);
 		}
-	printf("result after: %lx\n", result);
 	} else {
 		printf("Failure in CIF preparation.\n");
 	}
@@ -432,15 +426,10 @@ void nativeCall(char *cs, Stack *STACK) {
 	if(returnType[0] != 'v') {
 		stackPush(STACK, result);
 	}
-	printf("Returning from native call with value %lx\n", result);
 
 	//clean up
-	//free(functionName);
-	//free(parameters);
-	//free(libName);
 	free(types);
 	free(argv);
 	free(args);
-	//free(returnType);
 	dlclose(handle);
 }
