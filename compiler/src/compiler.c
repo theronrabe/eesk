@@ -38,7 +38,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	int oldLC = *LC;		//for measuring output progress
 	int fakeLC = 0;			//for measuring relative addresses sub-statement
 	int fakeSC;			//for measuring relative addresses on sub-statement
-	char tok[256];i			//needs to be big in case of string
+	char tok[256];			//needs to be big in case of string
 	long nameAddr;			//for marking important working addresses
 	long DC[3];			//data counters
 	int i;				//iterator
@@ -255,20 +255,13 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_doubleQuote):
+				DC[0] = getQuote(tok, src, SC);
 				if(!literalFlag) {
 					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+4, LC);	//push start of string
-				}
-
-				DC[0] = getQuote(tok, src, SC);
-
-				if(!literalFlag) {
-					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+DC[0]+2, LC);	//push end of string
+					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+2+DC[0], LC);	//push end of string
 					writeObj(dst, JMP, LC);						//skip over string leaving it on stack
 				}
-				
-				for(i=0;i<DC[0];i++) {
-					writeObj(dst, (int)tok[i], LC);				//a word for each character
-				}
+				writeStr(dst, tok, LC);
 				break;
 
 
@@ -556,6 +549,28 @@ void writeObj(FILE *fn, long val, int *LC) {
 		printf("%x:%lx\n", *LC, val);
 	}
 	(*LC)++;
+}
+
+void writeStr(FILE *fn, char *str, int *LC) {
+	//write a string of characters to the output file, padding null characters to align words
+	int len = strlen(str);
+	int words = (len%8)?len/8+1:len/8;
+	int padding = (len%8)?8 - len%8:0;
+	char pad = '\0';
+	int i;
+
+	if(fn) {
+		//write the string
+		fwrite(str, sizeof(char), len, fn);
+
+		//write padding, if needed
+		for(i=0;i<padding;i++) {
+			fwrite(&pad, sizeof(char), 1, fn);
+		}
+	}
+
+	//increase location counter
+	(*LC) += words;
 }
 
 int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {

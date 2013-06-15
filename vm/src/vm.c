@@ -283,12 +283,7 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				break;
 			case(PRTS):
 				tempAddr = stackPop(STACK);
-				tempVal = 0;
-				while(MEM[tempAddr+tempVal]) {
-					printf("%c", (char)MEM[tempAddr+tempVal]);
-					++tempVal;
-				}
-				printf("\n");
+				printf("%s", &MEM[tempAddr]);
 				++PC;
 				break;
 
