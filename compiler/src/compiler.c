@@ -617,7 +617,7 @@ Table *prepareKeywords() {
 	//Language keywords
 	tableAddSymbol(ret, "if", k_if);
 	tableAddSymbol(ret, "while", k_while);
-	tableAddSymbol(ret, "function", k_Function);
+	tableAddSymbol(ret, "Function", k_Function);
 	tableAddSymbol(ret, "[", k_oBracket);
 	tableAddSymbol(ret, "]", k_cBracket);
 	tableAddSymbol(ret, "{", k_oBrace);
