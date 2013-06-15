@@ -591,7 +591,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 	if(piece1) {	//is this a compound symbol?
 		writeObj(dst, RPUSH, LC);	writeObj(dst, tableLookup(symbols, piece1)->val - *LC + 1, LC);
 		writeObj(dst, CONT, LC);
-		writeObj(dst, PUSH, LC);	writeObj(dst, sym->val, LC);
+		writeObj(dst, RPUSH, LC);	writeObj(dst, sym->val - *LC + 1, LC);
 		writeObj(dst, ADD, LC);
 	} else {
 		if(!literalFlag) writeObj(dst, RPUSH, LC);
