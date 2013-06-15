@@ -1,12 +1,17 @@
 Compiler to-do list:
-	-characters currently consume a full 64-bit word. They should only each consume one byte.
-		-This should be done not only to preserve memory, but also to keep strings consistent with C strings.
+	-Account for special characters (like \n or \t) in strings and characters
+		-this should be done by modifying the tokenizer's getQuote() function
 	-Accommodate new instruction for turning MEM indices into absolute addresses in compiler.h (LOC)
 	-Write LOC instructions whenever a pointer is pushed (and not immediately CONTed) when nativeFlag is raised.
 
 Virtual Machine to-do list:
-	-Rewrite character operations to still work on new character size.
+	-Make byte-addressable for string and character manipulation
 	-Implement new instruction for turning MEM indices into absolute addresses (LOC)
+		-or maybe just make everything work on absolute addresses and do away with MEM indices altogether?
+		-change MEM[i] in instruction implementations to &MEM+(i*sizeof(long)), and then bytes are addressable because
+		POP assigns values to calculated absolute addresses rather than MEM indices (so in eesk: myStr+1 = 'A sets the byte
+		after myStr, rather than the word after myStr)
+	-Implement new instructions for bit shifting
 
 Eesk Environment to-do list:
 	-choose a file extension for Eesk header files
