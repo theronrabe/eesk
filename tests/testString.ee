@@ -1,6 +1,7 @@
 {
-	message: \"Hello, World!"\
+	define message	\"Hello, World!\n"\
 Begin
-	prints message$;
+	prints message;
+	prints "What about this? Does this work?";
 End
 }

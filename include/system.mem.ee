@@ -1,0 +1,6 @@
+{
+	public Field mem {
+		public define malloc	\"malloc(i)@libc.so.6:p"\
+		public define free	\"free(p)@libc.so.6:v"\
+	}
+}

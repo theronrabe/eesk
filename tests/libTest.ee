@@ -1,0 +1,10 @@
+include "include/system.ee"
+
+{
+	given msg
+Begin
+	~system.math.abs[-75];
+	msg = "Hello, World!";
+	~system.IO.puts[msg$];
+End
+}

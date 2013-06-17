@@ -1,4 +1,5 @@
 {
+	given myData;
 	Collection data {
 		public given a;
 		public given b;
@@ -12,7 +13,6 @@
 		}
 	}
 
-	given myData;
 Begin
 	myData = new data;
 

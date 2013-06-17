@@ -1,11 +1,12 @@
 {
 	Field libc {
-		public define putc	\"putchar(c)@libc.so.6:v"\
+		public define puts	\"puts(p)@libc.so.6:v"\
 		public define cos	\"cos(f)@libm.so:f"\
 		public define abs	\"abs(i)@libm.so:i"\
 	}
 Begin
 	#printf ~libc.cos[0.57];
 	~libc.abs[-7];
+	#~libc.puts[libc.abs];
 End
 }

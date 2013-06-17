@@ -1,0 +1,35 @@
+{
+	public Field math {
+		public define cos	\"cos(f)@libm.so:f"\
+		public define sin	\"sin(f)@libm.so:f"\
+		public define tan	\"tan(f)@libm.so:f"\
+		public define acos	\"acos(f)@libm.so:f"\
+		public define asin	\"asin(f)@libm.so:f"\
+		public define atan	\"atan(f)@libm.so:f"\
+		public define atanTwo	\"atan2(ff)@libm.so:f"\
+
+		public define cosh	\"cosh(f)@libm.so:f"\
+		public define sinh	\"sinh(f)@libm.so:f"\
+		public define tanh	\"tanh(f)@libm.so:f"\
+		public define acosh	\"acosh(f)@libm.so:f"\
+		public define asinh	\"asinh(f)@libm.so:f"\
+		public define atanh	\"atanh(f)@libm.so:f"\
+
+		public define pow	\"pow(ff)@libm.so:f"\
+		public define sqrt	\"sqrt(f)@libm.so:f"\
+
+		public define exp	\"exp(f)@libm.so:f"\
+		public define log	\"log(f)@libm.so:f"\
+		public define logTen	\"log10(f)@libm.so:f"\
+		public define expTwo	\"exp2(f)@libm.so:f"\
+		public define logTwo	\"log2(f)@libm.so:f"\
+
+		public define ceiling	\"ceil(f)@libm.so:i"\
+		public define floor	\"floor(f)@libm.so:i"\
+		public define fmod	\"fmod(ff)@libm.so:f"\
+		public define trunc	\"trunc(f)@libm.so:i"\
+
+		public define fabs	\"fabs(f)@libm.so:f"\
+		public define abs	\"abs(i)@libm.so:i"\
+	}
+}
