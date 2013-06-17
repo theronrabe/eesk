@@ -22,15 +22,15 @@ This file is part of Eesk.
 
 typedef enum {
 	//machine control
-	HALT,
+	HALT,	//0
 	JMP,
-	BRN,
-	BNE,
-	NTV,
+	BRN, BNE, NTV,
+	LOC,
+	DLOC,
 	PRNT,
 
 	//stack control
-	PUSH,
+	PUSH,	//6
 	RPUSH,
 	POPTO,
 	POP,
@@ -38,7 +38,7 @@ typedef enum {
 	CLR,
 
 	//value manipulation
-	ADD,
+	ADD,	//c
 	SUB,
 	MUL,
 	DIV,
@@ -75,6 +75,8 @@ long *load(char *fn);
 void execute(long *MEM, Stack *STACK, CallList *CALLS, long address);
 void quit(long *MEM, Stack *STACK, long address);
 void nativeCall(char *cs, Stack *STACK);
+long loc(long start, long offset);
+long dloc(long start, long address);
 
 long PC = 0, SP = 0;
 int LEN = 0;

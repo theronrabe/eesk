@@ -3,6 +3,12 @@ vm.c
 
 	This program acts as a 64-bit, zero-address, address-addressable virtual machine.
 
+	TODO:
+		I'm in the middle of prepping the vm to have stack-popped addresses be absolute addresses, rather than indices of the MEM array.
+		Once that's done, Eesk variables that are pushed will leave an absolute address on the stack which makes for much cleaner
+		integration with the native system.
+
+
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
 
@@ -56,6 +62,7 @@ void main(int argc, char **argv) {
 	CallList *CALLS = NULL;
 	long *MEM = load(argv[1]);
 
+	printf("________________________________________________________________________________\n\n");
 	execute(MEM, STACK, CALLS, PC);
 	
 	stackFree(STACK);
@@ -114,13 +121,25 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 			case(NTV):
 				//call string of format: "foo(pif)@bar.so:v" takes parameters pointer, integer, float, and returns void on stack
 				i=0;
-				tempAddr = stackPop(STACK);
+				tempAddr = dloc((long)&MEM[0], stackPop(STACK));
 				do {
 					string[i] = (char) MEM[tempAddr + i];
 					++i;
 				} while(string[i-1]);
 
 				nativeCall(string, STACK);
+				++PC;
+				break;
+			case(LOC):
+				//locates the MEM index atop the stack into its absolute address
+				tempAddr = stackPop(STACK);
+				stackPush(STACK, loc((long) &MEM[0], tempAddr));
+				++PC;
+				break;
+			case(DLOC):
+				//turns an absolute address into its relative MEM index
+				tempAddr = stackPop(STACK);
+				stackPush(STACK, dloc((long) &MEM[0], tempAddr));
 				++PC;
 				break;
 			case(PRNT):
@@ -136,25 +155,24 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				PC += 2;
 				break;
 			case(RPUSH):
-				stackPush(STACK, PC + MEM[PC+1]);
-				if(verboseFlag) printf("%lx:\tRPUSH:\t%lx to make %lx\n", PC, MEM[PC+1], PC+MEM[PC+1]);
+				stackPush(STACK, loc((long)&MEM[0], PC + MEM[PC+1]));
+				if(verboseFlag) printf("%lx:\tRPUSH:\t%lx to make offset %lx, address %lx\n", PC, MEM[PC+1], PC+MEM[PC+1], loc((long)&MEM[0], PC+MEM[PC+1]));
 				PC += 2;
 				break;
 			case(POPTO):
-				//made this relative for now
 				MEM[PC+MEM[PC+1]] = stackPop(STACK);
 				if(verboseFlag) printf("%lx:\tPOPTO\t%lx = %lx\n", PC, PC+MEM[PC+1], MEM[PC+MEM[PC+1]]);
 				PC += 2;
 				break;
 			case(POP):
 				tempVal = stackPop(STACK);
-				tempAddr = stackPop(STACK);
+				tempAddr = dloc((long)&MEM[0], stackPop(STACK));
 				MEM[tempAddr] = tempVal;
 				if(verboseFlag) printf("%lx:\tPOP\t%lx = %lx\n", PC, tempAddr, tempVal);
 				++PC;
 				break;
 			case(CONT):
-				tempAddr = stackPop(STACK);
+				tempAddr = dloc((long)&MEM[0], stackPop(STACK));
 				stackPush(STACK, MEM[tempAddr]);
 				if(verboseFlag) printf("%lx:\tCONT:\t%lx is %lx\n", PC, tempAddr, MEM[tempAddr]);
 				++PC;
@@ -283,7 +301,7 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				break;
 			case(PRTS):
 				tempAddr = stackPop(STACK);
-				printf("%s", &MEM[tempAddr]);
+				printf("%s", (char *) tempAddr);
 				++PC;
 				break;
 
@@ -312,24 +330,27 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 			case(ALOC):
 				tempVal = stackPop(STACK);
 				tempAddr = (long)malloc(tempVal*sizeof(long));
-				stackPush(STACK, (long *)tempAddr - &MEM[0]);
+				stackPush(STACK, tempAddr);
 				if(verboseFlag) printf("%lx:\tALOC\n", PC);
 				++PC;
 				break;
 			case(NEW):
 				if(verboseFlag) printf("%lx:\tNEW\n", PC);
-				tempVal = stackPop(STACK); //this location contains size to allocate and precedes start of copying
-				tempAddr = (long *)malloc(MEM[tempVal]*sizeof(long)) - &MEM[0];
+				tempVal = dloc((long)&MEM[0], stackPop(STACK)); //this location contains size to allocate and precedes start of copying
+				printf("tempVal MEM index = %lx\n", tempVal);
+				tempAddr = dloc((long)&MEM[0], malloc(MEM[tempVal]*sizeof(long)));
+				printf("NEW address: %lx\n", tempAddr);
 				for(i=0;i<MEM[tempVal];i++) {
 					MEM[tempAddr+i] = MEM[tempVal+1+i];
-					if(verboseFlag) printf("\tcopying value %lx to %lx\n", MEM[tempVal+1+i], tempAddr+i);
+					if(verboseFlag) printf("\tcopying value %lx to index %lx, address %lx\n", MEM[tempVal+1+i], tempAddr+i, (long) &MEM[tempAddr+i]);
 				}
-				stackPush(STACK, tempAddr);
+				stackPush(STACK, loc((long)&MEM[0], tempAddr));
 				++PC;
 				break;
 			case(FREE):
 				tempAddr = stackPop(STACK);
-				free((long *)(tempAddr + &MEM[0]));
+				printf("tempAddr = %lx\n", tempAddr);
+				free((long *)tempAddr);
 				if(verboseFlag) printf("%lx:\tFREE\n", PC);
 				++PC;
 				break;
@@ -427,4 +448,11 @@ void nativeCall(char *cs, Stack *STACK) {
 	free(argv);
 	free(args);
 	dlclose(handle);
+}
+
+long loc(long start, long offset) {
+	return offset*8 + start;
+}
+long dloc(long start, long address) {
+	return (address-start)/8;
 }
