@@ -98,7 +98,7 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				break;
 			case(JMP):
 				PC = stackPop(STACK);
-				if(verboseFlag) printf("JMP\t%lx\n", PC);
+				if(verboseFlag) printf("JMP\t%lx, address %lx\n", PC, loc((long)&MEM[0], PC));
 				break;
 			case(BRN):
 				if(stackPop(STACK)) {
@@ -123,23 +123,26 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				i=0;
 				tempAddr = dloc((long)&MEM[0], stackPop(STACK));
 				do {
-					string[i] = (char) MEM[tempAddr + i];
+					string[i] = (char) *((char *)loc((long)&MEM[0], tempAddr)+i);
 					++i;
 				} while(string[i-1]);
 
 				nativeCall(string, STACK);
+				if(verboseFlag) printf("%lx\tNTV:\t%s\n", PC, string);
 				++PC;
 				break;
 			case(LOC):
 				//locates the MEM index atop the stack into its absolute address
 				tempAddr = stackPop(STACK);
 				stackPush(STACK, loc((long) &MEM[0], tempAddr));
+				if(verboseFlag) printf("%lx:\tLOC:\t%lx becomes %lx\n", PC, tempAddr, loc((long)&MEM[0], tempAddr));
 				++PC;
 				break;
 			case(DLOC):
 				//turns an absolute address into its relative MEM index
 				tempAddr = stackPop(STACK);
 				stackPush(STACK, dloc((long) &MEM[0], tempAddr));
+				if(verboseFlag) printf("%lx:\tDLOC:\t%lx becomes %lx\n", PC, tempAddr, dloc((long)&MEM[0], tempAddr));
 				++PC;
 				break;
 			case(PRNT):

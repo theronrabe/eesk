@@ -34,6 +34,7 @@ Stack *varyStack;	//stores all the addresses to vary to
 
 int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC);
 void writeObj(FILE *fn, long val, int *LC);
+void writeStr(FILE *fn, char *str, int *LC);
 int writeAddressCalculation(FILE *fn, char *token, Table *symbols, int *LC);
 Table *prepareKeywords();
 void fillOperations(FILE *dst, int *LC, Stack *operationStack);
@@ -45,6 +46,8 @@ typedef enum {
 	BRN,
 	BNE,
 	NTV,
+	LOC,
+	DLOC,
 	PRNT,
 
 	//stack control

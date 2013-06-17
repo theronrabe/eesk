@@ -24,13 +24,15 @@ typedef enum {
 	//machine control
 	HALT,	//0
 	JMP,
-	BRN, BNE, NTV,
+	BRN,
+	BNE,
+	NTV,
 	LOC,
 	DLOC,
 	PRNT,
 
 	//stack control
-	PUSH,	//6
+	PUSH,	//8
 	RPUSH,
 	POPTO,
 	POP,

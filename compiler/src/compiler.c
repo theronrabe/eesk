@@ -6,6 +6,11 @@ compiler.c
 	output file using the writeObj function, or oftentimes recurse into compiling a substatement, then advancing to the
 	next state.
 
+	TODO:
+		-Dynamic function calling causes a segfault because it no longer adds two offsets to find the correct address
+		to jump to, it instead adds two absolute addresses.
+
+
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
 
@@ -172,12 +177,13 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC);		//compiled argument section
 
 					//push return address of call
-					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+DC[0]+16, LC);			//push return address
+					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+DC[0]+23, LC);			//push return address
 
 					//push result address for function
 					writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);	//push function pointer
+					writeObj(dst, LOC, LC);						//turn into address
 					writeObj(dst, CONT, LC);					//turn pointer into relative address base
-					writeObj(dst, PUSH, LC);	writeObj(dst, 1, LC);		//push function pointer
+					writeObj(dst, PUSH, LC);	writeObj(dst, 8, LC);		//push function pointer
 					writeObj(dst, SUB, LC);						//combine base and offset to get result address
 
 					//compile arguments
@@ -185,18 +191,25 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 					//make call
 					writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);	//push function pointer
+					writeObj(dst, LOC, LC);						//get actual address
 					writeObj(dst, CONT, LC);					//turn pointer into relative address base
 				
 					writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);	//push function pointer
+					writeObj(dst, LOC, LC);						//grab real address
 					writeObj(dst, CONT, LC);
+					//writeObj(dst, LOC, LC);						//locate new pointer
 					writeObj(dst, CONT, LC);					//turn pointer into address offset
+					writeObj(dst, PUSH, LC);	writeObj(dst, 8, LC);		//turn index offset into address offset
+					writeObj(dst, MUL, LC);							//by multiplying by 8
 					writeObj(dst, ADD, LC);						//combine base and offset to get call address
+					writeObj(dst, DLOC, LC);					//turn address into MEM index
 					writeObj(dst, JMP, LC);						//goto call address
 
 					//push result address 
 					writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);	//push function pointer
+					writeObj(dst, LOC, LC);						//locate it
 					writeObj(dst, CONT, LC);					//turn pointer into relative address base
-					writeObj(dst, PUSH, LC);	writeObj(dst, 1, LC);		//push function pointer
+					writeObj(dst, PUSH, LC);	writeObj(dst, 8, LC);		//push function pointer
 					writeObj(dst, SUB, LC);						//combine base and offset to get result address
 					writeObj(dst, CONT, LC);
 				} else {
@@ -205,6 +218,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 					//push call string with format: "foo(isf)@libbar.so" for a function that takes an integer, string, and float as parameters
 					writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);	//stored pointer here earlier
+					writeObj(dst, LOC, LC);
 					writeObj(dst, CONT, LC);
 
 					//make call
@@ -590,9 +604,11 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 	
 	if(piece1) {	//is this a compound symbol?
 		writeObj(dst, RPUSH, LC);	writeObj(dst, tableLookup(symbols, piece1)->val - *LC + 1, LC);
-		writeObj(dst, CONT, LC);
-		writeObj(dst, RPUSH, LC);	writeObj(dst, sym->val - *LC + 1, LC);
+		writeObj(dst, CONT, LC);	//resolve pointer
+		writeObj(dst, DLOC, LC);
+		writeObj(dst, PUSH, LC);	writeObj(dst, sym->val, LC);
 		writeObj(dst, ADD, LC);
+		writeObj(dst, LOC, LC);
 	} else {
 		if(!literalFlag) writeObj(dst, RPUSH, LC);
 		writeObj(dst, sym->val - *LC + 1, LC);
