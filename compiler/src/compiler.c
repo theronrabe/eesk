@@ -6,10 +6,6 @@ compiler.c
 	output file using the writeObj function, or oftentimes recurse into compiling a substatement, then advancing to the
 	next state.
 
-	TODO:
-		-Dynamic function calling causes a segfault because it no longer adds two offsets to find the correct address
-		to jump to, it instead adds two absolute addresses.
-
 
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
@@ -271,7 +267,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_doubleQuote):
 				DC[0] = getQuote(tok, src, SC);
 				if(!literalFlag) {
-					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+4, LC);	//push start of string
+					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+5, LC);	//push start of string
+					writeObj(dst, LOC, LC);
 					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+2+DC[0], LC);	//push end of string
 					writeObj(dst, JMP, LC);						//skip over string leaving it on stack
 				}
@@ -500,14 +497,15 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_include):
-				getToken(tok, src, SC);
+				getQuote(tok, src, SC);
+				getQuote(tok, src, SC);			//to accommodate for the beginning "
 				printf("INCLUDING FILE: %s\n", tok);
 				char *inc = loadFile(tok);
 				trimComments(inc);
 				fakeSC = 0;
 				compileStatement(keyWords, symbols, inc, &fakeSC, dst, LC);
 				free(inc);
-				endOfStatement = 1;
+				//endOfStatement = 1;
 				break;
 
 
