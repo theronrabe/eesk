@@ -174,6 +174,13 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				if(verboseFlag) printf("%lx:\tPOP\t%lx = %lx\n", PC, tempAddr, tempVal);
 				++PC;
 				break;
+			case(BPOP):
+				tempVal = stackPop(STACK);
+				tempAddr = stackPop(STACK);
+				*((char *)tempAddr) = (char) tempVal;
+				if(verboseFlag) printf("%lx:\tBPOP\t%lx = %lx\n", PC, tempAddr, tempVal);
+				++PC;
+				break;
 			case(CONT):
 				tempAddr = dloc((long)&MEM[0], stackPop(STACK));
 				stackPush(STACK, MEM[tempAddr]);
@@ -443,7 +450,7 @@ void nativeCall(char *cs, Stack *STACK) {
 
 	//push result to stack
 	if(returnType[0] != 'v') {
-		stackPush(STACK, result);
+		stackPush(STACK, (long)result);
 	}
 
 	//clean up

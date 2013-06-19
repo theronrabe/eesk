@@ -351,6 +351,12 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				break;
 
 
+			case(k_set):
+				fillOperations(dst, LC, operationStack);
+				stackPush(operationStack, BPOP);
+				break;
+
+
 			case(k_eq):
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, EQ);
@@ -498,7 +504,10 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_include):
 				getQuote(tok, src, SC);
-				getQuote(tok, src, SC);			//to accommodate for the beginning "
+				strcpy(tok, "");
+				strcat(tok, "include/");
+				getQuote(&tok[8], src, SC);			//to accommodate for the beginning "include/"
+				strcat(tok, ".ee");
 				printf("INCLUDING FILE: %s\n", tok);
 				char *inc = loadFile(tok);
 				trimComments(inc);
@@ -657,6 +666,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "$", k_cont);
 	tableAddSymbol(ret, "!", k_not);
 	tableAddSymbol(ret, "=", k_is);
+	tableAddSymbol(ret, "set", k_set);
 	tableAddSymbol(ret, "==", k_eq);
 	tableAddSymbol(ret, ">", k_gt);
 	tableAddSymbol(ret, "<", k_lt);

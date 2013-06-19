@@ -1,6 +1,4 @@
 {
-	public Field IO {
-		public define putc	\"putc(c)@libc.so.6:v"\
-		public define puts	\"puts(p)@libc.so.6:v"\
-	}
+	public define putc	\"putchar(c)@libc.so.6:v"\
+	public define puts	\"puts(p)@libc.so.6:v"\
 }

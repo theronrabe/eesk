@@ -1,0 +1,4 @@
+{
+	public define strcpy	\"strcpy(pp)@libc.so.6:p"\
+	public define strcat	\"strcat(pp)@libc.so.6:p"\
+}

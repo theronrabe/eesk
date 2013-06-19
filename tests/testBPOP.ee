@@ -1,0 +1,15 @@
+#This test ensures that Eesk's memory space is byte addressable
+{
+	include "system.IO"
+	include "system.string"
+
+	given i
+
+	public define myString	\"H llo, World!"\
+	given 8 message
+Begin
+	myString+1 set 'e;
+	~strcat[" Does it work?"; myString],
+	~puts[myString];
+End
+}
