@@ -408,7 +408,7 @@ void nativeCall(char *cs, Stack *STACK) {
 
 	//pop parameter values from stack
 	for(i=0;i<argc;i++) {
-		args[i] = stackPop(STACK);
+		args[argc-i-1] = stackPop(STACK);
 		argv[i] = &args[i];
 	}
 

@@ -9,7 +9,7 @@
 	given 8 message
 Begin
 	myString+1 set 'e;
-	~strcat[" Does it work?"; myString],
+	~strcat[myString; " Does this work?"],
 	~puts[myString];
 End
 }
