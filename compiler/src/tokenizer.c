@@ -107,15 +107,26 @@ int getToken(char *token, char *src, int *loc) {
 
 int getQuote(char *tok, char *src, int *SC) {
 	//returns how many 64-bit words the quote consumes
-	int i = 0, words = 0;
+	int i = 0, j = 0, words = 0;
 	while(src[*SC+i] != '\"') {
-		tok[i] = src[*SC+i];
-		++i;
+		if(src[*SC+i] == '\\') {
+			switch(src[*SC+i+1]) {
+				case('n'): tok[j++] = '\n'; break;
+				case('t'): tok[j++] = '\t'; break;
+				case('\\'): tok[j++] = '\\'; break;
+				case('\"'): tok[j++] = '\"'; break;
+			}
+			i += 2;
+		} else {
+			tok[j] = src[*SC+i];
+			++j;
+			++i;
+		}
 	}
-	tok[i++] = '\0';
+	tok[j++] = '\0';
+	++i;
 
 	*SC += i;
-	--i;
-	words = (i%8)?i/8+1:i/8;
+	words = (j%8)?j/8+1:j/8;
 	return words;
 }
