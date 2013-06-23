@@ -28,6 +28,7 @@ int transferAddress;
 char publicFlag;
 char literalFlag;
 char nativeFlag;
+char staticFlag;
 Stack *callStack;
 Stack *nameStack;
 Stack *varyStack;	//stores all the addresses to vary to
@@ -43,6 +44,7 @@ typedef enum {
 	//machine control
 	HALT,
 	JMP,
+	HOP,
 	BRN,
 	BNE,
 	NTV,
@@ -55,6 +57,7 @@ typedef enum {
 	RPUSH,
 	POPTO,
 	POP,
+	BPOP,
 	CONT,
 	CLR,
 
@@ -102,12 +105,12 @@ typedef enum {
 	k_int, k_char, k_pnt, k_float,
 	k_begin, k_halt,
 	k_clr, k_endStatement, k_cont, k_not,
-	k_is,
+	k_is, k_set,
 	k_eq, k_gt, k_lt,
 	k_add, k_sub, k_mul, k_div, k_mod, k_and, k_or,
 	k_fadd, k_fsub, k_fmul, k_fdiv,
 	k_return,
-	k_public, k_private, k_literal, k_collect, k_field,
+	k_public, k_private, k_literal, k_collect, k_field, k_static,
 	k_child,
 	k_alloc, k_new, k_free,
 	k_include,

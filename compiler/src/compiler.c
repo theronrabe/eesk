@@ -107,7 +107,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				nameAddr = *LC;
 				stackPush(nameStack, *LC);
 				tokLen = getToken(tok, src, SC);
-				symbols = tableAddSymbol(symbols, tok, nameAddr);	//change to this scope
+				symbols = tableAddSymbol(symbols, tok, nameAddr, staticFlag);	//change to this scope
 				if(publicFlag) { publicize(symbols); publicFlag = 0; }
 				symbols = tableAddLayer(symbols, tok);
 	
@@ -161,8 +161,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_oBracket):
 				//set aside call address/string for now
-				writeObj(dst, PUSH, LC);		writeObj(dst, *LC+3, LC);	//jump over word of call data
-				writeObj(dst, JMP, LC);
+				writeObj(dst, PUSH, LC);		writeObj(dst, 2, LC);	//jump over word of call data
+				writeObj(dst, HOP, LC);
 					nameAddr = *LC;
 					writeObj(dst, 0, LC);	//storage for call address
 				writeObj(dst, POPTO, LC);	writeObj(dst, nameAddr - *LC + 1, LC);
@@ -213,8 +213,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					compileStatement(keyWords, symbols, src, SC, dst, LC);
 
 					//push call string with format: "foo(isf)@libbar.so" for a function that takes an integer, string, and float as parameters
-					writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);	//stored pointer here earlier
-					writeObj(dst, LOC, LC);
+					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC + 1, LC);	//stored pointer here earlier
+					//writeObj(dst, LOC, LC);
 					writeObj(dst, CONT, LC);
 
 					//make call
@@ -267,9 +267,10 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_doubleQuote):
 				DC[0] = getQuote(tok, src, SC);
 				if(!literalFlag) {
-					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+5, LC);	//push start of string
-					writeObj(dst, LOC, LC);
-					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+2+DC[0], LC);	//push end of string
+					writeObj(dst, RPUSH, LC);	writeObj(dst, 6, LC);	//push start of string
+					//writeObj(dst, LOC, LC);
+					writeObj(dst, RPUSH, LC);	writeObj(dst, 4+DC[0], LC);	//push end of string
+					writeObj(dst, DLOC, LC);
 					writeObj(dst, JMP, LC);						//skip over string leaving it on stack
 				}
 				writeStr(dst, tok, LC);
@@ -296,11 +297,11 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						writeObj(dst, DC[0], LC);
 					tokLen = getToken(tok, src, SC);
 					if(dst) {
-						tempTable = tableAddSymbol(symbols, tok, *LC-DC[0]-1);
+						tempTable = tableAddSymbol(symbols, tok, *LC-DC[0]-1, staticFlag);
 					}
 				} else {
 					//create a symbol and a word
-					tempTable = tableAddSymbol(symbols, tok, *LC);
+					tempTable = tableAddSymbol(symbols, tok, *LC, staticFlag);
 					if(publicFlag) publicize(tempTable);
 					writeObj(dst, 0, LC);
 				}
@@ -454,7 +455,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_collect):
 				//set the scope
 				tokLen = getToken(tok, src, SC);
-				symbols = tableAddSymbol(symbols, tok, *LC);
+				symbols = tableAddSymbol(symbols, tok, *LC, staticFlag);
 				symbols = tableAddLayer(symbols, tok);
 
 				//get its own length:
@@ -473,9 +474,10 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_field):
+				staticFlag = 1;
 				//set the scope
 				tokLen = getToken(tok, src, SC);
-				symbols = tableAddSymbol(symbols, tok, *LC);
+				symbols = tableAddSymbol(symbols, tok, *LC, 1);
 				symbols = tableAddLayer(symbols, tok);
 
 				//compile the body
@@ -483,6 +485,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				//clean up
 				symbols = tableRemoveLayer(symbols);
+				staticFlag = 0;
 				break;
 
 
@@ -515,8 +518,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				compileStatement(keyWords, symbols, inc, &fakeSC, dst, LC);
 				free(inc);
 				//endOfStatement = 1;
-				break;
-
+				break; 
 
 
 			case(k_native):
@@ -529,8 +531,12 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_label):
 				//create a symbol referring to this location
 				tokLen = getToken(tok, src, SC);
-				tempTable = tableAddSymbol(symbols, tok, *LC);
+				tempTable = tableAddSymbol(symbols, tok, *LC, staticFlag);
 				if(publicFlag) publicize(tempTable);
+				break;
+
+
+			case(k_static):
 				break;
 
 
@@ -604,9 +610,12 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 	Table *sym = tableLookup(symbols, piece0);
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
-		tableAddSymbol(symbols, piece0, *LC);
+		tableAddSymbol(symbols, piece0, *LC, staticFlag);
 		sym = tableLookup(symbols, piece0);
+		printf("%x: Unknown symbol: %s:%x, %d.\nContinuing, substituting with location counter...\n", *LC, sym->token, sym->val, sym->staticFlag);
 		if(publicFlag) publicize(sym);
+	} else {
+		//already in symbol table
 	}
 	
 	if(piece1) {	//is this a compound symbol?
@@ -617,8 +626,16 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 		writeObj(dst, ADD, LC);
 		writeObj(dst, LOC, LC);
 	} else {
-		if(!literalFlag) writeObj(dst, RPUSH, LC);
-		writeObj(dst, sym->val - *LC + 1, LC);
+		if(!sym->staticFlag) {
+			if(!literalFlag) writeObj(dst, RPUSH, LC);
+			writeObj(dst, sym->val - *LC + 1, LC);
+			printf("%x: Dynamic symbol encountered: %s:%x %d\n", *LC, sym->token, sym->val, sym->staticFlag);
+		} else {
+			printf("%x: Static symbol encountered: %s:%x %d\n", *LC, sym->token, sym->val, sym->staticFlag);
+			if(!literalFlag) writeObj(dst, PUSH, LC);
+			writeObj(dst, sym->val, LC);
+			writeObj(dst, LOC, LC);
+		}
 	}
 
 	return *LC - oldLC;
@@ -638,61 +655,62 @@ Table *prepareKeywords() {
 	Table *ret = tableCreate();
 
 	//Language keywords
-	tableAddSymbol(ret, "if", k_if);
-	tableAddSymbol(ret, "while", k_while);
-	tableAddSymbol(ret, "Function", k_Function);
-	tableAddSymbol(ret, "[", k_oBracket);
-	tableAddSymbol(ret, "]", k_cBracket);
-	tableAddSymbol(ret, "{", k_oBrace);
-	tableAddSymbol(ret, "}", k_cBrace);
-	tableAddSymbol(ret, "(", k_oParen);
-	tableAddSymbol(ret, ")", k_cParen);
-	tableAddSymbol(ret, "printd", k_prnt);
-	tableAddSymbol(ret, "printf", k_prtf);
-	tableAddSymbol(ret, "printc", k_prtc);
-	tableAddSymbol(ret, "prints", k_prts);
-	tableAddSymbol(ret, "goto", k_goto);
-	tableAddSymbol(ret, "\'", k_singleQuote);
-	tableAddSymbol(ret, "\"", k_doubleQuote);
-	tableAddSymbol(ret, "int", k_int);
-	tableAddSymbol(ret, "char", k_char);
-	tableAddSymbol(ret, "given", k_pnt);
-	tableAddSymbol(ret, "float", k_float);
-	tableAddSymbol(ret, "Begin", k_begin);
-	tableAddSymbol(ret, "End", k_halt);
-	tableAddSymbol(ret, ",", k_clr);
-	tableAddSymbol(ret, ":", k_clr);
-	tableAddSymbol(ret, ";", k_endStatement);
-	tableAddSymbol(ret, "$", k_cont);
-	tableAddSymbol(ret, "!", k_not);
-	tableAddSymbol(ret, "=", k_is);
-	tableAddSymbol(ret, "set", k_set);
-	tableAddSymbol(ret, "==", k_eq);
-	tableAddSymbol(ret, ">", k_gt);
-	tableAddSymbol(ret, "<", k_lt);
-	tableAddSymbol(ret, "+", k_add);
-	tableAddSymbol(ret, "-", k_sub);
-	tableAddSymbol(ret, "*", k_mul);
-	tableAddSymbol(ret, "/", k_div);
-	tableAddSymbol(ret, "%", k_mod);
-	tableAddSymbol(ret, "&", k_and);
-	tableAddSymbol(ret, "|", k_or);
-	tableAddSymbol(ret, "++", k_fadd);
-	tableAddSymbol(ret, "--", k_fsub);
-	tableAddSymbol(ret, "**", k_fmul);
-	tableAddSymbol(ret, "//", k_fdiv);
-	tableAddSymbol(ret, "return", k_return);
-	tableAddSymbol(ret, "public", k_public);
-	tableAddSymbol(ret, "private", k_private);
-	tableAddSymbol(ret, "\\", k_literal);
-	tableAddSymbol(ret, "Collection", k_collect);
-	tableAddSymbol(ret, "Field", k_field);
-	tableAddSymbol(ret, "alloc", k_alloc);
-	tableAddSymbol(ret, "new", k_new);
-	tableAddSymbol(ret, "free", k_free);
-	tableAddSymbol(ret, "include", k_include);
-	tableAddSymbol(ret, "~", k_native);
-	tableAddSymbol(ret, "define", k_label);
+	tableAddSymbol(ret, "if", k_if, 0);
+	tableAddSymbol(ret, "while", k_while, 0);
+	tableAddSymbol(ret, "Function", k_Function, 0);
+	tableAddSymbol(ret, "[", k_oBracket, 0);
+	tableAddSymbol(ret, "]", k_cBracket, 0);
+	tableAddSymbol(ret, "{", k_oBrace, 0);
+	tableAddSymbol(ret, "}", k_cBrace, 0);
+	tableAddSymbol(ret, "(", k_oParen, 0);
+	tableAddSymbol(ret, ")", k_cParen, 0);
+	tableAddSymbol(ret, "printd", k_prnt, 0);
+	tableAddSymbol(ret, "printf", k_prtf, 0);
+	tableAddSymbol(ret, "printc", k_prtc, 0);
+	tableAddSymbol(ret, "prints", k_prts, 0);
+	tableAddSymbol(ret, "goto", k_goto, 0);
+	tableAddSymbol(ret, "\'", k_singleQuote, 0);
+	tableAddSymbol(ret, "\"", k_doubleQuote, 0);
+	tableAddSymbol(ret, "int", k_int, 0);
+	tableAddSymbol(ret, "char", k_char, 0);
+	tableAddSymbol(ret, "given", k_pnt, 0);
+	tableAddSymbol(ret, "float", k_float, 0);
+	tableAddSymbol(ret, "Begin", k_begin, 0);
+	tableAddSymbol(ret, "End", k_halt, 0);
+	tableAddSymbol(ret, ",", k_clr, 0);
+	tableAddSymbol(ret, ":", k_clr, 0);
+	tableAddSymbol(ret, ";", k_endStatement, 0);
+	tableAddSymbol(ret, "$", k_cont, 0);
+	tableAddSymbol(ret, "!", k_not, 0);
+	tableAddSymbol(ret, "=", k_is, 0);
+	tableAddSymbol(ret, "set", k_set, 0);
+	tableAddSymbol(ret, "==", k_eq, 0);
+	tableAddSymbol(ret, ">", k_gt, 0);
+	tableAddSymbol(ret, "<", k_lt, 0);
+	tableAddSymbol(ret, "+", k_add, 0);
+	tableAddSymbol(ret, "-", k_sub, 0);
+	tableAddSymbol(ret, "*", k_mul, 0);
+	tableAddSymbol(ret, "/", k_div, 0);
+	tableAddSymbol(ret, "%", k_mod, 0);
+	tableAddSymbol(ret, "&", k_and, 0);
+	tableAddSymbol(ret, "|", k_or, 0);
+	tableAddSymbol(ret, "++", k_fadd, 0);
+	tableAddSymbol(ret, "--", k_fsub, 0);
+	tableAddSymbol(ret, "**", k_fmul, 0);
+	tableAddSymbol(ret, "//", k_fdiv, 0);
+	tableAddSymbol(ret, "return", k_return, 0);
+	tableAddSymbol(ret, "public", k_public, 0);
+	tableAddSymbol(ret, "private", k_private, 0);
+	tableAddSymbol(ret, "\\", k_literal, 0);
+	tableAddSymbol(ret, "Collection", k_collect, 0);
+	tableAddSymbol(ret, "Field", k_field, 0);
+	tableAddSymbol(ret, "alloc", k_alloc, 0);
+	tableAddSymbol(ret, "new", k_new, 0);
+	tableAddSymbol(ret, "free", k_free, 0);
+	tableAddSymbol(ret, "include", k_include, 0);
+	tableAddSymbol(ret, "~", k_native, 0);
+	tableAddSymbol(ret, "define", k_label, 0);
+	tableAddSymbol(ret, "static", k_static, 0);
 
 	return ret;
 }

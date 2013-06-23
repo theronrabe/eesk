@@ -24,6 +24,7 @@ typedef enum {
 	//machine control
 	HALT,	//0
 	JMP,
+	HOP,
 	BRN,
 	BNE,
 	NTV,
@@ -36,6 +37,7 @@ typedef enum {
 	RPUSH,
 	POPTO,
 	POP,
+	BPOP,
 	CONT,
 	CLR,
 

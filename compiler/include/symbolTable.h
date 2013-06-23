@@ -26,7 +26,7 @@ You should have received a copy of the GNU General Public License
 typedef struct Table {
 	char *token;
 	int val;
-	int publicFlag;
+	char staticFlag;
 	struct Table *left;
 	struct Table *right;
 	struct Table *parent;
@@ -35,7 +35,7 @@ typedef struct Table {
 
 Table *tableCreate();
 void publicize(Table *node);
-Table *tableAddSymbol(Table *T, char *token, int val);
+Table *tableAddSymbol(Table *T, char *token, int val, char staticFlag);
 Table *tableAddLayer(Table *T, char *token);
 Table *tableRemoveLayer(Table *T);
 Table *tableLookup(Table *T, char *token);

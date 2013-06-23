@@ -48,7 +48,7 @@ long *load(char *fn) {
 
 	if(verboseFlag) {
 		for(j=0;j<=i/sizeof(long);j++) {
-			printf("%x:\t%lx\n", j, ret[j]);
+			printf("%lx\t%x:\t%lx\n", (long)&ret[j], j, ret[j]);
 		}
 	}
 
@@ -100,6 +100,10 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				PC = stackPop(STACK);
 				if(verboseFlag) printf("JMP\t%lx, address %lx\n", PC, loc((long)&MEM[0], PC));
 				break;
+			case(HOP):
+				PC += stackPop(STACK);
+				if(verboseFlag) printf("HOP\t%lx, address %lx\n", PC, loc((long)&MEM[0], PC));
+				break;
 			case(BRN):
 				if(stackPop(STACK)) {
 					PC = stackPop(STACK);
@@ -147,7 +151,7 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				break;
 			case(PRNT):
 				tempVal = stackPop(STACK);
-				printf("%lx:\tPRINTS:\t%lx\n", PC, tempVal);
+				printf("PRINTS:\t%lx\n", PC, tempVal);
 				++PC;
 				break;
 
@@ -347,9 +351,7 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 			case(NEW):
 				if(verboseFlag) printf("%lx:\tNEW\n", PC);
 				tempVal = dloc((long)&MEM[0], stackPop(STACK)); //this location contains size to allocate and precedes start of copying
-				printf("tempVal MEM index = %lx\n", tempVal);
 				tempAddr = dloc((long)&MEM[0], malloc(MEM[tempVal]*sizeof(long)));
-				printf("NEW address: %lx\n", tempAddr);
 				for(i=0;i<MEM[tempVal];i++) {
 					MEM[tempAddr+i] = MEM[tempVal+1+i];
 					if(verboseFlag) printf("\tcopying value %lx to index %lx, address %lx\n", MEM[tempVal+1+i], tempAddr+i, (long) &MEM[tempAddr+i]);
@@ -359,7 +361,6 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				break;
 			case(FREE):
 				tempAddr = stackPop(STACK);
-				printf("tempAddr = %lx\n", tempAddr);
 				free((long *)tempAddr);
 				if(verboseFlag) printf("%lx:\tFREE\n", PC);
 				++PC;

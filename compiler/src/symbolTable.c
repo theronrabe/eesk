@@ -21,6 +21,7 @@ This file is part of Eesk.
 */
 #include <symbolTable.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 char layerChar = '0';
 
@@ -33,23 +34,26 @@ Table *tableCreate() {
 	ret->left = NULL;
 	ret->layerRoot = ret;
 	ret->val = 0;
+	ret->staticFlag = 1;
 	return ret;
 }
 
 void publicize(Table *node) {
 	if(node) {
+		//printf("%s staticity: %d\n", node->token, node->staticFlag);
+		//printf("publicizing node %s\n", node->token);
 		char publicToken[128];
 		if(node->parent) {
 			strcpy(publicToken, node->parent->token);
 			strcat(publicToken, ".");
 			strcat(publicToken, node->token);
-			node = tableAddSymbol(node->parent, publicToken, node->val);
+			node = tableAddSymbol(node->parent, publicToken, node->val, node->staticFlag);
 			publicize(node);
 		}
 	}
 }
 
-Table *tableAddSymbol(Table *T, char *token, int address) {
+Table *tableAddSymbol(Table *T, char *token, int address, char sF) {
 	int cmp;
 
 	if(!T->token) {
@@ -64,7 +68,7 @@ Table *tableAddSymbol(Table *T, char *token, int address) {
 		return T;
 	} else if(cmp < 0) {
 		if(T->left) {
-			tableAddSymbol(T->left, token, address);
+			return tableAddSymbol(T->left, token, address, sF);
 		} else {
 			T->left = malloc(sizeof(Table));
 			T->left->token = malloc(sizeof(char)*32);
@@ -74,12 +78,13 @@ Table *tableAddSymbol(Table *T, char *token, int address) {
 			T->left->left = NULL;
 			T->left->right = NULL;
 			T->left->layerRoot = T->layerRoot;
-			//printf("Inserting %s as %d left of %s on layer %s\n", token, address, T->token, T->layerRoot->token);
+			T->left->staticFlag = sF;
+			//printf("Inserting %s as %x left of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->left->staticFlag);
 			return T->left;
 		}
 	} else if(cmp > 0) {
 		if(T->right) {
-			tableAddSymbol(T->right, token, address);
+			return tableAddSymbol(T->right, token, address, sF);
 		} else {
 			T->right = malloc(sizeof(Table));
 			T->right->token = malloc(sizeof(char)*32);
@@ -89,10 +94,12 @@ Table *tableAddSymbol(Table *T, char *token, int address) {
 			T->right->left = NULL;
 			T->right->right = NULL;
 			T->right->layerRoot = T->layerRoot;
-			//printf("Inserting %s as %d right of %s on layer %s\n", token, address, T->token, T->layerRoot->token);
+			T->right->staticFlag = sF;
+			//printf("Inserting %s as %x right of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->right->staticFlag);
 			return T->right;
 		}
 	}
+	return NULL; //this should be unreachable
 }
 
 Table *tableAddLayer(Table *T, char *token) {
