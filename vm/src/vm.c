@@ -151,7 +151,7 @@ void execute(long *MEM, Stack *STACK, CallList *CALLS, long address) {
 				break;
 			case(PRNT):
 				tempVal = stackPop(STACK);
-				printf("PRINTS:\t%lx\n", PC, tempVal);
+				printf("PRINTS:\t%lx\n", tempVal);
 				++PC;
 				break;
 

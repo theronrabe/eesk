@@ -70,12 +70,14 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC);	//clause
 				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC);	//else
 
-				writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr+DC[0]+DC[1]+6, LC);	//else address
+				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+DC[1]+8, LC);	//else address
+				writeObj(dst, DLOC, LC);
 				compileStatement(keyWords, symbols, src, SC, dst, LC);				//compiled condition
 				writeObj(dst, BNE, LC);								//decide
 
 				compileStatement(keyWords, symbols, src, SC, dst, LC);				//compiled statement
-				writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr+DC[0]+DC[1]+6+DC[2], LC);	//push end address
+				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[2]+4, LC);	//push end address
+				writeObj(dst, DLOC, LC);
 				writeObj(dst, JMP, LC);		//jump to end
 
 				compileStatement(keyWords, symbols, src, SC, dst, LC);		//compiled else
@@ -83,6 +85,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_while):
+				printf("compiling while statement:\n");
 				//get beginning address
 				nameAddr = *LC;
 
@@ -91,12 +94,19 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC);	//condition length
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC);	//loop length
 
-				writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr+DC[0]+DC[1]+6, LC);	//end address
+				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+DC[1]+8, LC);	//end address
+				printf("return address = (from %lx) %lx\n", DC[0]+DC[1]+8, DC[0]+DC[1]+8 + *LC - 2);
+				writeObj(dst, DLOC, LC);
+				printf("compiling condition:\n");
 				compileStatement(keyWords, symbols, src, SC, dst, LC);				//compiled condtion
 				writeObj(dst, BNE, LC);								//decide
+				printf("compiling loop:\n");
 				compileStatement(keyWords, symbols, src, SC, dst, LC);				//compiled loop
-				writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);			//begin address
+				printf("iterating:\n");
+				writeObj(dst, RPUSH, LC);	writeObj(dst, -(DC[0]+DC[1]+4), LC);			//begin address
+				writeObj(dst, DLOC, LC);
 				writeObj(dst, JMP, LC);								//iterate
+				printf("ending while statement.\n");
 				break;
 
 
@@ -214,7 +224,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 					//push call string with format: "foo(isf)@libbar.so" for a function that takes an integer, string, and float as parameters
 					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC + 1, LC);	//stored pointer here earlier
-					//writeObj(dst, LOC, LC);
 					writeObj(dst, CONT, LC);
 
 					//make call
@@ -333,6 +342,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				fillOperations(dst, LC, operationStack);
 				publicFlag = 0;
 				nativeFlag = 0;
+				staticFlag = 0;
 				break;
 
 
@@ -474,7 +484,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_field):
-				staticFlag = 1;
 				//set the scope
 				tokLen = getToken(tok, src, SC);
 				symbols = tableAddSymbol(symbols, tok, *LC, 1);
@@ -485,7 +494,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				//clean up
 				symbols = tableRemoveLayer(symbols);
-				staticFlag = 0;
 				break;
 
 
@@ -537,6 +545,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_static):
+				staticFlag = 1;
 				break;
 
 
@@ -574,6 +583,7 @@ void writeObj(FILE *fn, long val, int *LC) {
 	if (fn) {
 		fwrite(&val, sizeof(long), 1, fn);
 		printf("%x:%lx\n", *LC, val);
+		if(val < 0) printf("\t(%lx)\n", *LC + val - 1);
 	}
 	(*LC)++;
 }
@@ -628,16 +638,27 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC) {
 	} else {
 		if(!sym->staticFlag) {
 			if(!literalFlag) writeObj(dst, RPUSH, LC);
+			int temp = sym->val - *LC + 1;
 			writeObj(dst, sym->val - *LC + 1, LC);
-			printf("%x: Dynamic symbol encountered: %s:%x %d\n", *LC, sym->token, sym->val, sym->staticFlag);
 		} else {
-			printf("%x: Static symbol encountered: %s:%x %d\n", *LC, sym->token, sym->val, sym->staticFlag);
-			if(!literalFlag) writeObj(dst, PUSH, LC);
-			writeObj(dst, sym->val, LC);
-			writeObj(dst, LOC, LC);
+			/* with the whole "rpushing the negative LC" to find true address of dynamic address thing,
+			do we really need to keep track of what is/isn't static?
+
+			Also, maybe do something to clean up those literalFlag sections. They aren't right.
+			*/
+			if(sym->parent) {
+				//Add offset to parent address
+				if(!literalFlag) writeObj(dst, PUSH, LC);
+				writeObj(dst, 8*sym->val, LC);
+				writeObj(dst, RPUSH, LC);	writeObj(dst, -*LC + 1, LC);
+				writeObj(dst, ADD, LC);
+			} else {
+				if(!literalFlag) writeObj(dst, PUSH, LC);
+				writeObj(dst, sym->val, LC);
+				writeObj(dst, LOC, LC);
+			}
 		}
 	}
-
 	return *LC - oldLC;
 }
 
@@ -710,7 +731,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "include", k_include, 0);
 	tableAddSymbol(ret, "~", k_native, 0);
 	tableAddSymbol(ret, "define", k_label, 0);
-	tableAddSymbol(ret, "static", k_static, 0);
+	tableAddSymbol(ret, "global", k_static, 0);
 
 	return ret;
 }
