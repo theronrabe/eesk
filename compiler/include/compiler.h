@@ -25,18 +25,14 @@ This file is part of Eesk.
 #include <stdio.h>
 
 int transferAddress;
-char publicFlag;
-char literalFlag;
-char nativeFlag;
-char staticFlag;
 Stack *callStack;
 Stack *nameStack;
 Stack *varyStack;	//stores all the addresses to vary to
 
-int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC);
+int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC, char publicFlag, char literalFlag, char nativeFlag, char staticFlag);
 void writeObj(FILE *fn, long val, int *LC);
 void writeStr(FILE *fn, char *str, int *LC);
-int writeAddressCalculation(FILE *fn, char *token, Table *symbols, int *LC);
+int writeAddressCalculation(FILE *fn, char *token, Table *symbols, int *LC, char publicFlag, char literalFlag, char nativeFlag, char staticFlag);
 Table *prepareKeywords();
 void fillOperations(FILE *dst, int *LC, Stack *operationStack);
 
