@@ -66,14 +66,12 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag);	//clause
 				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag);	//else
 
-				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+DC[1]+8, LC);	//else address
-				writeObj(dst, DLOC, LC);
+				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+DC[1]+6, LC);	//else address
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag);				//compiled condition
 				writeObj(dst, BNE, LC);								//decide
 
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag);				//compiled statement
-				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[2]+4, LC);	//push end address
-				writeObj(dst, DLOC, LC);
+				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[2]+3, LC);	//push end address
 				writeObj(dst, JMP, LC);		//jump to end
 
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag);		//compiled else
@@ -81,7 +79,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_while):
-				printf("compiling while statement:\n");
 				//get beginning address
 				nameAddr = *LC;
 
@@ -90,19 +87,12 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag);	//condition length
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag);	//loop length
 
-				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+DC[1]+8, LC);	//end address
-				printf("return address = (from %lx) %lx\n", DC[0]+DC[1]+8, DC[0]+DC[1]+8 + *LC - 2);
-				writeObj(dst, DLOC, LC);
-				printf("compiling condition:\n");
+				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+DC[1]+6, LC);	//end address
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag);				//compiled condtion
 				writeObj(dst, BNE, LC);								//decide
-				printf("compiling loop:\n");
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag);				//compiled loop
-				printf("iterating:\n");
-				writeObj(dst, RPUSH, LC);	writeObj(dst, -(DC[0]+DC[1]+4), LC);			//begin address
-				writeObj(dst, DLOC, LC);
+				writeObj(dst, RPUSH, LC);	writeObj(dst, -(DC[0]+DC[1]+3), LC);			//begin address
 				writeObj(dst, JMP, LC);								//iterate
-				printf("ending while statement.\n");
 				break;
 
 
@@ -122,14 +112,14 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag);	//param length
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag);	//data length
 				
-				writeObj(dst, DC[0]+DC[1]+1, LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
+				writeObj(dst, (DC[0]+DC[1]+1)*WRDSZ, LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag);		//compiled parameters section
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag);		//compiled data section
 	
 				//fill parameters with arguments
 				for(i=DC[0]-1;i>=0;i--){
 					writeObj(dst, POPTO, LC);				//POPTO each argument
-					writeObj(dst, nameAddr+2+i - *LC, LC);
+					writeObj(dst, nameAddr+2+i-*LC, LC);
 				}
 	
 				//writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr-1, LC);	//push result address
@@ -171,47 +161,47 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				writeObj(dst, HOP, LC);
 					nameAddr = *LC;
 					writeObj(dst, 0, LC);	//storage for call address
-				writeObj(dst, POPTO, LC);	writeObj(dst, nameAddr - *LC + 1, LC);
+				writeObj(dst, POPTO, LC);	writeObj(dst, -1, LC); //writeObj(dst, nameAddr - *LC + 1, LC);
 
 				if(!nativeFlag) {
 					//find length of arguments
 					fakeSC = *SC;
-					DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag);		//compiled argument section
+					DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag);	//compiled argument section
 
 					//push return address of call
-					writeObj(dst, PUSH, LC);	writeObj(dst, *LC+DC[0]+23, LC);			//push return address
+					writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+17, LC);			//push return address
 
 					//push result address for function
-					writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);	//push function pointer
-					writeObj(dst, LOC, LC);						//turn into address
+					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
 					writeObj(dst, CONT, LC);					//turn pointer into relative address base
-					writeObj(dst, PUSH, LC);	writeObj(dst, 8, LC);		//push function pointer
+					writeObj(dst, PUSH, LC);	writeObj(dst, WRDSZ, LC);		//push function pointer
 					writeObj(dst, SUB, LC);						//combine base and offset to get result address
 
 					//compile arguments
 					compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag);
 
 					//make call
-					writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);	//push function pointer
-					writeObj(dst, LOC, LC);						//get actual address
+					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
 					writeObj(dst, CONT, LC);					//turn pointer into relative address base
 				
-					writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);	//push function pointer
-					writeObj(dst, LOC, LC);						//grab real address
+					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
 					writeObj(dst, CONT, LC);
 					//writeObj(dst, LOC, LC);						//locate new pointer
 					writeObj(dst, CONT, LC);					//turn pointer into address offset
+					/*
 					writeObj(dst, PUSH, LC);	writeObj(dst, 8, LC);		//turn index offset into address offset
 					writeObj(dst, MUL, LC);							//by multiplying by 8
+					*/
 					writeObj(dst, ADD, LC);						//combine base and offset to get call address
-					writeObj(dst, DLOC, LC);					//turn address into MEM index
+					//writeObj(dst, DLOC, LC);					//turn address into MEM index
 					writeObj(dst, JMP, LC);						//goto call address
 
+					//return to right here
+
 					//push result address 
-					writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr, LC);	//push function pointer
-					writeObj(dst, LOC, LC);						//locate it
+					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
 					writeObj(dst, CONT, LC);					//turn pointer into relative address base
-					writeObj(dst, PUSH, LC);	writeObj(dst, 8, LC);		//push function pointer
+					writeObj(dst, PUSH, LC);	writeObj(dst, WRDSZ, LC);		//push function pointer
 					writeObj(dst, SUB, LC);						//combine base and offset to get result address
 					writeObj(dst, CONT, LC);
 				} else {
@@ -271,11 +261,11 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_doubleQuote):
 				DC[0] = getQuote(tok, src, SC);
+				printf("Quote length:\t%x\n", DC[0]);
 				if(!literalFlag) {
-					writeObj(dst, RPUSH, LC);	writeObj(dst, 6, LC);	//push start of string
+					writeObj(dst, RPUSH, LC);	writeObj(dst, 5, LC);	//push start of string
 					//writeObj(dst, LOC, LC);
-					writeObj(dst, RPUSH, LC);	writeObj(dst, 4+DC[0], LC);	//push end of string
-					writeObj(dst, DLOC, LC);
+					writeObj(dst, RPUSH, LC);	writeObj(dst, 3+DC[0], LC);	//push end of string
 					writeObj(dst, JMP, LC);						//skip over string leaving it on stack
 				}
 				writeStr(dst, tok, LC);
@@ -521,7 +511,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				fakeSC = 0;
 				compileStatement(keyWords, symbols, inc, &fakeSC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag);
 				free(inc);
-				//endOfStatement = 1;
 				break; 
 
 
@@ -554,9 +543,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						tempFloat = atof(tok);
 						if(!literalFlag) writeObj(dst, PUSH, LC);	//writeObj(dst, tempFloat, LC);
 						if(dst) {
-							//fwrite(&tempFloat, sizeof(long), 1, dst);
 							writeObj(dst, *(long *) &tempFloat, LC);
-							//++(*LC);
 						}
 					} else {
 						if(!literalFlag) writeObj(dst, PUSH, LC);
@@ -579,16 +566,17 @@ void writeObj(FILE *fn, long val, int *LC) {
 	if (fn) {
 		fwrite(&val, sizeof(long), 1, fn);
 		printf("%x:%lx\n", *LC, val);
-		if(val < 0) printf("\t(%lx)\n", *LC + val - 1);
+		if(val < 0) printf("\tValue to write: -%lx (relatively %lx)\n", -val, *LC + val);
 	}
-	(*LC)++;
+	//(*LC) += WRDSZ;
+	++(*LC);
 }
 
 void writeStr(FILE *fn, char *str, int *LC) {
 	//write a string of characters to the output file, padding null characters to align words
-	int len = strlen(str);
-	int words = (len%8)?len/8+1:len/8;
-	int padding = (len%8)?8 - len%8:0;
+	int len = strlen(str) + 1;	//+1 to account for \0
+	int words = (len%WRDSZ)?len/WRDSZ+1:len/WRDSZ;
+	int padding = (len%WRDSZ)?WRDSZ - len%WRDSZ:0;
 	char pad = '\0';
 	int i;
 
@@ -627,13 +615,14 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 	if(piece1) {	//is this a compound symbol?
 		writeObj(dst, RPUSH, LC);	writeObj(dst, tableLookup(symbols, piece1)->val - *LC + 1, LC);
 		writeObj(dst, CONT, LC);	//resolve pointer
-		writeObj(dst, DLOC, LC);
-		writeObj(dst, PUSH, LC);	writeObj(dst, sym->val, LC);
+		//writeObj(dst, DLOC, LC);
+		writeObj(dst, PUSH, LC);	writeObj(dst, sym->val*WRDSZ, LC);
 		writeObj(dst, ADD, LC);
-		writeObj(dst, LOC, LC);
+		//writeObj(dst, LOC, LC);
 	} else {
 		if(!sym->staticFlag) {
-			if(!literalFlag) writeObj(dst, RPUSH, LC); else printf("OOPS!\n");
+			if(!literalFlag) writeObj(dst, RPUSH, LC);
+			printf("pushing symbol %s(%lx)\n", sym->token, sym->val);
 			writeObj(dst, sym->val - *LC + 1, LC);
 		} else {
 			/* with the whole "rpushing the negative LC" to find true address of dynamic address thing,
@@ -643,12 +632,12 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 			*/
 			if(sym->parent) {
 				//Add offset to parent address
-				if(!literalFlag) writeObj(dst, PUSH, LC); else printf("OOPS2!\n");
-				writeObj(dst, 8*sym->val, LC);
-				writeObj(dst, RPUSH, LC);	writeObj(dst, -*LC + 1, LC);
+				if(!literalFlag) writeObj(dst, PUSH, LC);
+				writeObj(dst, WRDSZ*sym->val, LC);
+				writeObj(dst, RPUSH, LC);	writeObj(dst, -*LC + WRDSZ, LC);
 				writeObj(dst, ADD, LC);
 			} else {
-				if(!literalFlag) writeObj(dst, PUSH, LC); else printf("OOPS3!\n");
+				if(!literalFlag) writeObj(dst, PUSH, LC);
 				writeObj(dst, sym->val, LC);
 				writeObj(dst, LOC, LC);
 			}

@@ -15,10 +15,8 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <stdlib.h>
-#include <stdio.h>
-#include "stack.h"
-#include "callList.h"
+#include <stack.h>
+#define WRDSZ 8
 
 typedef enum {
 	//machine control
@@ -33,7 +31,7 @@ typedef enum {
 	PRNT,
 
 	//stack control
-	PUSH,	//8
+	PUSH,	//9
 	RPUSH,
 	POPTO,
 	POP,
@@ -42,7 +40,7 @@ typedef enum {
 	CLR,
 
 	//value manipulation
-	ADD,	//c
+	ADD,	//10
 	SUB,
 	MUL,
 	DIV,
@@ -76,12 +74,8 @@ typedef enum {
 } OPCODE;
 
 long *load(char *fn);
-void execute(long *MEM, Stack *STACK, CallList *CALLS, long address);
+void execute(long *MEM, Stack *STACK, long *address);
 void quit(long *MEM, Stack *STACK, long address);
 void nativeCall(char *cs, Stack *STACK);
 long loc(long start, long offset);
 long dloc(long start, long address);
-
-long PC = 0, SP = 0;
-int LEN = 0;
-int verboseFlag = 0;
