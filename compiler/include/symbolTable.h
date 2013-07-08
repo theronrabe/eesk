@@ -1,5 +1,4 @@
-/*
-symbolTable.h
+/* symbolTable.h
 
 	The data structure used by the compiler to keep track of user-defined symbols and their associated addresses.
 
@@ -27,6 +26,7 @@ typedef struct Table {
 	char *token;
 	int val;
 	char staticFlag;
+	char searchUp;
 	struct Table *left;
 	struct Table *right;
 	struct Table *parent;
@@ -36,7 +36,7 @@ typedef struct Table {
 Table *tableCreate();
 void publicize(Table *node);
 Table *tableAddSymbol(Table *T, char *token, int val, char staticFlag);
-Table *tableAddLayer(Table *T, char *token);
+Table *tableAddLayer(Table *T, char *token, char isObject);
 Table *tableRemoveLayer(Table *T);
 Table *tableLookup(Table *T, char *token);
 

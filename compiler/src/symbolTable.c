@@ -35,6 +35,7 @@ Table *tableCreate() {
 	ret->layerRoot = ret;
 	ret->val = 0;
 	ret->staticFlag = 1;
+	ret->searchUp = 0;
 	return ret;
 }
 
@@ -79,6 +80,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF) {
 			T->left->right = NULL;
 			T->left->layerRoot = T->layerRoot;
 			T->left->staticFlag = sF;
+			T->left->searchUp = T->searchUp;
 			//printf("Inserting %s as %x left of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->left->staticFlag);
 			return T->left;
 		}
@@ -95,6 +97,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF) {
 			T->right->right = NULL;
 			T->right->layerRoot = T->layerRoot;
 			T->right->staticFlag = sF;
+			T->right->searchUp = T->searchUp;
 			//printf("Inserting %s as %x right of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->right->staticFlag);
 			return T->right;
 		}
@@ -102,7 +105,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF) {
 	return NULL; //this should be unreachable
 }
 
-Table *tableAddLayer(Table *T, char *token) {
+Table *tableAddLayer(Table *T, char *token, char isObject) {
 	//Probably gonna have to change the way this works, seeing as adding another layer
 	//doesn't always mean adding another symbol
 	Table *ret = malloc(sizeof(Table));
@@ -112,6 +115,8 @@ Table *tableAddLayer(Table *T, char *token) {
 	ret->right = NULL;
 	ret->left = NULL;
 	ret->layerRoot = ret;
+	ret->searchUp = !isObject;
+	ret->staticFlag = 0;
 
 	strcpy(ret->token, token);
 	//strcpy(ret->token, "this");
@@ -166,7 +171,7 @@ Table *tableLookup(Table *T, char *token) {
 			return tableLookup(T->left, token);
 		} else {
 			//printf("\t\tNO LEFT... searching parent layer of %s for %s\n", T->token, token);
-			if(T->parent) {
+			if(T->parent && T->searchUp) {
 				return tableLookup(T->parent->layerRoot, token);
 			} else {
 				//printf("\tdidn't find %s.\n", token);
@@ -179,7 +184,7 @@ Table *tableLookup(Table *T, char *token) {
 			return tableLookup(T->right, token);
 		} else {
 			//printf("\t\tNO RIGHT... searching parent layer of %s for %s\n", T->token, token);
-			if(T->parent) {
+			if(T->parent && T->searchUp) {
 				return tableLookup(T->parent->layerRoot, token);
 			} else {
 				//printf("\tdidn't find %s.\n", token);

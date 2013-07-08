@@ -1,13 +1,10 @@
 Compiler to-do list:
-	-The only symbols that should be accessable to collections are its own symbols, and those
-	that are specifically declared "global" (which can only be done at program-level).
-
 	-make block-structured calling convention
 
 Virtual Machine to-do list:
 	-Implement new instructions for bit shifting
 	-Seperate stack for activation records. Eesk should be more block-structured.
-	-switch from loc/dloc-ing all the fucking time to always using real addresses
 
 Eesk Environment to-do list:
 	-keep making header files to link the standard C library.
+	-write a manual

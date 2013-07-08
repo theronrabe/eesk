@@ -105,7 +105,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				tokLen = getToken(tok, src, SC);
 				symbols = tableAddSymbol(symbols, tok, nameAddr, staticFlag);	//change to this scope
 				if(publicFlag) { publicize(symbols); publicFlag = 0; }
-				symbols = tableAddLayer(symbols, tok);
+				symbols = tableAddLayer(symbols, tok, 0);
 	
 				//count length of parameters and data sections
 				fakeSC = *SC;
@@ -186,14 +186,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				
 					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
 					writeObj(dst, CONT, LC);
-					//writeObj(dst, LOC, LC);						//locate new pointer
 					writeObj(dst, CONT, LC);					//turn pointer into address offset
-					/*
-					writeObj(dst, PUSH, LC);	writeObj(dst, 8, LC);		//turn index offset into address offset
-					writeObj(dst, MUL, LC);							//by multiplying by 8
-					*/
 					writeObj(dst, ADD, LC);						//combine base and offset to get call address
-					//writeObj(dst, DLOC, LC);					//turn address into MEM index
 					writeObj(dst, JMP, LC);						//goto call address
 
 					//return to right here
@@ -264,7 +258,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				printf("Quote length:\t%x\n", DC[0]);
 				if(!literalFlag) {
 					writeObj(dst, RPUSH, LC);	writeObj(dst, 5, LC);	//push start of string
-					//writeObj(dst, LOC, LC);
 					writeObj(dst, RPUSH, LC);	writeObj(dst, 3+DC[0], LC);	//push end of string
 					writeObj(dst, JMP, LC);						//skip over string leaving it on stack
 				}
@@ -452,7 +445,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				//set the scope
 				tokLen = getToken(tok, src, SC);
 				symbols = tableAddSymbol(symbols, tok, *LC, staticFlag);
-				symbols = tableAddLayer(symbols, tok);
+				symbols = tableAddLayer(symbols, tok, 1);
 
 				//get its own length:
 				fakeSC = *SC;
@@ -473,7 +466,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				//set the scope
 				tokLen = getToken(tok, src, SC);
 				symbols = tableAddSymbol(symbols, tok, *LC, 1);
-				symbols = tableAddLayer(symbols, tok);
+				symbols = tableAddLayer(symbols, tok, 0);
 
 				//compile the body
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag);
@@ -516,7 +509,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_native):
 				nativeFlag = 1;
-				//stackPush(operationStack, NTV);
 				break;
 
 
@@ -541,7 +533,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					//this is a numeric literal
 					if(isFloat(tok)) {
 						tempFloat = atof(tok);
-						if(!literalFlag) writeObj(dst, PUSH, LC);	//writeObj(dst, tempFloat, LC);
+						if(!literalFlag) writeObj(dst, PUSH, LC);
 						if(dst) {
 							writeObj(dst, *(long *) &tempFloat, LC);
 						}
@@ -606,7 +598,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 	if(sym == NULL) {	//does the symbol not exist yet?
 		tableAddSymbol(symbols, piece0, *LC, staticFlag);
 		sym = tableLookup(symbols, piece0);
-		printf("%x: Unknown symbol: %s:%x, %d.\nContinuing, substituting with location counter...\n", *LC, sym->token, sym->val, sym->staticFlag);
+		printf("%x: Implicitly declared symbol: %s:%x, %d.\nContinuing, substituting with location counter...\n", *LC, sym->token, sym->val, sym->staticFlag);
 		if(publicFlag) publicize(sym);
 	} else {
 		//already in symbol table
@@ -615,14 +607,11 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 	if(piece1) {	//is this a compound symbol?
 		writeObj(dst, RPUSH, LC);	writeObj(dst, tableLookup(symbols, piece1)->val - *LC + 1, LC);
 		writeObj(dst, CONT, LC);	//resolve pointer
-		//writeObj(dst, DLOC, LC);
 		writeObj(dst, PUSH, LC);	writeObj(dst, sym->val*WRDSZ, LC);
 		writeObj(dst, ADD, LC);
-		//writeObj(dst, LOC, LC);
 	} else {
 		if(!sym->staticFlag) {
 			if(!literalFlag) writeObj(dst, RPUSH, LC);
-			printf("pushing symbol %s(%lx)\n", sym->token, sym->val);
 			writeObj(dst, sym->val - *LC + 1, LC);
 		} else {
 			/* with the whole "rpushing the negative LC" to find true address of dynamic address thing,
@@ -633,7 +622,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 			if(sym->parent) {
 				//Add offset to parent address
 				if(!literalFlag) writeObj(dst, PUSH, LC);
-				writeObj(dst, WRDSZ*sym->val, LC);
+				writeObj(dst, sym->val, LC);
 				writeObj(dst, RPUSH, LC);	writeObj(dst, -*LC + WRDSZ, LC);
 				writeObj(dst, ADD, LC);
 			} else {
