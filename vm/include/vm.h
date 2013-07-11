@@ -39,6 +39,12 @@ typedef enum {
 	CONT,
 	CLR,
 
+	//activation stack
+	JSR,
+	RSR,
+	APUSH,
+	AGET,
+
 	//value manipulation
 	ADD,	//10
 	SUB,

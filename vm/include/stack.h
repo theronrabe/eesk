@@ -30,10 +30,11 @@ Stack *stackCreate(int size) {
 	Stack *ret = malloc(sizeof(Stack));
 	ret->array = malloc(sizeof(long) * size);
 	ret->sp = 0;
+	ret->array[0] = 0;
 	return ret;
 }
 
-Stack *stackFree(Stack *st) {
+void stackFree(Stack *st) {
 	free(st->array);
 	free(st);
 }
