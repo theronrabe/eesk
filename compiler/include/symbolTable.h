@@ -27,6 +27,7 @@ typedef struct Table {
 	int val;
 	char staticFlag;
 	char searchUp;
+	char parameterFlag;
 	struct Table *left;
 	struct Table *right;
 	struct Table *parent;
@@ -35,7 +36,7 @@ typedef struct Table {
 
 Table *tableCreate();
 void publicize(Table *node);
-Table *tableAddSymbol(Table *T, char *token, int val, char staticFlag);
+Table *tableAddSymbol(Table *T, char *token, int val, char staticFlag, char parameterFlag);
 Table *tableAddLayer(Table *T, char *token, char isObject);
 Table *tableRemoveLayer(Table *T);
 Table *tableLookup(Table *T, char *token);
