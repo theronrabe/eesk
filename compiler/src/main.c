@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
 	trimComments(src);
 	
-	compileStatement(keyWords, symbols, src, &SC, dst, &LC);
+	compileStatement(keyWords, symbols, src, &SC, dst, &LC, 0, 0, 0, 0, 0);
 	writeObj(dst, transferAddress, &LC);
 
 	free(src);
