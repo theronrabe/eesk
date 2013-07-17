@@ -127,6 +127,6 @@ int getQuote(char *tok, char *src, int *SC) {
 	++i;
 
 	*SC += i;
-	words = (j%8)?j/8+1:j/8;
+	words = (j%8)?j/8+1: j/8;
 	return words;
 }
