@@ -36,6 +36,7 @@ Table *tableCreate() {
 	ret->val = 0;
 	ret->staticFlag = 1;
 	ret->searchUp = 0;
+	ret->parameterFlag = 0;
 	return ret;
 }
 
@@ -48,13 +49,13 @@ void publicize(Table *node) {
 			strcpy(publicToken, node->parent->token);
 			strcat(publicToken, ".");
 			strcat(publicToken, node->token);
-			node = tableAddSymbol(node->parent, publicToken, node->val, node->staticFlag);
+			node = tableAddSymbol(node->parent, publicToken, node->val, node->staticFlag, 0);
 			publicize(node);
 		}
 	}
 }
 
-Table *tableAddSymbol(Table *T, char *token, int address, char sF) {
+Table *tableAddSymbol(Table *T, char *token, int address, char sF, char pF) {
 	int cmp;
 
 	if(!T->token) {
@@ -69,7 +70,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF) {
 		return T;
 	} else if(cmp < 0) {
 		if(T->left) {
-			return tableAddSymbol(T->left, token, address, sF);
+			return tableAddSymbol(T->left, token, address, sF, pF);
 		} else {
 			T->left = malloc(sizeof(Table));
 			T->left->token = malloc(sizeof(char)*32);
@@ -81,12 +82,13 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF) {
 			T->left->layerRoot = T->layerRoot;
 			T->left->staticFlag = sF;
 			T->left->searchUp = T->searchUp;
+			T->left->parameterFlag = pF;
 			//printf("Inserting %s as %x left of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->left->staticFlag);
 			return T->left;
 		}
 	} else if(cmp > 0) {
 		if(T->right) {
-			return tableAddSymbol(T->right, token, address, sF);
+			return tableAddSymbol(T->right, token, address, sF, pF);
 		} else {
 			T->right = malloc(sizeof(Table));
 			T->right->token = malloc(sizeof(char)*32);
@@ -98,6 +100,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF) {
 			T->right->layerRoot = T->layerRoot;
 			T->right->staticFlag = sF;
 			T->right->searchUp = T->searchUp;
+			T->right->parameterFlag = pF;
 			//printf("Inserting %s as %x right of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->right->staticFlag);
 			return T->right;
 		}
@@ -117,9 +120,10 @@ Table *tableAddLayer(Table *T, char *token, char isObject) {
 	ret->layerRoot = ret;
 	ret->searchUp = !isObject;
 	ret->staticFlag = 0;
+	ret->parameterFlag = 0;
 
-	strcpy(ret->token, token);
-	//strcpy(ret->token, "this");
+	//strcpy(ret->token, token);
+	strcpy(ret->token, "this");
 	//ret->address = address;
 	//printf("\nNew Layer %s under %s\n", token, T->token);
 

@@ -1,9 +1,7 @@
 Compiler to-do list:
-	-make block-structured calling convention
 
 Virtual Machine to-do list:
 	-Implement new instructions for bit shifting
-	-Seperate stack for activation records. Eesk should be more block-structured.
 
 Eesk Environment to-do list:
 	-keep making header files to link the standard C library.

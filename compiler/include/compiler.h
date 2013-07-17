@@ -24,15 +24,17 @@ This file is part of Eesk.
 #include <fileIO.h>
 #include <stdio.h>
 
+#define WRDSZ 8
+
 int transferAddress;
 Stack *callStack;
 Stack *nameStack;
-Stack *varyStack;	//stores all the addresses to vary to
+//Stack *varyStack;	//stores all the addresses to vary to
 
-int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC, char publicFlag, char literalFlag, char nativeFlag, char staticFlag);
+int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC, char publicFlag, char literalFlag, char nativeFlag, char staticFlag, char parameterFlag);
 void writeObj(FILE *fn, long val, int *LC);
 void writeStr(FILE *fn, char *str, int *LC);
-int writeAddressCalculation(FILE *fn, char *token, Table *symbols, int *LC, char publicFlag, char literalFlag, char nativeFlag, char staticFlag);
+int writeAddressCalculation(FILE *fn, char *token, Table *symbols, int *LC, char publicFlag, char literalFlag, char nativeFlag, char staticFlag, char parameterFlag);
 Table *prepareKeywords();
 void fillOperations(FILE *dst, int *LC, Stack *operationStack);
 
@@ -56,6 +58,12 @@ typedef enum {
 	BPOP,
 	CONT,
 	CLR,
+
+	//activation stack
+	JSR,
+	RSR,
+	APUSH,
+	AGET,
 
 	//value manipulation
 	ADD,	//10
@@ -112,6 +120,7 @@ typedef enum {
 	k_include,
 	k_native,
 	k_label,
+	k_argument
 } OPCODE;
 
 #endif

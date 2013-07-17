@@ -53,7 +53,7 @@ long *load(char *fn) {
 	long offset = ret[i/WRDSZ - 1];
 	//PC = (long *)(((long) &ret[0]) + offset);
 	PC = ret + offset;
-	printf("PC = %lx + %lx = %lx\n", ret, offset, PC);
+	if(verboseFlag) printf("PC = %lx + %lx = %lx\n", ret, offset, PC);
 
 	if(verboseFlag) {
 		for(j=0;j<=i/sizeof(long);j++) {
@@ -70,14 +70,14 @@ void main(int argc, char **argv) {
 	Stack *STACK = stackCreate(128);
 	long *MEM = load(argv[1]);
 
-	printf("________________________________________________________________________________\n\n");
+	if(verboseFlag) printf("________________________________________________________________________________\n\n");
 	execute(MEM, STACK, PC);
 	
 	stackFree(STACK);
 }
 
 void quit(long *MEM, Stack *STACK, long PC) {
-	printf("Machine halts on address %lx\n\n", PC);
+	//printf("Machine halts on address %lx\n\n", PC);
 	
 	int i;
 	for(i=STACK->sp-1; i>=0; i--) {
@@ -91,6 +91,7 @@ void quit(long *MEM, Stack *STACK, long PC) {
 void execute(long *MEM, Stack *STACK, long *address) {
 	Stack *activationStack = stackCreate(128);
 	Stack *counterStack = stackCreate(128);
+	stackPush(counterStack, 0);
 	long tempVal;
 	long *tempAddr;
 	int i;
@@ -212,35 +213,37 @@ void execute(long *MEM, Stack *STACK, long *address) {
 
 			//Activation Stack
 			case(JSR):
-				counterStack->sp++;
-				counterStack->array[counterStack->sp] = 0;
+				stackPush(counterStack, activationStack->sp);
 				tempAddr = stackPop(STACK);
-				if(verboseFlag) printf("%p:\tJSR\t%p\n", PC, tempAddr);
+				if(verboseFlag) printf("%p:\tJSR\t%p, counter = %d\n", PC, tempAddr, activationStack->sp);
 				PC = tempAddr;
 				break;
 			case(RSR):
-				activationStack->sp -= stackPop(counterStack);
+				tempVal = stackPop(STACK);
 				tempAddr = stackPop(STACK);
-				if(verboseFlag) printf("%p:\tRSR\t%p\n", PC, tempAddr);
+				stackPush(STACK, tempVal);
+				activationStack->sp = stackPop(counterStack)-1;
+				if(verboseFlag) printf("%p:\tRSR\t to %p with %lx\n", PC, tempAddr, tempVal);
 				PC = tempAddr;
 				break;
 			case(APUSH):
-				counterStack->array[counterStack->sp]++;
-				stackPush(activationStack, *(PC+1));
-				if(verboseFlag) printf("%p:\tAPUSH\t%lx\n", PC, *(PC+1));
-				PC += 2;
+				tempVal = stackPop(STACK);
+				stackPush(activationStack, tempVal);
+				if(verboseFlag) printf("%p:\tAPUSH\t%d = %lx\n", PC, activationStack->sp-1, tempVal);
+				++PC;
 				break;
 			case(AGET):
-				tempVal = activationStack->array[activationStack->sp - counterStack->array[counterStack->sp-1] + *(PC+1)];
-				stackPush(STACK, tempVal);
-				if(verboseFlag) printf("%p:\tAGET\t%lx\n", PC, tempVal);
+				i = counterStack->array[counterStack->sp - 2] + (*(PC+1));
+				tempAddr = &(activationStack->array[i]);
+				stackPush(STACK, tempAddr);
+				if(verboseFlag) printf("%p:\tAGET %lx:%lx\n", PC, *(PC+1), *tempAddr);
 				PC += 2;
 				break;
 
 			//Data Manipulation
 			case(ADD):
 				stackPush(STACK, stackPop(STACK) + stackPop(STACK));
-				if(verboseFlag) printf("%p:\tADD\n", PC);
+				if(verboseFlag) printf("%p:\tADD\t%lx\n", PC, STACK->array[STACK->sp-1]);
 				++PC;
 				break;
 			case(SUB):
