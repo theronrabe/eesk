@@ -698,7 +698,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "Begin", k_begin, 0, 0);
 	tableAddSymbol(ret, "End", k_halt, 0, 0);
 	tableAddSymbol(ret, ",", k_argument, 0, 0);
-	tableAddSymbol(ret, ":", k_clr, 0, 0);
+	tableAddSymbol(ret, "^", k_clr, 0, 0);
 	tableAddSymbol(ret, ";", k_endStatement, 0, 0);
 	tableAddSymbol(ret, "$", k_cont, 0, 0);
 	tableAddSymbol(ret, "!", k_not, 0, 0);

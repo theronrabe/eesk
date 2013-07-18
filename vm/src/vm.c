@@ -138,14 +138,14 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				i=0;
 				tempAddr = stackPop(STACK);
 				do {
-					//string[i] = (char) *((char *)loc((long)&MEM[0], tempAddr)+i);
-					//string[i] = *((char *) (tempAddr + i));
 					string[i] = *( ((char *) tempAddr) + i);
 					++i;
 				} while(string[i-1]);
-
-				nativeCall(string, STACK);
 				if(verboseFlag) printf("%lp\tNTV:\t%s\n", PC, string);
+
+				stackPush(counterStack, activationStack->sp);
+				stackPush(STACK, nativeCall(string, activationStack));
+				activationStack->sp = stackPop(counterStack)-1;
 				++PC;
 				break;
 			case(LOC):
@@ -415,7 +415,7 @@ void execute(long *MEM, Stack *STACK, long *address) {
 	}
 }
 
-void nativeCall(char *cs, Stack *STACK) {
+long nativeCall(char *cs, Stack *STACK) {
 	char *functionName, *parameters, *libName, *returnType;
 	int i;
 	void *result = -1;
@@ -452,7 +452,7 @@ void nativeCall(char *cs, Stack *STACK) {
 
 	//pop parameter values from stack
 	for(i=0;i<argc;i++) {
-		args[argc-i-1] = stackPop(STACK);
+		args[i] = STACK->array[STACK->sp-i-1];//stackPop(STACK);
 		argv[i] = &args[i];
 	}
 
@@ -493,15 +493,18 @@ void nativeCall(char *cs, Stack *STACK) {
 	}
 
 	//push result to stack
+	/*
 	if(returnType[0] != 'v') {
 		stackPush(STACK, (long)result);
 	}
+	*/
 
 	//clean up
 	free(types);
 	free(argv);
 	free(args);
 	dlclose(handle);
+	return (returnType[0] != 'v')?(long) result:0;
 }
 
 long loc(long start, long offset) {
