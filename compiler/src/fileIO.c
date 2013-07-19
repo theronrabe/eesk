@@ -29,6 +29,10 @@ char *loadFile(char *fn) {
 	int i=0;
 
 	fp = fopen(fn, "rt");
+	if(!fp) {
+		printf("Error: File not found.\n");
+		exit(1);
+	}
 	fseek(fp, 0, SEEK_END);
 	i = ftell(fp);
 	rewind(fp);
