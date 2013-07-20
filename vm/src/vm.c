@@ -164,7 +164,7 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				break;
 			case(PRNT):
 				tempVal = stackPop(STACK);
-				printf("PRINTS:\t%lx\n", tempVal);
+				printf("PRINTD:\t%lx\n", tempVal);
 				++PC;
 				break;
 
@@ -222,8 +222,10 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				tempVal = stackPop(STACK);
 				tempAddr = stackPop(STACK);
 				stackPush(STACK, tempVal);
-				activationStack->sp = stackPop(counterStack)-1;
-				if(verboseFlag) printf("%p:\tRSR\t to %p with %lx\n", PC, tempAddr, tempVal);
+				stackPop(counterStack);
+				activationStack->sp = counterStack->array[counterStack->sp-1];
+				//if(activationStack->sp < 0) activationStack->sp = 0;
+				if(verboseFlag) printf("%p:\tRSR\t to %p with %lx, counter=%d\n", PC, tempAddr, tempVal, activationStack->sp);
 				PC = tempAddr;
 				break;
 			case(APUSH):
@@ -236,7 +238,7 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				i = counterStack->array[counterStack->sp - 2] + (*(PC+1));
 				tempAddr = &(activationStack->array[i]);
 				stackPush(STACK, tempAddr);
-				if(verboseFlag) printf("%p:\tAGET %lx:%lx\n", PC, *(PC+1), *tempAddr);
+				if(verboseFlag) printf("%p:\tAGET\t%lx + %lx:%lx\n", PC, i, *(PC+1), *tempAddr);
 				PC += 2;
 				break;
 
