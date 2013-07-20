@@ -48,6 +48,10 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	while(!endOfStatement && tokLen != -1) {
 		tokLen = getToken(tok, src, SC);
 //printf("token:\t%s\n", tok);
+		if(!tok[0]) {
+			printf("Error: Expected } symbol.\n");
+			//exit(0);
+		}
 		tempTable = tableLookup(keyWords, tok);
 		if(tempTable) {
 			tokVal = tempTable->val;
@@ -269,7 +273,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_doubleQuote):
 				DC[0] = getQuote(tok, src, SC);
-				printf("Quote length:\t%x\n", DC[0]);
 				if(!literalFlag) {
 					writeObj(dst, RPUSH, LC);	writeObj(dst, 5, LC);	//push start of string
 					writeObj(dst, RPUSH, LC);	writeObj(dst, 3+DC[0], LC);	//push end of string
@@ -575,8 +578,8 @@ void writeObj(FILE *fn, long val, int *LC) {
 	//writes a word into the output file
 	if (fn) {
 		fwrite(&val, sizeof(long), 1, fn);
-		printf("%x:%lx\n", *LC, val);
-		if(val < 0) printf("\tValue to write: -%lx (relatively %lx)\n", -val, *LC + val);
+		//printf("%x:%lx\n", *LC, val);
+		//if(val < 0) printf("\tValue to write: -%lx (relatively %lx)\n", -val, *LC + val);
 	}
 	//(*LC) += WRDSZ;
 	++(*LC);
@@ -608,8 +611,8 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 	//this function figures out what address a non-keyword token should correlate to
 	//and writes that address to the output file
 	int oldLC = *LC;
-	char *piece0 = strtok(token, "@");
-	char *piece1 = strtok(NULL, "@");
+	char *piece0 = strtok(token, ":");
+	char *piece1 = strtok(NULL, ":");
 
 	Table *sym = tableLookup(symbols, piece0);
 	
@@ -630,7 +633,6 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 	} else {
 		if(!sym->staticFlag) {
 			if(sym->parameterFlag) {
-				printf("AGETting %s, %x\n", sym->token, sym->val);
 				writeObj(dst, AGET, LC);
 				writeObj(dst, sym->val, LC);
 			} else {
