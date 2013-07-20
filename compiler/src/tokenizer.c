@@ -59,7 +59,7 @@ int symbolic(char c) {
 }
 
 int alphabetic(char c) {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '.') || (c == ':');
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '.');
 }
 
 int numeric(char c) {

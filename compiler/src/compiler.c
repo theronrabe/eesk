@@ -547,6 +547,21 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				break;
 
 
+			case(k_redir):
+				writeObj(dst, CONT, LC);
+				tokLen = getToken(tok, src, SC);
+				tempTable = tableLookup(symbols, tok);
+				if(!tempTable) {
+					printf("Warning: Couldn't find offset symbol: %s. Assuming value zero.\n");
+					DC[0] = 0;
+				} else {
+					DC[0] = tempTable->val;
+				}
+				writeObj(dst, PUSH, LC);	writeObj(dst, DC[0]*WRDSZ, LC);
+				writeObj(dst, ADD, LC);
+				break;
+
+
 			default:
 				//this is either an intended symbol or a number
 
@@ -611,53 +626,37 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 	//this function figures out what address a non-keyword token should correlate to
 	//and writes that address to the output file
 	int oldLC = *LC;
-	char *piece0 = strtok(token, ":");
-	char *piece1 = strtok(NULL, ":");
 
-	Table *sym = tableLookup(symbols, piece0);
+	Table *sym = tableLookup(symbols, token);
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
-		tableAddSymbol(symbols, piece0, *LC, staticFlag, parameterFlag);
-		sym = tableLookup(symbols, piece0);
+		tableAddSymbol(symbols, token, *LC, staticFlag, parameterFlag);
+		sym = tableLookup(symbols, token);
 		printf("%x: Implicitly declared symbol: %s:%x, %d.\nContinuing, substituting with location counter...\n", *LC, sym->token, sym->val, sym->staticFlag);
 		if(publicFlag) publicize(sym);
-	} else {
-		//already in symbol table
 	}
 	
-	if(piece1) {	//is this a compound symbol?
-		writeObj(dst, RPUSH, LC);	writeObj(dst, tableLookup(symbols, piece1)->val - *LC + 1, LC);
-		writeObj(dst, CONT, LC);	//resolve pointer
-		writeObj(dst, PUSH, LC);	writeObj(dst, sym->val*WRDSZ, LC);
-		writeObj(dst, ADD, LC);
-	} else {
-		if(!sym->staticFlag) {
-			if(sym->parameterFlag) {
-				writeObj(dst, AGET, LC);
-				writeObj(dst, sym->val, LC);
-			} else {
-				if(!literalFlag) {
-					writeObj(dst, RPUSH, LC);
-				}
-				writeObj(dst, sym->val - *LC + 1, LC);
-			}
+	if(!sym->staticFlag) {
+		if(sym->parameterFlag) {
+			writeObj(dst, AGET, LC);
+			writeObj(dst, sym->val, LC);
 		} else {
-			/* with the whole "rpushing the negative LC" to find true address of dynamic address thing,
-			do we really need to keep track of what is/isn't static?
-
-			Also, maybe do something to clean up those literalFlag sections. They aren't right.
-			*/
-			if(sym->parent) {
-				//Add offset to parent address
-				if(!literalFlag) writeObj(dst, PUSH, LC);
-				writeObj(dst, sym->val, LC);
-				writeObj(dst, RPUSH, LC);	writeObj(dst, -*LC + WRDSZ, LC);
-				writeObj(dst, ADD, LC);
-			} else {
-				if(!literalFlag) writeObj(dst, PUSH, LC);
-				writeObj(dst, sym->val, LC);
-				writeObj(dst, LOC, LC);
+			if(!literalFlag) {
+				writeObj(dst, RPUSH, LC);
 			}
+			writeObj(dst, sym->val - *LC + 1, LC);
+		}
+	} else {
+		if(sym->parent) {
+			//Add offset to parent address
+			if(!literalFlag) writeObj(dst, PUSH, LC);
+			writeObj(dst, sym->val, LC);
+			writeObj(dst, RPUSH, LC);	writeObj(dst, -*LC + WRDSZ, LC);
+			writeObj(dst, ADD, LC);
+		} else {
+			if(!literalFlag) writeObj(dst, PUSH, LC);
+			writeObj(dst, sym->val, LC);
+			writeObj(dst, LOC, LC);
 		}
 	}
 	return *LC - oldLC;
@@ -733,6 +732,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "~", k_native, 0, 0);
 	tableAddSymbol(ret, "define", k_label, 0, 0);
 	tableAddSymbol(ret, "global", k_static, 0, 0);
+	tableAddSymbol(ret, "->", k_redir, 0, 0);
 
 	return ret;
 }
