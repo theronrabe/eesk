@@ -80,7 +80,7 @@ int getToken(char *token, char *src, int *loc) {
 		token[i++] = src[*loc+ws];
 	
 		if(alphabetic(src[*loc+ws])) {
-			while(alphabetic(src[*loc+ws+i])) {
+			while(alphabetic(src[*loc+ws+i]) || numeric(src[*loc+ws+i])) {
 				token[i] = src[*loc+ws+i];
 				++i;
 			}
