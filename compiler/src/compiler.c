@@ -101,42 +101,32 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_Function):
-				//writeObj(dst, 0, LC);						//result location
-	
 				//in a new namespace
-				nameAddr = *LC;
+				nameAddr = *LC+3;
 				stackPush(nameStack, *LC);
 				tokLen = getToken(tok, src, SC);
 				symbols = tableAddSymbol(symbols, tok, nameAddr, staticFlag, parameterFlag);	//change to this scope
 				if(publicFlag) { publicize(symbols); publicFlag = 0; }
 				symbols = tableAddLayer(symbols, tok, 0);
 	
-				//count length of parameters and data sections
+				//count length of parameters, data, and statement sections
 				fakeSC = *SC;
 				fakeLC = 0;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, 1);	//param length
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);	//data length
+				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);	//statement length
 				
+				writeObj(dst, PUSH, LC);	writeObj(dst, DC[0]+DC[1]+DC[2]+4, LC);
+				writeObj(dst, HOP, LC);		//Hop over the definition
+
 				writeObj(dst, (DC[0]+DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
 				writeObj(dst, DC[0], LC);
 				fakeLC = 0;
 				compileStatement(keyWords, symbols, src, SC, dst, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, 1);		//compiled parameters section
-				//printf("%d + %d = %d\n", *LC, fakeLC, 
 				*LC += fakeLC;
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);		//compiled data section
 	
-				//fill parameters with arguments
-				/*
-				for(i=DC[0]-1;i>=0;i--){
-					writeObj(dst, POPTO, LC);				//POPTO each argument
-					writeObj(dst, nameAddr+2+i-*LC, LC);
-				}
-				*/
-	
-				//writeObj(dst, PUSH, LC);	writeObj(dst, nameAddr-1, LC);	//push result address
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);		//compiled statement section
-				//writeObj(dst, POP, LC);						//store result
-				//writeObj(dst, JMP, LC);						//goto return address
 				writeObj(dst, RSR, LC);
 	
 				//no longer in this namespace
@@ -189,12 +179,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 					//make call
 					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
-					//writeObj(dst, CONT, LC);					//turn pointer into relative address base
-				
-					//writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
-					//writeObj(dst, CONT, LC);
-					//writeObj(dst, CONT, LC);					//turn pointer into address offset
-					//writeObj(dst, ADD, LC);						//combine base and offset to get call address
 					writeObj(dst, JSR, LC);
 
 					//return to right here
@@ -449,18 +433,23 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_collect):
 				//set the scope
 				tokLen = getToken(tok, src, SC);
-				symbols = tableAddSymbol(symbols, tok, *LC, staticFlag, parameterFlag);
+				symbols = tableAddSymbol(symbols, tok, *LC+3, staticFlag, parameterFlag);	//add 3 accommodating for hop over definition
 				symbols = tableAddLayer(symbols, tok, 1);
 
 				//get its own length:
 				fakeSC = *SC;
+				fakeLC = 0;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);
-				*LC += fakeLC; //accommodate for change in location
+
+				//hop over the definition
+				writeObj(dst, PUSH, LC);	writeObj(dst, DC[0] + 2, LC);
+				writeObj(dst, HOP, LC);
 
 				//write its length, and its body (addressed relative to right here)
 				writeObj(dst, DC[0], LC);
 				fakeLC = 0;
 				compileStatement(keyWords, symbols, src, SC, dst, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);
+				*LC += fakeLC; //accommodate for change in location
 				
 				//clean up
 				symbols = tableRemoveLayer(symbols);
@@ -472,6 +461,15 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				tokLen = getToken(tok, src, SC);
 				symbols = tableAddSymbol(symbols, tok, *LC, 1, parameterFlag);
 				symbols = tableAddLayer(symbols, tok, 0);
+
+				//get its own length:
+				fakeSC = *SC;
+				fakeLC = 0;
+				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);
+
+				//hop over the definition
+				writeObj(dst, PUSH, LC);	writeObj(dst, DC[0] + 1, LC);
+				writeObj(dst, HOP, LC);
 
 				//compile the body
 				compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);
@@ -577,7 +575,7 @@ void writeObj(FILE *fn, long val, int *LC) {
 	//writes a word into the output file
 	if (fn) {
 		fwrite(&val, sizeof(long), 1, fn);
-		//printf("%x:%lx\n", *LC, val);
+		printf("%x:%lx\n", *LC, val);
 		//if(val < 0) printf("\tValue to write: -%lx (relatively %lx)\n", -val, *LC + val);
 	}
 	//(*LC) += WRDSZ;
