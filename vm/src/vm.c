@@ -179,6 +179,11 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				if(verboseFlag) printf("%p:\tRPUSH:\t%lx to make address %p\n", PC, *(PC+1), PC + *(PC+1));
 				PC += 2;
 				break;
+			case(GRAB):
+				stackPush(STACK, PC + 1);
+				if(verboseFlag) printf("%p:\tGRAB:\t%lx\n", PC, *(PC+1));
+				PC += 2;
+				break;
 			case(POPTO):
 				//MEM[PC+MEM[PC+1]] = stackPop(STACK);
 				*(PC+*(PC+1)) = stackPop(STACK);
@@ -215,6 +220,13 @@ void execute(long *MEM, Stack *STACK, long *address) {
 			case(JSR):
 				stackPush(counterStack, activationStack->sp);
 				tempAddr = stackPop(STACK);
+
+				tempVal = *(((long *)(*tempAddr))+1) - (counterStack->array[counterStack->sp-1] - counterStack->array[counterStack->sp-2]);
+				activationStack->sp += tempVal;
+				counterStack->array[counterStack->sp-1] += tempVal;	//account for stack memory that wasn't passed as arguments
+
+				tempAddr = (long *)*tempAddr + *(long *)(*tempAddr);	//combine contents with offset
+				
 				if(verboseFlag) printf("%p:\tJSR\t%p, counter = %d\n", PC, tempAddr, activationStack->sp);
 				PC = tempAddr;
 				break;
@@ -224,7 +236,6 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				stackPush(STACK, tempVal);
 				stackPop(counterStack);
 				activationStack->sp = counterStack->array[counterStack->sp-1];
-				//if(activationStack->sp < 0) activationStack->sp = 0;
 				if(verboseFlag) printf("%p:\tRSR\t to %p with %lx, counter=%d\n", PC, tempAddr, tempVal, activationStack->sp);
 				PC = tempAddr;
 				break;
@@ -238,7 +249,7 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				i = counterStack->array[counterStack->sp - 2] + (*(PC+1));
 				tempAddr = &(activationStack->array[i]);
 				stackPush(STACK, tempAddr);
-				if(verboseFlag) printf("%p:\tAGET\t%lx + %lx:%lx\n", PC, i, *(PC+1), *tempAddr);
+				if(verboseFlag) printf("%p:\tAGET\t%lx,  %lx:%lx\n", PC, *(PC+1), i, *tempAddr);
 				PC += 2;
 				break;
 

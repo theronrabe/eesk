@@ -117,7 +117,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, 1);	//param length
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);	//data length
 				
-				writeObj(dst, (DC[0]+DC[1]+1)*WRDSZ, LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
+				writeObj(dst, (DC[0]+DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
+				writeObj(dst, DC[0], LC);
 				fakeLC = 0;
 				compileStatement(keyWords, symbols, src, SC, dst, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, 1);		//compiled parameters section
 				//printf("%d + %d = %d\n", *LC, fakeLC, 
@@ -181,40 +182,23 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);
 
 					//push return address of call
-					writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+11, LC);			//push return address
-
-					//push result address for function
-					/*
-					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
-					writeObj(dst, CONT, LC);					//turn pointer into relative address base
-					writeObj(dst, PUSH, LC);	writeObj(dst, WRDSZ, LC);		//push function pointer
-					writeObj(dst, SUB, LC);						//combine base and offset to get result address
-					*/
+					writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+5, LC);			//push return address
 
 					//compile arguments
 					compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);
 
 					//make call
 					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
-					writeObj(dst, CONT, LC);					//turn pointer into relative address base
+					//writeObj(dst, CONT, LC);					//turn pointer into relative address base
 				
-					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
-					writeObj(dst, CONT, LC);
-					writeObj(dst, CONT, LC);					//turn pointer into address offset
-					writeObj(dst, ADD, LC);						//combine base and offset to get call address
-					//writeObj(dst, JMP, LC);						//goto call address
+					//writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
+					//writeObj(dst, CONT, LC);
+					//writeObj(dst, CONT, LC);					//turn pointer into address offset
+					//writeObj(dst, ADD, LC);						//combine base and offset to get call address
 					writeObj(dst, JSR, LC);
 
 					//return to right here
 
-					//push result address 
-					/*
-					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
-					writeObj(dst, CONT, LC);					//turn pointer into relative address base
-					writeObj(dst, PUSH, LC);	writeObj(dst, WRDSZ, LC);		//push function pointer
-					writeObj(dst, SUB, LC);						//combine base and offset to get result address
-					writeObj(dst, CONT, LC);
-					*/
 				} else {
 					//compiled argument section
 					compileStatement(keyWords, symbols, src, SC, dst, LC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);
@@ -552,7 +536,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				tokLen = getToken(tok, src, SC);
 				tempTable = tableLookup(symbols, tok);
 				if(!tempTable) {
-					printf("Warning: Couldn't find offset symbol: %s. Assuming value zero.\n");
+					printf("Warning: Couldn't find offset symbol: %s. Assuming value zero.\n", tok);
 					DC[0] = 0;
 				} else {
 					DC[0] = tempTable->val;
@@ -630,10 +614,12 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 	Table *sym = tableLookup(symbols, token);
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
-		tableAddSymbol(symbols, token, *LC, staticFlag, parameterFlag);
+		tableAddSymbol(symbols, token, *LC+1, staticFlag, parameterFlag);
 		sym = tableLookup(symbols, token);
 		printf("%x: Implicitly declared symbol: %s:%x, %d.\nContinuing, substituting with location counter...\n", *LC, sym->token, sym->val, sym->staticFlag);
 		if(publicFlag) publicize(sym);
+		writeObj(dst, GRAB, LC);	writeObj(dst, 0, LC);
+		return *LC - oldLC;
 	}
 	
 	if(!sym->staticFlag) {
