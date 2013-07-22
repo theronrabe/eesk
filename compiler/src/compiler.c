@@ -575,8 +575,8 @@ void writeObj(FILE *fn, long val, int *LC) {
 	//writes a word into the output file
 	if (fn) {
 		fwrite(&val, sizeof(long), 1, fn);
-		printf("%x:%lx\n", *LC, val);
-		//if(val < 0) printf("\tValue to write: -%lx (relatively %lx)\n", -val, *LC + val);
+		//printf("%x:%lx\n", *LC, val);
+		//if(val < 0) printf("\tValue to write: -%lx (relatively %lx)\n", -val, *LC + val - 1);
 	}
 	//(*LC) += WRDSZ;
 	++(*LC);
@@ -612,9 +612,9 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 	Table *sym = tableLookup(symbols, token);
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
-		tableAddSymbol(symbols, token, *LC+1, staticFlag, parameterFlag);
+		if(dst) tableAddSymbol(symbols, token, *LC+1, staticFlag, parameterFlag);
 		sym = tableLookup(symbols, token);
-		printf("%x: Implicitly declared symbol: %s:%x, %d.\nContinuing, substituting with location counter...\n", *LC, sym->token, sym->val, sym->staticFlag);
+		if(dst) printf("%x: Implicitly declared symbol: %s:%x, %d\n", *LC, sym->token, sym->val, sym->staticFlag);
 		if(publicFlag) publicize(sym);
 		writeObj(dst, GRAB, LC);	writeObj(dst, 0, LC);
 		return *LC - oldLC;
