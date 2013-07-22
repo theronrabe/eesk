@@ -438,7 +438,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				//get its own length:
 				fakeSC = *SC;
-				fakeLC = 0;
+				fakeLC = 1;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);
 
 				//hop over the definition
@@ -447,9 +447,9 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				//write its length, and its body (addressed relative to right here)
 				writeObj(dst, DC[0], LC);
-				fakeLC = 0;
+				fakeLC = 1;
 				compileStatement(keyWords, symbols, src, SC, dst, &fakeLC, publicFlag, literalFlag, nativeFlag, staticFlag, parameterFlag);
-				*LC += fakeLC; //accommodate for change in location
+				*LC += fakeLC - 1; //accommodate for change in location
 				
 				//clean up
 				symbols = tableRemoveLayer(symbols);
@@ -501,7 +501,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				strcat(tok, "include/");
 				getQuote(&tok[8], src, SC);			//to accommodate for the beginning "include/"
 				strcat(tok, ".ee");
-				printf("INCLUDING FILE: %s\n", tok);
+				printf("Including file: %s\n", tok);
 				char *inc = loadFile(tok);
 				trimComments(inc);
 				fakeSC = 0;

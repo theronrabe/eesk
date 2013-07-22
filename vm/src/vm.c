@@ -129,6 +129,7 @@ void execute(long *MEM, Stack *STACK, long *address) {
 					PC = (long *) stackPop(STACK);
 					if(verboseFlag) printf("BNE\t%lp\n", PC);
 				} else {
+					if(verboseFlag) printf("%lp\tNOT BNE\n", PC);
 					stackPop(STACK);
 					++PC;
 				}
@@ -407,10 +408,10 @@ void execute(long *MEM, Stack *STACK, long *address) {
 			case(NEW):
 				if(verboseFlag) printf("%p:\tNEW\n", PC);
 				tempVal = stackPop(STACK); //this location contains size to allocate and precedes start of copying
-				tempAddr = malloc(*((long *)tempVal)*sizeof(long));
-				for(i=0;i<*((long *)tempVal);i++) {
-					*(tempAddr+i) = *((long*)tempVal+1+i);
-					if(verboseFlag) printf("\tcopying value %lx to address %p\n", *((long*)tempVal+1+i), tempAddr+i);
+				tempAddr = malloc((*((long *)tempVal)+1)*sizeof(long));
+				for(i=0;i<=*((long *)tempVal);i++) {
+					*(tempAddr+i) = *((long*)tempVal+i);
+					if(verboseFlag) printf("\tcopying value %lx to address %p\n", *((long*)tempVal+i), tempAddr+i);
 				}
 				stackPush(STACK, tempAddr);
 				++PC;
