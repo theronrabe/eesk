@@ -534,8 +534,12 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				tokLen = getToken(tok, src, SC);
 				tempTable = tableLookup(symbols, tok, &fakeLC);
 				if(!tempTable) {
-					printf("Warning: Couldn't find offset symbol: %s. Assuming value zero.\n", tok);
-					DC[0] = 0;
+					if(numeric(tok[0])) {
+						DC[0] = atoi(tok);
+					} else {
+						printf("Implicitly declared offset: %s.\n", tok);
+						DC[0] = 0;
+					}
 				} else {
 					DC[0] = tempTable->val;
 				}
