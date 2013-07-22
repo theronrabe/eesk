@@ -1,0 +1,42 @@
+#This program maintains a list-based stack
+{
+	public Collection listStack {
+		private Collection node {
+			public given value;
+			public given value2;
+			public given prev;
+		}
+		private given tail;
+
+		public Function push {given X; given Y; given next} {} {
+			next = new node;
+			next->node.value = X$;
+			next->node.value2 = Y$;
+			next->node.prev = tail$;
+			tail = next$;
+			return X$;
+		}
+
+		public Function pop {} {given ret; given temp} {
+			ret = tail->node.value$;
+			printd tail->node.value2$;
+			temp = tail->node.prev$;
+			free tail$;
+			tail = temp$;
+			return ret$;
+		}
+	}
+
+	given myStack;
+Begin
+	myStack = new listStack;
+	
+	myStack->listStack.push[7, 1]^;
+	myStack->listStack.push[8, 2]^;
+	myStack->listStack.push[9, 3]^;
+	myStack->listStack.pop[];
+	myStack->listStack.pop[];
+	myStack->listStack.pop[];
+	free myStack$;
+End
+}

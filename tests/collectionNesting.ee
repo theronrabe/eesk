@@ -1,0 +1,41 @@
+#This program nests some collections
+{
+	public Collection inside {
+		public given value;
+		public given value2;
+	}
+
+	Collection outside {
+		public given myInside;
+		
+		public Function init {} {} {
+			myInside = new inside;
+			return 0;
+		}
+
+		public Function alter {} {} {
+			myInside->inside.value = -17;
+			return 0;
+		}
+
+		public Function destroy {} {} {
+			free myInside$;
+			return 0;
+		}
+	}
+	
+	given myOutside;
+Begin
+	myOutside = new outside;
+	myOutside->outside.init[]^;
+	
+	myOutside->outside.myInside->inside.value = 100;
+	myOutside->outside.myInside->inside.value2 = 14;
+
+	myOutside->outside.alter[]^;
+	myOutside->outside.myInside->inside.value$;	#Leave altered value on stack
+
+	myOutside->outside.destroy[]^;
+	free myOutside$;
+End
+}

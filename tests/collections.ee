@@ -1,0 +1,26 @@
+#This program tests dynamic memory allocation
+{
+	given myData;
+	Collection data {
+		public given a;
+		public given b;
+
+		public Function test {} {} {
+			return a$ + b$;
+		}
+		public Function setA {given i} {} {
+			a = i$;
+			return a$;
+		}
+	}
+
+Begin
+	myData = new data;
+
+	myData->data.setA[5]^;
+	myData->data.b = 3;
+	myData->data.test[];
+
+	free myData$;
+End
+}
