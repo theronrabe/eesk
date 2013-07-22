@@ -52,7 +52,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			printf("Error: Expected } symbol.\n");
 			//exit(0);
 		}
-		tempTable = tableLookup(keyWords, tok);
+		tempTable = tableLookup(keyWords, tok, &fakeLC);
 		if(tempTable) {
 			tokVal = tempTable->val;
 		} else {
@@ -532,7 +532,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_redir):
 				writeObj(dst, CONT, LC);
 				tokLen = getToken(tok, src, SC);
-				tempTable = tableLookup(symbols, tok);
+				tempTable = tableLookup(symbols, tok, &fakeLC);
 				if(!tempTable) {
 					printf("Warning: Couldn't find offset symbol: %s. Assuming value zero.\n", tok);
 					DC[0] = 0;
@@ -609,37 +609,40 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, cha
 	//and writes that address to the output file
 	int oldLC = *LC;
 
-	Table *sym = tableLookup(symbols, token);
+	int fakeLC = 0;
+	Table *sym = tableLookup(symbols, token, &fakeLC);
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
 		if(dst) tableAddSymbol(symbols, token, *LC+1, staticFlag, parameterFlag);
-		sym = tableLookup(symbols, token);
+		sym = tableLookup(symbols, token, &fakeLC);
 		if(dst) printf("%x: Implicitly declared symbol: %s:%x, %d\n", *LC, sym->token, sym->val, sym->staticFlag);
 		if(publicFlag) publicize(sym);
 		writeObj(dst, GRAB, LC);	writeObj(dst, 0, LC);
 		return *LC - oldLC;
 	}
+
+	int value = sym->val + fakeLC;
 	
 	if(!sym->staticFlag) {
 		if(sym->parameterFlag) {
 			writeObj(dst, AGET, LC);
-			writeObj(dst, sym->val, LC);
+			writeObj(dst, value, LC);
 		} else {
 			if(!literalFlag) {
 				writeObj(dst, RPUSH, LC);
 			}
-			writeObj(dst, sym->val - *LC + 1, LC);
+			writeObj(dst, value - *LC + 1, LC);
 		}
 	} else {
 		if(sym->parent) {
 			//Add offset to parent address
 			if(!literalFlag) writeObj(dst, PUSH, LC);
-			writeObj(dst, sym->val, LC);
+			writeObj(dst, value, LC);
 			writeObj(dst, RPUSH, LC);	writeObj(dst, -*LC + WRDSZ, LC);
 			writeObj(dst, ADD, LC);
 		} else {
 			if(!literalFlag) writeObj(dst, PUSH, LC);
-			writeObj(dst, sym->val, LC);
+			writeObj(dst, value, LC);
 			writeObj(dst, LOC, LC);
 		}
 	}

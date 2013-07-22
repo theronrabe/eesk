@@ -150,9 +150,8 @@ Table *tableRemoveLayer(Table *T) {
 	return ret->layerRoot;
 }
 
-Table *tableLookup(Table *T, char *token) {
+Table *tableLookup(Table *T, char *token, int *accOff) {
 	if(!T) {
-		//return -1;
 		//printf("\tdidn't find %s.\n", token);
 		return NULL;
 	}
@@ -166,17 +165,20 @@ Table *tableLookup(Table *T, char *token) {
 	}
 
 	if(!cmp) {
-		//return T->val;
 		//printf("\tfound %s in layer %s.\n", token, T->layerRoot->token);
 		return T;
 	} else if(cmp < 0) {
 		if(T->left) {
 			//printf("\t\tsearching left of %s for %s\n", T->token, token);
-			return tableLookup(T->left, token);
+			return tableLookup(T->left, token, accOff);
 		} else {
 			//printf("\t\tNO LEFT... searching parent layer of %s for %s\n", T->token, token);
-			if(T->parent && T->searchUp) {
-				return tableLookup(T->parent->layerRoot, token);
+			if(T->parent) {
+				if(!T->searchUp) {
+					//build accumulated offset
+					*accOff += T->parent->val;
+				}
+				return tableLookup(T->parent->layerRoot, token, accOff);
 			} else {
 				//printf("\tdidn't find %s.\n", token);
 				return NULL;
@@ -185,11 +187,15 @@ Table *tableLookup(Table *T, char *token) {
 	} else if(cmp > 0) {
 		if(T->right) {
 			//printf("\t\tsearching right of %s for %s\n", T->token, token);
-			return tableLookup(T->right, token);
+			return tableLookup(T->right, token, accOff);
 		} else {
 			//printf("\t\tNO RIGHT... searching parent layer of %s for %s\n", T->token, token);
-			if(T->parent && T->searchUp) {
-				return tableLookup(T->parent->layerRoot, token);
+			if(T->parent) {
+				if(!T->searchUp) {
+					//build accumulated offset
+					*accOff += T->parent->val;
+				}
+				return tableLookup(T->parent->layerRoot, token, accOff);
 			} else {
 				//printf("\tdidn't find %s.\n", token);
 				return NULL;
