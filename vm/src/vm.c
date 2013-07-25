@@ -36,6 +36,7 @@ long *PC = 0;
 long SP = 0;
 long LEN = 0;
 char verboseFlag = 0;
+Stack *libStack;
 
 long *load(char *fn) {
 	FILE *fp;
@@ -68,6 +69,7 @@ void main(int argc, char **argv) {
 	if(argc>2) verboseFlag = 1;
 
 	Stack *STACK = stackCreate(128);
+	libStack = stackCreate(32);
 	long *MEM = load(argv[1]);
 
 	if(verboseFlag) printf("________________________________________________________________________________\n\n");
@@ -84,6 +86,11 @@ void quit(long *MEM, Stack *STACK, long PC) {
 		printf("| %4lx |\n", STACK->array[i]);
 	}
 		printf("|______|\n");
+	
+	//Unload libStack
+	for(i=0;i<libStack->sp;i++) {
+		dlclose(libStack->array[i]);
+	}
 	
 	exit(0);
 }
@@ -422,7 +429,10 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				break;
 			case(LOAD):
 				tempAddr = stackPop(STACK);
-				stackPush(STACK, dlopen((char *)tempAddr, RTLD_LAZY));
+				tempVal = dlopen((char *)tempAddr, RTLD_LAZY);
+				stackPush(STACK, tempVal);
+				stackPush(libStack, tempVal);
+
 				tempVal = dlerror();
 				if(tempVal) {
 					printf("Error opening shared library: %s\n", (char *)tempVal);
@@ -491,13 +501,13 @@ long nativeCall(long *call, void *handle, Stack *STACK) {
 					*(call+3+i) = &ffi_type_sint64;
 					break;
 				case('f'):
-					//types[i] = &ffi_type_double;
+					*(call+3+i) = &ffi_type_double;
 					break;
 				case('p'):
-					//types[i] = &ffi_type_pointer;
+					*(call+3+i) = &ffi_type_pointer;
 					break;
 				default:
-					//printf("Unknown argument type:\t%p: %x\n",*(char *)(&types[i]));
+					printf("Unknown argument type:\t%p: %x\n",(char) *(call+3+i));
 					exit(1);
 					break;
 			}
