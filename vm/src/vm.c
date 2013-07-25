@@ -137,15 +137,13 @@ void execute(long *MEM, Stack *STACK, long *address) {
 			case(NTV):
 				//call string of format: "foo(pif)@bar.so:v" takes parameters pointer, integer, float, and returns void on stack
 				i=0;
+				tempVal = stackPop(STACK);
 				tempAddr = stackPop(STACK);
-				do {
-					string[i] = *( ((char *) tempAddr) + i);
-					++i;
-				} while(string[i-1]);
-				if(verboseFlag) printf("%lp\tNTV:\t%s\n", PC, string);
+				
+				if(verboseFlag) printf("%lp\tNTV:\t\n", PC);
 
 				stackPush(counterStack, activationStack->sp);
-				stackPush(STACK, nativeCall(string, activationStack));
+				stackPush(STACK, nativeCall(tempAddr, (void *) tempVal, activationStack));
 				activationStack->sp = stackPop(counterStack)-1;
 				++PC;
 				break;
@@ -408,10 +406,10 @@ void execute(long *MEM, Stack *STACK, long *address) {
 			case(NEW):
 				if(verboseFlag) printf("%p:\tNEW\n", PC);
 				tempVal = stackPop(STACK); //this location contains size to allocate and precedes start of copying
-				tempAddr = malloc((*((long *)tempVal)+1)*sizeof(long));
+				tempAddr = malloc((*((long *)tempVal))*sizeof(long));
 				for(i=0;i<=*((long *)tempVal);i++) {
 					*(tempAddr+i) = *((long*)tempVal+i);
-					if(verboseFlag) printf("\tcopying value %lx to address %p\n", *((long*)tempVal+i), tempAddr+i);
+					if(verboseFlag) printf("\tcopying value %lx to address %p\n", *((long*)tempVal+1+i), tempAddr+i);
 				}
 				stackPush(STACK, tempAddr);
 				++PC;
@@ -422,6 +420,17 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				if(verboseFlag) printf("%p:\tFREE\n", PC);
 				++PC;
 				break;
+			case(LOAD):
+				tempAddr = stackPop(STACK);
+				stackPush(STACK, dlopen((char *)tempAddr, RTLD_LAZY));
+				tempVal = dlerror();
+				if(tempVal) {
+					printf("Error opening shared library: %s\n", (char *)tempVal);
+					quit(MEM, STACK, PC);
+				}
+				if(verboseFlag) printf("%p:\tLOAD\t%s\n", PC, (char *)tempAddr);
+				++PC;
+				break;
 			default:
 				printf("Unknown opcode: %p\n at %lx", *PC, PC);
 				exit(1);
@@ -429,96 +438,95 @@ void execute(long *MEM, Stack *STACK, long *address) {
 	}
 }
 
-long nativeCall(char *cs, Stack *STACK) {
-	char *functionName, *parameters, *libName, *returnType;
+long nativeCall(long *call, void *handle, Stack *STACK) {
+	void (*function)();
 	int i;
-	void *result = -1;
-	ffi_type *ret;
-
-	//format reminder: "foo(sid)@bar.so:f"
-	functionName = strtok(cs, "()@:");
-	parameters = strtok(NULL, "()@:");
-	libName = strtok(NULL, "()@:");
-	returnType = strtok(NULL, "()@:");
-
-
-	//find parameter count and types
-	int argc = strlen(parameters);
-	ffi_type **types = malloc(sizeof(ffi_type*) * argc);
-	void **argv = malloc(sizeof(void*) * argc);
-	void **args = malloc(sizeof(void*) * argc);
-	for(i=0;i<argc;i++) {
-		switch(parameters[i]) {
-			case('i'):
-				types[i] = &ffi_type_sint64;
-				break;
-			case('f'):
-				types[i] = &ffi_type_double;
-				break;
-			case('p'):
-				types[i] = &ffi_type_pointer;
-				break;
-			case('c'):
-				types[i] = &ffi_type_uchar;
-				break;
-		}
-	}
+	void *result = 0;
+	char returnChar = (char) *(call+1);
+	int argc = *(call+2);
+	char *functionName = (char *) (call+3+argc);
+	long **argv = malloc(argc*WRDSZ);
+	ffi_cif cif;
 
 	//pop parameter values from stack
 	for(i=0;i<argc;i++) {
-		args[i] = STACK->array[STACK->sp-i-1];//stackPop(STACK);
-		argv[i] = &args[i];
+		argv[i] = &STACK->array[STACK->sp-i-1];
+		//printf("... grabbing argument:\t%p: %lx\n", argv[i], *argv[i]);
 	}
 
-	//resolve return type
-	switch(returnType[0]) {
-		case('i'):
-			ret = &ffi_type_sint64;
-			break;
-		case('f'):
-			ret = &ffi_type_double;
-			break;
-		case('p'):
-			ret = &ffi_type_pointer;
-			break;
-		case('c'):
-			ret = &ffi_type_uchar;
-			break;
-		case('v'):
-			ret = &ffi_type_void;
-			break;
-	}
 
 	//make call
-	void *handle = dlopen(libName, RTLD_LAZY);
-	if(!handle) printf("Error opening shared library: %s\n", dlerror());
-	void (*function)() = dlsym(handle, functionName);
-	printf(dlerror());
+	if(!*call) {
+		if(verboseFlag) printf("Resolving native function %s\n", functionName);
+		function = dlsym(handle, functionName);
+		printf(dlerror());
+		*call = function;
 
-	ffi_cif cif;
-	if(ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argc, ret, types) == FFI_OK) {
-		if(returnType[0] != 'v') {
-			ffi_call(&cif, function, &result, argv);
-		} else {
-			ffi_call(&cif, function, NULL, argv);
+		//resolve return type
+		switch(returnChar) {
+			case('d'):
+				*(call+1) = &ffi_type_sint64;
+				break;
+			case('f'):
+				*(call+1) = &ffi_type_double;
+				break;
+			case('p'):
+				*(call+1) = &ffi_type_pointer;
+				break;
+			case('v'):
+				*(call+1) = &ffi_type_void;
+				break;
+			default:
+				printf("Unknown return type:\t%x\n", returnChar);
+				exit(1);
+				break;
+		}
+		//if(verboseFlag) printf("Function return type:\t%c: %p\n", returnChar, *(call+1));
+
+		//resolve parameter types
+		for(i=0;i<argc;i++) {
+			//if(verboseFlag) printf("Argument type:\t%p: %c\n", call+3+i, *(char *)(call+3+i));
+			switch(*(char *)(call+3+i)) {
+				case('d'):
+					*(call+3+i) = &ffi_type_sint64;
+					break;
+				case('f'):
+					//types[i] = &ffi_type_double;
+					break;
+				case('p'):
+					//types[i] = &ffi_type_pointer;
+					break;
+				default:
+					//printf("Unknown argument type:\t%p: %x\n",*(char *)(&types[i]));
+					exit(1);
+					break;
+			}
+			//if(verboseFlag) printf("Argument type pointer:\t%p:%p\n", call+3+i, *(call+3+i));
 		}
 	} else {
+		if(verboseFlag) printf("Calling native function %s\n", functionName);
+		function = *call;
+	}
+	printf(dlerror());
+
+	if(ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argc, *(call+1), (call+3)) == FFI_OK) {
+			if(returnChar == 'v') {
+				ffi_call(&cif, function, NULL, argv);
+			} else {
+				ffi_call(&cif, function, &result, argv);
+			}
+	} else {
 		printf("Failure in CIF preparation.\n");
+		exit(1);
+		return NULL;
 	}
 
-	//push result to stack
-	/*
-	if(returnType[0] != 'v') {
-		stackPush(STACK, (long)result);
-	}
-	*/
-
-	//clean up
-	free(types);
+	//Clean up
 	free(argv);
-	free(args);
-	dlclose(handle);
-	return (returnType[0] != 'v')?(long) result:0;
+
+	//Return
+	if(verboseFlag) printf("Returning with:\t%p: %lx\n", &result, result);
+	return (long) result;
 }
 
 long loc(long start, long offset) {

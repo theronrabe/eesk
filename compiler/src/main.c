@@ -27,14 +27,22 @@ int main(int argc, char **argv) {
 	FILE *dst = fopen("e.out", "w");
 	Table *keyWords = prepareKeywords();
 	Table *symbols = tableCreate();
-	int SC = 0, LC = 0;
+	Context context;
+	int SC = 0, LC = 0, lineCount = 1;
 	
 	callStack = stackCreate(32);
 	nameStack = stackCreate(32);
 
 	trimComments(src);
+
+	context.publicFlag = 0;
+	context.literalFlag = 0;
+	context.nativeFlag = 0;
+	context.staticFlag = 0;
+	context.parameterFlag = 0;
+	context.instructionFlag = 0;
 	
-	compileStatement(keyWords, symbols, src, &SC, dst, &LC, 0, 0, 0, 0, 0);
+	compileStatement(keyWords, symbols, src, &SC, dst, &LC, &context, &lineCount);
 	writeObj(dst, transferAddress, &LC);
 
 	free(src);

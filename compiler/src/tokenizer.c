@@ -66,7 +66,7 @@ int numeric(char c) {
 	return (c >= '0' && c <= '9') || (c == '.');
 }
 
-int getToken(char *token, char *src, int *loc) {
+int getToken(char *token, char *src, int *loc, int *lineCount) {
 	//places src's next token (starting at location loc) into token, then returns it's final location.
 
 	int i=0;
@@ -74,7 +74,10 @@ int getToken(char *token, char *src, int *loc) {
 	
 	if(*loc < (signed) strlen(src)) {
 		//trim whitespace
-		while(src[*loc+ws]==' '||src[*loc+ws]=='\t'||src[*loc+ws]=='\n') ++ws;
+		while(src[*loc+ws]==' '||src[*loc+ws]=='\t'||src[*loc+ws]=='\n'||src[*loc+ws]=='@') {
+			if(src[*loc+ws] == '\n') ++*lineCount;
+			++ws;
+		}
 		
 		//Get token
 		token[i++] = src[*loc+ws];

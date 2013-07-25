@@ -31,10 +31,19 @@ Stack *callStack;
 Stack *nameStack;
 //Stack *varyStack;	//stores all the addresses to vary to
 
-int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC, char publicFlag, char literalFlag, char nativeFlag, char staticFlag, char parameterFlag);
+typedef struct Context {
+	char publicFlag;
+	char literalFlag;
+	char nativeFlag;
+	char staticFlag;
+	char parameterFlag;
+	char instructionFlag;
+} Context;
+
+int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC, Context *con, int *lineCounter);
 void writeObj(FILE *fn, long val, int *LC);
 void writeStr(FILE *fn, char *str, int *LC);
-int writeAddressCalculation(FILE *fn, char *token, Table *symbols, int *LC, char publicFlag, char literalFlag, char nativeFlag, char staticFlag, char parameterFlag);
+int writeAddressCalculation(FILE *fn, char *token, Table *symbols, int *LC, Context *context, int *lineCounter);
 Table *prepareKeywords();
 void fillOperations(FILE *dst, int *LC, Stack *operationStack);
 
@@ -53,6 +62,7 @@ typedef enum {
 	//stack control
 	PUSH,	//6
 	RPUSH,
+	GRAB,
 	POPTO,
 	POP,
 	BPOP,
@@ -97,6 +107,7 @@ typedef enum {
 	ALOC,	//30
 	NEW,
 	FREE,
+	LOAD,
 
 	//language keywords
 	k_if, k_while,
@@ -120,7 +131,9 @@ typedef enum {
 	k_include,
 	k_native,
 	k_label,
-	k_argument
+	k_argument,
+	k_redir,
+	k_load, k_nativeFunction
 } OPCODE;
 
 #endif
