@@ -1,13 +1,13 @@
 SHELL = /bin/sh
 CC    = gcc
  
-FLAGS        = -std=gnu99 -Iinclude
+FLAGS        = -std=gnu99 -Iinclude 
 CFLAGS       = -pedantic -Wall -Wextra -march=native -ggdb3
 DEBUGFLAGS   = -O0 -D _DEBUG
 RELEASEFLAGS = -O2 -D NDEBUG -combine -fwhole-program
 POSTFLAGS    = -ldl -lffi
  
-TARGET  = eesk
+TARGET  = ../eesk
 SOURCES = $(shell echo src/*.c)
 COMMON  = 
 HEADERS = $(shell echo include/*.h)

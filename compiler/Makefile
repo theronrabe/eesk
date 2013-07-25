@@ -5,8 +5,9 @@ FLAGS        = -std=gnu99 -Iinclude
 CFLAGS       = -pedantic -Wall -Wextra -march=native -ggdb3
 DEBUGFLAGS   = -O0 -D _DEBUG
 RELEASEFLAGS = -O2 -D NDEBUG -combine -fwhole-program
+LATEFLAGS    = -ldl
  
-TARGET  = ee
+TARGET  = ../ee
 SOURCES = $(shell echo src/*.c)
 COMMON  = include/definitions.h include/debug.h
 HEADERS = $(shell echo include/*.h)
@@ -19,7 +20,7 @@ BINDIR = $(PREFIX)/bin
 all: $(TARGET)
  
 $(TARGET): $(OBJECTS) $(COMMON)
-	$(CC) $(FLAGS) $(CFLAGS) $(DEBUGFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CC) $(FLAGS) $(CFLAGS) $(DEBUGFLAGS) -o $(TARGET) $(OBJECTS) $(LATEFLAGS)
 
 release: $(SOURCES) $(HEADERS) $(COMMON)
 	$(CC) $(FLAGS) $(CFLAGS) $(RELEASEFLAGS) -o $(TARGET) $(SOURCES)
