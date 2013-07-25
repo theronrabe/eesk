@@ -74,7 +74,7 @@ int getToken(char *token, char *src, int *loc, int *lineCount) {
 	
 	if(*loc < (signed) strlen(src)) {
 		//trim whitespace
-		while(src[*loc+ws]==' '||src[*loc+ws]=='\t'||src[*loc+ws]=='\n'||src[*loc+ws]=='@') {
+		while(src[*loc+ws]==' '||src[*loc+ws]=='\t'||src[*loc+ws]=='\n') {
 			if(src[*loc+ws] == '\n') ++*lineCount;
 			++ws;
 		}

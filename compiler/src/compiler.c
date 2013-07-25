@@ -786,7 +786,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "new", k_new, 0, 0);
 	tableAddSymbol(ret, "free", k_free, 0, 0);
 	tableAddSymbol(ret, "include", k_include, 0, 0);
-	tableAddSymbol(ret, "~", k_native, 0, 0);
+	tableAddSymbol(ret, "@", k_native, 0, 0);
 	tableAddSymbol(ret, "define", k_label, 0, 0);
 	tableAddSymbol(ret, "global", k_static, 0, 0);
 	tableAddSymbol(ret, "->", k_redir, 0, 0);
