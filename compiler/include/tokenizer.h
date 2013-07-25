@@ -29,6 +29,6 @@ int symbolic(char c);
 int alphabetic(char c);
 int getQuote(char *tok, char *src, int *SC);
 int numeric(char c);
-int getToken(char *token, char *src, int *loc);
+int getToken(char *token, char *src, int *loc, int *lineCount);
 
 #endif
