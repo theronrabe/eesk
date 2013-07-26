@@ -693,23 +693,15 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, Con
 
 	int value = sym->val + fakeLC;
 	
-	if(!sym->staticFlag) {
-		if(sym->parameterFlag) {
-			writeObj(dst, AGET, LC);
-			writeObj(dst, value, LC);
-		} else {
+	if(sym->parameterFlag) {
+		writeObj(dst, AGET, LC);
+		writeObj(dst, value, LC);
+	} else {
+		if(!sym->staticFlag) {
 			if(!context->literalFlag) {
 				writeObj(dst, RPUSH, LC);
 			}
 			writeObj(dst, value - *LC + 1, LC);
-		}
-	} else {
-		if(sym->parent) {
-			//Add offset to parent address
-			if(!context->literalFlag) writeObj(dst, PUSH, LC);
-			writeObj(dst, value, LC);
-			writeObj(dst, RPUSH, LC);	writeObj(dst, -*LC + WRDSZ, LC);
-			writeObj(dst, ADD, LC);
 		} else {
 			if(!context->literalFlag) writeObj(dst, PUSH, LC);
 			writeObj(dst, value, LC);

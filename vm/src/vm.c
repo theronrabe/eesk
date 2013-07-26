@@ -460,8 +460,8 @@ long nativeCall(long *call, void *handle, Stack *STACK) {
 
 	//pop parameter values from stack
 	for(i=0;i<argc;i++) {
-		argv[i] = &STACK->array[STACK->sp-i-1];
-		//printf("... grabbing argument:\t%p: %lx\n", argv[i], *argv[i]);
+		argv[argc-i-1] = &STACK->array[STACK->sp - (argc-i) - 1];
+		//printf("... grabbing argument:\t%p: %lx\n", argv[argc-i-1], *argv[argc-i-1]);
 	}
 
 
