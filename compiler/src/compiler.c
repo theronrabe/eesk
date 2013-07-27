@@ -115,7 +115,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_Function):
 				//in a new namespace
-				nameAddr = *LC+3;
+				nameAddr = *LC;
 				stackPush(nameStack, *LC);
 				tokLen = getToken(tok, src, SC, lineCount);
 				symbols = tableAddSymbol(symbols, tok, nameAddr, context->staticFlag, context->parameterFlag);	//change to this scope
@@ -131,8 +131,10 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//data length
 				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);//statement length
 				
+				/*
 				writeObj(dst, PUSH, LC);	writeObj(dst, DC[0]+DC[1]+DC[2]+4, LC);
 				writeObj(dst, HOP, LC);		//Hop over the definition
+				*/
 
 				writeObj(dst, (DC[0]+DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
 				writeObj(dst, DC[0], LC);
@@ -482,7 +484,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_field):
 				//set the scope
 				tokLen = getToken(tok, src, SC, lineCount);
-				symbols = tableAddSymbol(symbols, tok, *LC, 1, context->parameterFlag);
+				symbols = tableAddSymbol(symbols, tok, *LC, 0, context->parameterFlag);
 				symbols = tableAddLayer(symbols, tok, 0);
 
 				//get its own length:
@@ -698,11 +700,20 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, Con
 		writeObj(dst, value, LC);
 	} else {
 		if(!sym->staticFlag) {
-			if(!context->literalFlag) {
-				writeObj(dst, RPUSH, LC);
+			if(!fakeLC) {
+				//symbol is not being called for within a collection
+				//if(dst) printf("%d:\t%s, to dynamic, no transversal\n", *lineCount, sym->token);
+				if(!context->literalFlag) {
+					writeObj(dst, RPUSH, LC);
+				}
+				writeObj(dst, value - *LC + 1, LC);
+			} else {
+				//if(dst) printf("%d:\t%s to static from dynamic\n", *lineCount, sym->token);
+				writeObj(dst, PUSH, LC);	writeObj(dst, sym->val, LC);
+				writeObj(dst, LOC, LC);
 			}
-			writeObj(dst, value - *LC + 1, LC);
 		} else {
+			//if(dst) printf("%d:\t%s to static from somewhere\n", *lineCount, sym->token);
 			if(!context->literalFlag) writeObj(dst, PUSH, LC);
 			writeObj(dst, value, LC);
 			writeObj(dst, LOC, LC);
