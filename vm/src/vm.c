@@ -458,10 +458,12 @@ long nativeCall(long *call, void *handle, Stack *STACK) {
 	long **argv = malloc(argc*WRDSZ);
 	ffi_cif cif;
 
+	//if(verboseFlag) printf("Argc = %d\n", argc);
+	
 	//pop parameter values from stack
 	for(i=0;i<argc;i++) {
-		argv[argc-i-1] = &STACK->array[STACK->sp - (argc-i) - 1];
-		//printf("... grabbing argument:\t%p: %lx\n", argv[argc-i-1], *argv[argc-i-1]);
+		argv[argc-i-1] = &STACK->array[STACK->sp - (argc-i)];
+		//if(verboseFlag) printf("... grabbing argument:\t%d\t%p: %lx\n", argc-i-1, argv[argc-i-1], *argv[argc-i-1]);
 	}
 
 
