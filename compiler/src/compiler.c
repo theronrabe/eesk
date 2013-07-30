@@ -1,6 +1,7 @@
 /*
 compiler.c
 
+
 	This is the compiler. It basically works as a large finite state machine, where each iteration of the compileStatement
 	function corresponds to a new token-decided state. Any state has the potential to write pneumonic machine code to the
 	output file using the writeObj function, or oftentimes recurse into compiling a substatement, then advancing to the
@@ -115,8 +116,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_Function):
 				//in a new namespace
-				nameAddr = *LC;
-				stackPush(nameStack, *LC);
+				nameAddr = *LC + ((context->instructionFlag)?3:0);	//if these are instructions, jump over this
+				stackPush(nameStack, nameAddr);
 				tokLen = getToken(tok, src, SC, lineCount);
 				symbols = tableAddSymbol(symbols, tok, nameAddr, context->staticFlag, context->parameterFlag);	//change to this scope
 				if(context->publicFlag) { publicize(symbols); context->publicFlag = 0; }
@@ -126,15 +127,19 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				fakeSC = *SC;
 				fakeLC = 0;
 				subContext.parameterFlag = 1;
+				subContext.instructionFlag = 0;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//param length
 				subContext.parameterFlag = 0;
+				fakeLC += 2;	//accommodate for offset and parameter count words
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//data length
+				subContext.instructionFlag = 1;
 				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);//statement length
+				subContext.instructionFlag = 0;
 				
-				/*
-				writeObj(dst, PUSH, LC);	writeObj(dst, DC[0]+DC[1]+DC[2]+4, LC);
-				writeObj(dst, HOP, LC);		//Hop over the definition
-				*/
+				if(context->instructionFlag) {
+					writeObj(dst, PUSH, LC);	writeObj(dst, DC[0]+DC[1]+DC[2]+4, LC);
+					writeObj(dst, HOP, LC);		//Hop over the definition
+				}
 
 				writeObj(dst, (DC[0]+DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
 				writeObj(dst, DC[0], LC);
@@ -144,8 +149,9 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				subContext.parameterFlag = 0;
 				*LC += fakeLC;
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled data section
-	
+				subContext.instructionFlag = 1;
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled statement section
+				subContext.instructionFlag = context->instructionFlag;
 				writeObj(dst, RSR, LC);
 	
 				//no longer in this namespace
@@ -187,7 +193,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 					//find length of arguments
 					fakeSC = *SC;
-					//compiled argument section
+					subContext.instructionFlag = 1;
 					DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);
 
 					//push return address of call
@@ -195,6 +201,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 					//compile arguments
 					compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
+					subContext.instructionFlag = context->instructionFlag;
 
 					//make call
 					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
@@ -204,7 +211,9 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				} else {
 					//compiled argument section
+					subContext.instructionFlag = 1;
 					compileStatement(keyWords, symbols, src, SC, dst, LC, context, (dst)?lineCount:&i);
+					subContext.instructionFlag = context->instructionFlag;
 
 					//push call string with format: "foo(isf)@libbar.so" for a function that takes an integer, string, and float as parameters
 					//writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC + 1, LC);	//stored pointer here earlier
@@ -307,6 +316,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_begin):
 				transferAddress = *LC;
+				context->instructionFlag = 1;
 				break;
 
 
@@ -329,6 +339,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				context->nativeFlag = 0;
 				subContext.staticFlag = 0;
 				context->staticFlag = 0;
+				subContext.instructionFlag = 0;
+				context->instructionFlag = 0;
 				break;
 
 			case(k_argument):
@@ -458,7 +470,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_collect):
 				//set the scope
 				tokLen = getToken(tok, src, SC, lineCount);
-				symbols = tableAddSymbol(symbols, tok, *LC+3, context->staticFlag, context->parameterFlag);	//add 3 accommodating for hop over definition
+				symbols = tableAddSymbol(symbols, tok, *LC + ((context->instructionFlag)?3:0), context->staticFlag, context->parameterFlag);	//add 3 if instructions
 				symbols = tableAddLayer(symbols, tok, 1);
 
 				//get its own length:
@@ -467,13 +479,17 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);
 
 				//hop over the definition
-				writeObj(dst, PUSH, LC);	writeObj(dst, DC[0] + 2, LC);
-				writeObj(dst, HOP, LC);
+				if(context->instructionFlag) {
+					writeObj(dst, PUSH, LC);	writeObj(dst, DC[0] + 2, LC);
+					writeObj(dst, HOP, LC);
+				}
 
 				//write its length, and its body (addressed relative to right here)
 				writeObj(dst, DC[0], LC);
 				fakeLC = 1;
+				subContext.instructionFlag = 0;
 				compileStatement(keyWords, symbols, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);
+				subContext.instructionFlag = context->instructionFlag;
 				*LC += fakeLC - 1; //accommodate for change in location
 				
 				//clean up
@@ -484,20 +500,26 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_field):
 				//set the scope
 				tokLen = getToken(tok, src, SC, lineCount);
-				symbols = tableAddSymbol(symbols, tok, *LC, 0, context->parameterFlag);
+				symbols = tableAddSymbol(symbols, tok, *LC + ((context->instructionFlag)?3:0), 0, context->parameterFlag);
 				symbols = tableAddLayer(symbols, tok, 0);
 
 				//get its own length:
 				fakeSC = *SC;
 				fakeLC = 0;
+				subContext.instructionFlag = 0;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);
+				subContext.instructionFlag = context->instructionFlag;
 
 				//hop over the definition
-				writeObj(dst, PUSH, LC);	writeObj(dst, DC[0] + 1, LC);
-				writeObj(dst, HOP, LC);
+				if(context->instructionFlag) {
+					writeObj(dst, PUSH, LC);	writeObj(dst, DC[0] + 1, LC);
+					writeObj(dst, HOP, LC);
+				}
 
 				//compile the body
+				subContext.instructionFlag = 0;
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
+				subContext.instructionFlag = context->instructionFlag;
 
 				//clean up
 				symbols = tableRemoveLayer(symbols);
