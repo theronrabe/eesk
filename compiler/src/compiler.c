@@ -130,7 +130,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				subContext.instructionFlag = 0;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//param length
 				subContext.parameterFlag = 0;
-				fakeLC += 2;	//accommodate for offset and parameter count words
+				//fakeLC += 2;	//accommodate for offset and parameter count words
+				fakeLC = 0;	//because parameters don't increment location counter
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//data length
 				subContext.instructionFlag = 1;
 				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);//statement length
@@ -141,13 +142,13 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					writeObj(dst, HOP, LC);		//Hop over the definition
 				}
 
-				writeObj(dst, (DC[0]+DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
+				writeObj(dst, (DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
 				writeObj(dst, DC[0], LC);
 				fakeLC = 0;
 				subContext.parameterFlag = 1;
 				compileStatement(keyWords, symbols, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);	//compiled parameters section
 				subContext.parameterFlag = 0;
-				*LC += fakeLC;
+				//*LC += fakeLC;
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled data section
 				subContext.instructionFlag = 1;
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled statement section
@@ -303,9 +304,13 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				} else {
 					//create a symbol and a word
 					tempTable = tableAddSymbol(symbols, tok, *LC + ((context->instructionFlag)?1:0), context->staticFlag, context->parameterFlag);
-					if(context->publicFlag) publicize(tempTable);
-					if(context->instructionFlag) writeObj(dst, GRAB, LC);
-					writeObj(dst, 0, LC);
+					if(!context->parameterFlag) {
+						if(context->publicFlag) publicize(tempTable);
+						if(context->instructionFlag) writeObj(dst, GRAB, LC);
+						writeObj(dst, 0, LC);
+					} else {
+						*LC++;
+					}
 				}
 				break;
 
@@ -708,10 +713,16 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, Con
 	if(sym == NULL) {	//does the symbol not exist yet?
 		if(dst) tableAddSymbol(symbols, token, *LC+((context->instructionFlag)?1:0), context->staticFlag, context->parameterFlag);
 		sym = tableLookup(symbols, token, &fakeLC);
-		if(dst) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", *lineCount, sym->token, sym->val, sym->staticFlag);
-		if(context->publicFlag) publicize(sym);
-		if(context->instructionFlag) writeObj(dst, GRAB, LC);
-		writeObj(dst, 0, LC);
+		if(!context->parameterFlag) {
+			//This is an implicitly declared variable
+			if(dst) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", *lineCount, sym->token, sym->val, sym->staticFlag);
+			if(context->publicFlag) publicize(sym);
+			if(context->instructionFlag) writeObj(dst, GRAB, LC);
+			writeObj(dst, 0, LC);
+		} else {
+			//this is a parameter declaration, count it and carry on
+			(*LC)++;
+		}
 		return *LC - oldLC;
 	}
 
