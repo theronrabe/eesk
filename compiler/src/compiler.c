@@ -212,7 +212,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				} else {
 					//compiled argument section
 					subContext.instructionFlag = 1;
-					compileStatement(keyWords, symbols, src, SC, dst, LC, context, (dst)?lineCount:&i);
+					compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
 					subContext.instructionFlag = context->instructionFlag;
 
 					//push call string with format: "foo(isf)@libbar.so" for a function that takes an integer, string, and float as parameters
@@ -302,8 +302,9 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					}
 				} else {
 					//create a symbol and a word
-					tempTable = tableAddSymbol(symbols, tok, *LC, context->staticFlag, context->parameterFlag);
+					tempTable = tableAddSymbol(symbols, tok, *LC + ((context->instructionFlag)?1:0), context->staticFlag, context->parameterFlag);
 					if(context->publicFlag) publicize(tempTable);
+					if(context->instructionFlag) writeObj(dst, GRAB, LC);
 					writeObj(dst, 0, LC);
 				}
 				break;
@@ -339,8 +340,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				context->nativeFlag = 0;
 				subContext.staticFlag = 0;
 				context->staticFlag = 0;
-				subContext.instructionFlag = 0;
-				context->instructionFlag = 0;
 				break;
 
 			case(k_argument):
@@ -707,11 +706,12 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, Con
 	Table *sym = tableLookup(symbols, token, &fakeLC);
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
-		if(dst) tableAddSymbol(symbols, token, *LC+1, context->staticFlag, context->parameterFlag);
+		if(dst) tableAddSymbol(symbols, token, *LC+((context->instructionFlag)?1:0), context->staticFlag, context->parameterFlag);
 		sym = tableLookup(symbols, token, &fakeLC);
 		if(dst) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", *lineCount, sym->token, sym->val, sym->staticFlag);
 		if(context->publicFlag) publicize(sym);
-		writeObj(dst, GRAB, LC);	writeObj(dst, 0, LC);
+		if(context->instructionFlag) writeObj(dst, GRAB, LC);
+		writeObj(dst, 0, LC);
 		return *LC - oldLC;
 	}
 
