@@ -3,9 +3,9 @@ compiler.c
 
 
 	This is the compiler. It basically works as a large finite state machine, where each iteration of the compileStatement
-	function corresponds to a new token-decided state. Any state has the potential to write pneumonic machine code to the
-	output file using the writeObj function, or oftentimes recurse into compiling a substatement, then advancing to the
-	next state.
+	function corresponds to a new token-decided state, along with a context. Any state has the potential to write pneumonic 
+	machine code to the output file using the writeObj function, or oftentimes recurse into compiling a substatement, then
+	advancing to the next state.
 
 
 Copyright 2013 Theron Rabe
@@ -39,8 +39,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	int fakeLC = 0;			//for measuring relative addresses sub-statement
 	int fakeSC;			//for measuring relative addresses on sub-statement
 	char tok[256];			//needs to be big in case of string
-	char string[256];
-	char *charPtr;
+	char string[256];		//additional string space
+	char *charPtr;			
 	char *charPtr2;
 	long nameAddr;			//for marking important working addresses
 	long DC[3];			//data counters
@@ -130,7 +130,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				subContext.instructionFlag = 0;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//param length
 				subContext.parameterFlag = 0;
-				//fakeLC += 2;	//accommodate for offset and parameter count words
 				fakeLC = 0;	//because parameters don't increment location counter
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//data length
 				subContext.instructionFlag = 1;
@@ -138,7 +137,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				subContext.instructionFlag = 0;
 				
 				if(context->instructionFlag) {
-					writeObj(dst, PUSH, LC);	writeObj(dst, DC[0]+DC[1]+DC[2]+4, LC);
+					writeObj(dst, PUSH, LC);	writeObj(dst, DC[1]+DC[2]+4, LC);
 					writeObj(dst, HOP, LC);		//Hop over the definition
 				}
 
@@ -215,10 +214,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					subContext.instructionFlag = 1;
 					compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
 					subContext.instructionFlag = context->instructionFlag;
-
-					//push call string with format: "foo(isf)@libbar.so" for a function that takes an integer, string, and float as parameters
-					//writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC + 1, LC);	//stored pointer here earlier
-					//writeObj(dst, CONT, LC);
 
 					//make call
 					writeObj(dst, NTV, LC);
