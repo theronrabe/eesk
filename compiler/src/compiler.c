@@ -479,7 +479,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_collect):
 				//set the scope
 				tokLen = getToken(tok, src, SC, lineCount);
-				symbols = tableAddSymbol(symbols, tok, *LC + ((context->instructionFlag)?3:0), context->staticFlag, context->parameterFlag);	//add 3 if instructions
+				nameAddr = *LC + ((context->instructionFlag)?3:0);	//add 3 if instructions
+				symbols = tableAddSymbol(symbols, tok, nameAddr, context->staticFlag, context->parameterFlag);
 				symbols = tableAddLayer(symbols, tok, 1);
 
 				//get its own length:
@@ -501,6 +502,11 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				compileStatement(keyWords, symbols, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);
 				subContext.instructionFlag = context->instructionFlag;
 				*LC += fakeLC - 1; //accommodate for change in location
+
+				//push newing address, if we're in the middle of instructions
+				if(context->instructionFlag) {
+					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);
+				}
 				
 				//clean up
 				symbols = tableRemoveLayer(symbols);
@@ -510,7 +516,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_field):
 				//set the scope
 				tokLen = getToken(tok, src, SC, lineCount);
-				symbols = tableAddSymbol(symbols, tok, *LC + ((context->instructionFlag)?3:0), 0, context->parameterFlag);
+				nameAddr = *LC + ((context->instructionFlag)?3:0);
+				symbols = tableAddSymbol(symbols, tok, nameAddr, 0, context->parameterFlag);
 				symbols = tableAddLayer(symbols, tok, 0);
 
 				//get its own length:
