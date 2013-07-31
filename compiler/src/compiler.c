@@ -80,6 +80,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				//get length of statement
 				fakeSC = *SC;
+				subContext.instructionFlag = 1;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//clause
 				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//else
@@ -102,6 +103,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				//get section lengths
 				fakeSC = *SC;
+				subContext.instructionFlag = 1;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition length
 				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//loop length
 
@@ -137,7 +139,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				subContext.instructionFlag = 0;
 				
 				if(context->instructionFlag) {
-					writeObj(dst, PUSH, LC);	writeObj(dst, DC[1]+DC[2]+4, LC);
+					writeObj(dst, PUSH, LC);	writeObj(dst, DC[1]+DC[2]+6, LC);
 					writeObj(dst, HOP, LC);		//Hop over the definition
 				}
 
@@ -152,8 +154,14 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				subContext.instructionFlag = 1;
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled statement section
 				subContext.instructionFlag = context->instructionFlag;
+				writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC + 1, LC);
 				writeObj(dst, RSR, LC);
 	
+				if(context->instructionFlag) {
+					//basically, act like a lambda function
+					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);
+				}
+
 				//no longer in this namespace
 				stackPop(nameStack);
 				symbols = tableRemoveLayer(symbols);
@@ -172,7 +180,9 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_oParen):
+				subContext.instructionFlag = 1;
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, lineCount);
+				subContext.instructionFlag = context->instructionFlag;
 				break;
 
 
@@ -475,6 +485,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				//get its own length:
 				fakeSC = *SC;
 				fakeLC = 1;
+				subContext.instructionFlag = 0;
 				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 
 				//hop over the definition
