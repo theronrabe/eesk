@@ -349,7 +349,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_argument):
 				fillOperations(dst, LC, operationStack);
-				writeObj(dst, APUSH, LC);
+				if(!context->parameterFlag) writeObj(dst, APUSH, LC);
 				break;
 
 
