@@ -314,7 +314,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 						if(context->instructionFlag) writeObj(dst, GRAB, LC);
 						writeObj(dst, 0, LC);
 					} else {
-						*LC++;
+						++(*LC);
 					}
 				}
 				break;
