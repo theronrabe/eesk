@@ -84,6 +84,7 @@ typedef enum {
 	AND,
 	OR,
 	NOT,
+	SHIFT,
 
 	//float manipulation
 	FTOD,	//18
@@ -122,7 +123,7 @@ typedef enum {
 	k_clr, k_endStatement, k_cont, k_not,
 	k_is, k_set,
 	k_eq, k_gt, k_lt,
-	k_add, k_sub, k_mul, k_div, k_mod, k_and, k_or,
+	k_add, k_sub, k_mul, k_div, k_mod, k_and, k_or, k_shift,
 	k_fadd, k_fsub, k_fmul, k_fdiv,
 	k_return,
 	k_public, k_private, k_literal, k_collect, k_field, k_static,

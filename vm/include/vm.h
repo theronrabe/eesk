@@ -55,6 +55,7 @@ typedef enum {
 	AND,
 	OR,
 	NOT,
+	SHIFT,
 
 	//float manipulation
 	FTOD,

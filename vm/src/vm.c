@@ -3,12 +3,6 @@ vm.c
 
 	This program acts as a 64-bit, zero-address, address-addressable virtual machine.
 
-	TODO:
-		I'm in the middle of prepping the vm to have stack-popped addresses be absolute addresses, rather than indices of the MEM array.
-		Once that's done, Eesk variables that are pushed will leave an absolute address on the stack which makes for much cleaner
-		integration with the native system.
-
-
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
 
@@ -68,7 +62,7 @@ long *load(char *fn) {
 void main(int argc, char **argv) {
 	if(argc>2) verboseFlag = 1;
 
-	Stack *STACK = stackCreate(128);
+	Stack *STACK = stackCreate(1000);
 	libStack = stackCreate(32);
 	long *MEM = load(argv[1]);
 
@@ -96,7 +90,7 @@ void quit(long *MEM, Stack *STACK, long PC) {
 }
 
 void execute(long *MEM, Stack *STACK, long *address) {
-	Stack *activationStack = stackCreate(128);
+	Stack *activationStack = stackCreate(1000);
 	Stack *counterStack = stackCreate(128);
 	stackPush(counterStack, 0);
 	long tempVal;
@@ -301,6 +295,19 @@ void execute(long *MEM, Stack *STACK, long *address) {
 			case(NOT):
 				stackPush(STACK, !stackPop(STACK));
 				if(verboseFlag) printf("%p:\tNOT\n", PC);
+				++PC;
+				break;
+			case(SHIFT):
+				tempVal = stackPop(STACK);
+				tempAddr = stackPop(STACK);
+
+				if(tempVal > 0) {
+					stackPush(STACK, ((long)tempAddr) >> tempVal);
+					if(verboseFlag) printf("%p:\tSHIFT\t%lx by %lx is %lx\n", PC, tempAddr, tempVal, ((long)tempAddr)>>tempVal);
+				} else {
+					stackPush(STACK, ((long)tempAddr) << -tempVal);
+					if(verboseFlag) printf("%p:\tSHIFT\t%lx by %lx is %lx\n", PC, tempAddr, tempVal, ((long)tempAddr)<<-tempVal);
+				}
 				++PC;
 				break;
 

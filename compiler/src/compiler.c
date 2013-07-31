@@ -368,6 +368,11 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				break;
 
 
+			case(k_shift):
+				stackPush(operationStack, SHIFT);
+				break;
+
+
 			case(k_is):
 				fillOperations(dst, LC, operationStack);
 				stackPush(operationStack, POP);
@@ -809,6 +814,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, ";", k_endStatement, 0, 0);
 	tableAddSymbol(ret, "$", k_cont, 0, 0);
 	tableAddSymbol(ret, "!", k_not, 0, 0);
+	tableAddSymbol(ret, ">>", k_shift, 0, 0);
 	tableAddSymbol(ret, "=", k_is, 0, 0);
 	tableAddSymbol(ret, "set", k_set, 0, 0);
 	tableAddSymbol(ret, "==", k_eq, 0, 0);
