@@ -80,15 +80,15 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				//get length of statement
 				fakeSC = *SC;
-				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//condition
-				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//clause
-				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//else
+				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition
+				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//clause
+				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//else
 
 				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+DC[1]+6, LC);	//else address
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condition
 				writeObj(dst, BNE, LC);								//decide
 
-				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled statement
+				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, lineCount);		//compiled statement
 				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[2]+3, LC);	//push end address
 				writeObj(dst, JMP, LC);		//jump to end
 
@@ -102,8 +102,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				//get section lengths
 				fakeSC = *SC;
-				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);//condition length
-				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//loop length
+				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition length
+				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//loop length
 
 				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+DC[1]+6, LC);	//end address
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
@@ -128,13 +128,13 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				fakeLC = 0;
 				subContext.parameterFlag = 1;
 				subContext.instructionFlag = 0;
-				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//param length
+				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//param length
 				subContext.parameterFlag = 0;
 				//fakeLC += 2;	//accommodate for offset and parameter count words
 				fakeLC = 0;	//because parameters don't increment location counter
-				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);	//data length
+				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//data length
 				subContext.instructionFlag = 1;
-				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);//statement length
+				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//statement length
 				subContext.instructionFlag = 0;
 				
 				if(context->instructionFlag) {
@@ -195,7 +195,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					//find length of arguments
 					fakeSC = *SC;
 					subContext.instructionFlag = 1;
-					DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);
+					DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 
 					//push return address of call
 					writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+5, LC);			//push return address
@@ -480,7 +480,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				//get its own length:
 				fakeSC = *SC;
 				fakeLC = 1;
-				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);
+				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 
 				//hop over the definition
 				if(context->instructionFlag) {
@@ -511,7 +511,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				fakeSC = *SC;
 				fakeLC = 0;
 				subContext.instructionFlag = 0;
-				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, (dst)?lineCount:&i);
+				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 				subContext.instructionFlag = context->instructionFlag;
 
 				//hop over the definition
