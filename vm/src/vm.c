@@ -495,6 +495,9 @@ long nativeCall(long *call, void *handle, Stack *STACK) {
 			case('v'):
 				*(call+1) = &ffi_type_void;
 				break;
+			case('c'):
+				*(call+1) = &ffi_type_uchar;
+				break;
 			default:
 				printf("Unknown return type:\t%x\n", returnChar);
 				exit(1);
@@ -514,6 +517,9 @@ long nativeCall(long *call, void *handle, Stack *STACK) {
 					break;
 				case('p'):
 					*(call+3+i) = &ffi_type_pointer;
+					break;
+				case('c'):
+					*(call+3+i) = &ffi_type_uchar;
 					break;
 				default:
 					printf("Unknown argument type:\t%p: %x\n",(char) *(call+3+i));
