@@ -1,4 +1,22 @@
 {
-	public define strcpy	\"strcpy(pp)@libc.so.6:p"\
-	public define strcat	\"strcat(pp)@libc.so.6:p"\
+	public Field string {
+		private given libc;
+		private define libPath	\"libc.so.6"\
+	
+		public Function init {} {} {libc = load libPath}
+	
+		public Function strcpy {given dest; given src} {
+				private Native call "strcpy:p(pp)";
+			} {
+				if {libc$!} {init[]^} {}
+				call@libc$[dest$, src$]^;
+			}
+	
+		public Function strcat {given str1; given str2} {
+				private Native call "strcat:p(pp)";
+			} {
+				if {libc$!} {init[]^} {}
+				call@libc$[str1$, str2$]^;
+			}
+	}
 }

@@ -1,16 +1,8 @@
 {
-	Field system {
-		public Field IO {
-			include "system.IO"
-		}
-		public Field mem {
-			include "system.mem"
-		}
-		public Field math {
-			include "system.math"
-		}
-		public Field string {
-			include "system.string"
-		}
+	public Field system {
+		include "system.IO"
+		include "system.mem"
+		include "system.math"
+		include "system.string"
 	}
 }

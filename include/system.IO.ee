@@ -1,4 +1,22 @@
 {
-	public define putc	\"putchar(c)@libc.so.6:v"\
-	public define puts	\"puts(p)@libc.so.6:v"\
+	public Field IO {
+		private given libc
+		private define libPath	\"libc.so.6"\
+	
+		public Function init {} {} {libc = load libPath}
+	
+		global public Function putc {given c} {
+			private Native call "putchar:v(c)";
+		} {
+			if {libc$!} {init[]^} {}
+			call@libc$[c$]^;
+		}
+	
+		public Function puts {given str} {
+			private Native call "puts:v(p)";
+		} {
+			if {libc$!} {init[]^} {}
+			call@libc$[str$]^;
+		}
+	}
 }

@@ -1,33 +1,190 @@
 {
-	public define cos	\"cos(f)@libm.so:f"\
-	public define sin	\"sin(f)@libm.so:f"\
-	public define tan	\"tan(f)@libm.so:f"\
-	public define acos	\"acos(f)@libm.so:f"\
-	public define asin	\"asin(f)@libm.so:f"\
-	public define atan	\"atan(f)@libm.so:f"\
-	public define atanTwo	\"atan2(ff)@libm.so:f"\
+	public Field math {
+		private given libm;
+		private define libPath 	\"libm.so"\
 
-	public define cosh	\"cosh(f)@libm.so:f"\
-	public define sinh	\"sinh(f)@libm.so:f"\
-	public define tanh	\"tanh(f)@libm.so:f"\
-	public define acosh	\"acosh(f)@libm.so:f"\
-	public define asinh	\"asinh(f)@libm.so:f"\
-	public define atanh	\"atanh(f)@libm.so:f"\
+		private Function init {} {} {libm = load libPath}
 
-	public define pow	\"pow(ff)@libm.so:f"\
-	public define sqrt	\"sqrt(f)@libm.so:f"\
+		public Function cos {x} {
+				private Native call "cos:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
 
-	public define exp	\"exp(f)@libm.so:f"\
-	public define log	\"log(f)@libm.so:f"\
-	public define logTen	\"log10(f)@libm.so:f"\
-	public define expTwo	\"exp2(f)@libm.so:f"\
-	public define logTwo	\"log2(f)@libm.so:f"\
+		public Function sin {x} {
+				private Native call "sin:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
 
-	public define ceiling	\"ceil(f)@libm.so:i"\
-	public define floor	\"floor(f)@libm.so:i"\
-	public define fmod	\"fmod(ff)@libm.so:f"\
-	public define trunc	\"trunc(f)@libm.so:i"\
+		public Function tan {x} {
+				private Native call "tan:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+		
+		public Function acos {x} {
+				private Native call "acos:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+		
+		public Function asin {x} {
+				private Native call "asin:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
 
-	public define fabs	\"fabs(f)@libm.so:f"\
-	public define abs	\"abs(i)@libm.so:i"\
+		public Function atan {x} {
+				private Native call "atan:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function atanTwo {x,y} {
+				private Native call "atan2:f(ff)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$, y$];
+			}
+
+		public Function cosh {x} {
+				private Native call "cosh:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function sinh {x} {
+				private Native call "sinh:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function tanh {x} {
+				private Native call "tanh:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function acosh {x} {
+				private Native call "acosh:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function asinh {x} {
+				private Native call "asinh:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function atanh {x} {
+				private Native call "atanh:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+	
+		public Function pow {x,y} {
+				private Native call "pow:f(ff)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$, y$];
+			}
+
+		public Function sqrt {x} {
+				private Native call "sqrt:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+	
+		public Function exp {x} {
+				private Native call "exp:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function log {x} {
+				private Native call "log:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function log10 {x} {
+				private Native call "log10:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function exp2 {x} {
+				private Native call "exp2:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function log2 {x} {
+				private Native call "log2:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function ceil {x} {
+				private Native call "ceil:i(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function floor {x} {
+				private Native call "floor:i(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function fmod {x,y} {
+				private Native call "fmod:f(ff)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$, y$];
+			}
+
+		public Function trunc {x} {
+				private Native call "trunc:i(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+	
+		public Function fabs {x} {
+				private Native call "fabs:f(f)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+
+		public Function abs {x} {
+				private Native call "abs:i(i)";
+			} {
+				if {libm$!} {init[]^} {}
+				return call@libm$[x$];
+			}
+	}
 }

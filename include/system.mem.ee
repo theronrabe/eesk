@@ -1,4 +1,22 @@
 {
-	public define malloc	\"malloc(i)@libc.so.6:p"\
-	public define free	\"free(p)@libc.so.6:v"\
+	public Field mem {
+		private given libc;
+		private define libPath	\"libc.so.6"\
+
+		private Function init {} {} {libc = load libPath}
+
+		public Function malloc {size} {
+				private Native call "malloc:p(i)";
+			} {
+				if {libc$!} {init[]^} {}
+				return call@libc$[size$];
+			}
+		
+		public Function free {loc} {
+				private Native call "free:v(p)";
+			} {
+				if {libc$!} {init[]^} {}
+				return call@libc$[loc$];
+			}
+	}
 }
