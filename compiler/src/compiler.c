@@ -570,7 +570,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				strcat(tok, "include/");
 				getQuote(&tok[8], src, SC);			//to accommodate for the beginning "include/"
 				strcat(tok, ".ee");
-				printf("%d:\tIncluding file: %s\n", *lineCount, tok);
+				if(dst) printf("%d:\tIncluding file: %s\n", *lineCount, tok);
 				char *inc = loadFile(tok);
 				trimComments(inc);
 				fakeSC = 0;
