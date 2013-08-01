@@ -729,13 +729,13 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, Con
 	Table *sym = tableLookup(symbols, token, &fakeLC);
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
-		if(dst) tableAddSymbol(symbols, token, *LC+((context->instructionFlag)?1:0), context->staticFlag, context->parameterFlag);
+		if(dst) tableAddSymbol(symbols, token, *LC+((context->instructionFlag && !context->literalFlag)?1:0), context->staticFlag, context->parameterFlag);
 		sym = tableLookup(symbols, token, &fakeLC);
 		if(!context->parameterFlag) {
 			//This is an implicitly declared variable
 			if(dst) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", *lineCount, sym->token, sym->val, sym->staticFlag);
 			if(context->publicFlag) publicize(sym);
-			if(context->instructionFlag) writeObj(dst, GRAB, LC);
+			if(!context->literalFlag && context->instructionFlag) writeObj(dst, GRAB, LC);
 			writeObj(dst, 0, LC);
 		} else {
 			//this is a parameter declaration, count it and carry on
