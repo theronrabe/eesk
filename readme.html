@@ -1,0 +1,367 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="LibreOffice 3.5  (Linux)">
+	<META NAME="CREATED" CONTENT="20130801;19474700">
+	<META NAME="CHANGED" CONTENT="20130802;18253700">
+	<STYLE TYPE="text/css">
+	<!--
+		@page { margin: 0.79in }
+		P { margin-bottom: 0.08in }
+		A:link { so-language: zxx }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><FONT SIZE=5 STYLE="font-size: 20pt">The
+Eesk Programming Language</FONT></P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><FONT SIZE=3>Theron Rabe.
+2013.</FONT></P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">Eesk is a programming language designed
+with the following philosophies in mind:</P>
+<UL>
+	<LI><P STYLE="margin-bottom: 0in">A programming environment should
+	not prevent its users from doing stupid things. Just because a
+	program doesn't make sense from a compiler's point of view, doesn't
+	mean it contains mistakes.</P>
+	<LI><P STYLE="margin-bottom: 0in">Since all types are ultimately
+	composed of bits, types should be as interchangeable as bits. The
+	type of a symbol should be determined by the context it is used in,
+	rather than how it was declared. Abstraction should not prevent
+	computation.</P>
+	<LI><P STYLE="margin-bottom: 0in">High-level concepts in a language
+	should not hide their underlying mechanics from the programmer. In
+	other words, the architecture should be easy to abuse.</P>
+	<LI><P STYLE="margin-bottom: 0in">No syntax errors. Any sequence of
+	symbols should have some valid meaning in Eesk.</P>
+</UL>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">Eesk can be installed via:</P>
+<P STYLE="margin-bottom: 0in">	git clone
+<A HREF="https://github.com/theronrabe/eesk.git">https://github.com/theronrabe/eesk.git</A></P>
+<P STYLE="margin-bottom: 0in">	cd eesk/compiler; make</P>
+<P STYLE="margin-bottom: 0in">	cd ../vm; make</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">This will create the ee and eesk
+programs in Eesk's root directory. ee is the Eesk compiler, and eesk
+is the Eesk virtual machine.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">To use ee, give it the path to an Eesk
+file:</P>
+<P STYLE="margin-bottom: 0in">	./ee example.ee</P>
+<P STYLE="margin-bottom: 0in">ee will then place an eesk-able
+translation of the instructions into the file e.out.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">To use eesk, give it the path to a
+compiled file:</P>
+<P STYLE="margin-bottom: 0in">	./eesk e.out [-v]</P>
+<P STYLE="margin-bottom: 0in">The program will be executed and its
+results will be depicted as values on a stack, in hexadecimal.
+Optionally, with the -v flag set, the instruction-by-instruction
+actions of the virtual machine will display. Note that this
+dramatically slows the performance of eesk.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">To begin using Eesk, take a look at a
+simple example program, manual_examples/prints.ee:</P>
+<P STYLE="text-indent: 0.49in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="text-indent: 0.49in; margin-bottom: 0in">#This program
+prints some text</P>
+<P STYLE="text-indent: 0.49in; margin-bottom: 0in">{</P>
+<P STYLE="text-indent: 0.49in; margin-bottom: 0in">	Begin</P>
+<P STYLE="text-indent: 0.49in; margin-bottom: 0in">		prints “You're
+a grapefruitses.\n”;</P>
+<P STYLE="text-indent: 0.49in; margin-bottom: 0in">End</P>
+<P STYLE="text-indent: 0.49in; margin-bottom: 0in">}</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">Upon analysis, you might correctly
+assume that the # symbol leading the first line is indicative of a
+comment. Any text between a # and a new line will be ignored by ee.
+This, along with symbol delimiting, are the only times whitespace
+characters affect the meaning of an Eesk statement.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">The { on the second line is negligible;
+it has no meaning and is placed there solely for aesthetic symmetry
+with the closing }.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">The Begin keyword on the third line
+indicates that the virtual machine should begin executing
+instructions at this location. Each symbol (separated by whitespace),
+with the exception of a few keywords, represents a location in eesk's
+memory. This memory location is determined by where the most recent
+declaration of the symbol in the Eesk file was, where “recency”
+could be measured as increasing from the beginning toward the end of
+the file. Note that “declaration” is a loose term in Eesk, as it
+could simply be an unexpected first use of a new symbol in the middle
+of a subroutine. Opposite of the Begin keyword is End. End halts the
+eesk virtual machine at the current location.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">At the heart of the program is the
+prints operator, a string (which could by anything between a pair of
+“), and a ;.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">prints is an operator. To understand
+what an operator is in Eesk, you must understand the architecture of 
+Eesk. Eesk is composed of statements, each of which defines how
+various operands should be pushed onto a stack, what operations
+should be performed on the top of the stack, and how values should be
+removed from the stack. A statement may contain any combination of
+characters, and is terminated by a  }. When an operator is
+encountered, it is remembered until the next ;, =, &lt;, &gt;, &amp;,
+|, }, ), ], or ',' is encountered. At that time, all the remembered
+operators are released for eesk to execute on the stack. This is done
+at compile time.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">The string in the previous code is an
+example of one of the operands that occupy the stack. Anything that
+is not an operator or a keyword is an operand, and it will be pushed
+to the stack simply because it is encountered. From this, you can
+gather what the following Eesk statement means, from
+manual_examples/theStack.ee:</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">#This program
+illustrates manipulation of the stack</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">{</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">Begin</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">        3 - 2 + 1;</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">        - + 3 2 1;</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">        3 2 - + 1;</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">        3 2 1 - +;</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">End</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">}</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">When you run this program, you'll see
+an output of four 0s depicted on a stack. That is because all four
+lines between Begin and End mean the same thing. They place a 3, a 2,
+and a 1 on the stack, then perform an addition followed by a
+subtraction. These binary operators are right-associative, so the
+repeated line could more concretely be written as (3 – (2 + 1)).</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">An Eesk statement may use custom
+symbols as operands; from manual_examples/symbol.ee:</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">#This program
+defines a symbol</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">{</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">        given
+message</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">Begin   </P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">        message =
+&quot;We've made a symbol!\n&quot;;</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">        prints
+message$;</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">End     </P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">}</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">The “given” keyword indicates that
+the current relative location should correlate to a word of memory
+that is known as the following symbol. Whenever that symbol is found
+again, it means to place the correlated address to the stack. When
+the = operator is encountered in the example, then, the “message”
+address is assigned the value of the address correlated to the
+following string. Later, when the “message” symbol is again
+pushed to the stack, its contents are retrieved via $. Note that it
+is valid Eesk to remove the “given message” line. Doing so would
+delay the declaration of “message” until its next encounter
+(which changes its location in eesk's memory space), but has a
+virtually identical meaning.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">To further show how implicit symbols
+could be used, look at manual_examples/implicit.ee:</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">#This program uses
+implicitly-defined symbols</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">{</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">Begin</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">        myVal1 =
+12;</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">        myVal2 =
+myVal1$ + 1;</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">        myVal3 =
+myVal1$ + myVal2$;</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">        </P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">        myVal3$;</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">End</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">}</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-left: -0.01in; margin-bottom: 0in">When you compile
+this, ee will remind you of your implicit declarations (in case you
+were to accidentally make one). The program Ends after leaving the
+contents of myVal3 on the stack, which is correctly calculated as 19
+(results in hexadecimal, Eesk code in decimal).</P>
+<P STYLE="margin-left: -0.01in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-left: -0.01in; margin-bottom: 0in">Eesk is a
+structured language. Decision and iteration are done via “if” and
+“while” directives. An example is found in
+manual_examples/structure.ee:</P>
+<P STYLE="margin-left: -0.01in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">#This program uses
+control structures</P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">{</P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">Begin</P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">        while {i$
+&lt; 20} {</P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">                if
+{i$ % 2} {</P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">                  
+     printd i$;</P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">                }
+{     </P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">                  
+     prints &quot;not odd\n&quot;;</P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">                } 
+     </P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">                </P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">                i
+= i$ + 1;</P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">        }       </P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">End     </P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in">}</P>
+<P STYLE="margin-left: 0.48in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">This program counts the implicit symbol
+“i” up to 19, printing the value of the odds, or some text for
+the evens. You'll notice that the while directive takes two
+statements as parameters (because it is followed by two groups of {},
+and } ends a statement), exactly. The first parameter statement is a
+condition that, while met, will allow the second parameter statement
+(the body) to be repeatedly executed. The if directive takes exactly
+three parameter statements: a condition, a true, and a false
+statement. If the condition evaluates to non-zero, the true statement
+is executed, otherwise the false statement is.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">Eesk instructions can be reused with
+the help of the Function directive. An Eesk function has a
+block-structured calling convention for passing arguments and storing
+local variables, a chunk of non-block-structured function memory for
+local storage (making it a versatile form of subroutine), and a
+statement of instructions to execute when called. An example program
+using functions can be found in manual_examples/functions.ee:</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">#This program uses
+the Function directive</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">{</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">        Function
+twoXplusY {A, B} { </P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">               
+private Function add {X, Y} {} {</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">                  
+     return (X$ + Y$);</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">                }
+</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">        }{      </P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">               
+return add[2*A$, B$];</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">        }</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">Begin</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">        X = 34;</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">        Y = 3;</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">       
+twoXplusY[X$, Y$];</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">End</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in">}</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">You can see two function definitions in
+this program. The first function twoXplusY, is given two symbols (A
+and B) of data on the activation stack (which the function can
+optionally take as arguments). It has another function, add, defined
+in its static memory. The private flag is used here to prevent Eesk
+code outside of the parent function from accessing it via
+twoXplusY.add, as could be done were a “public” flag set. When
+the public flag is set, any symbols declared before the next ; are
+accessible beyond their scope by means of the '.' operator. This will
+be covered more later in this manual.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">A function can be called by means of
+the [] pair of operators, which call the function located at whatever
+address is on top of the stack. Any time a , is encountered (or ]
+with symbols preceding it) the value atop the stack is added to the
+activation stack, thus passing it as an argument. A function can,
+however, be called with more or fewer arguments than requested by the
+function definition.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">The return operator pops the stack,
+then returns to the address now atop the stack, pushing the
+first-popped value back on to the stack. In effect, it terminates
+execution of the function and returns its most recently-computed
+value. Control is returned to where the call was made. The default
+return value for a function is its own calling address.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">Since each function is a symbol, it can
+be spontaneously and implicitly declared just like any other symbol.
+This makes Eesk functions usable as a lambda calculus. An example of
+function versatility is demonstrated by the program found in
+manual_examples/implicitFunctions.ee:</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">#This program uses
+implicit function declaration </P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">{</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">Begin</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">        Function
+inc {x} {} {x$ = x$$ + 1}[x][][][][][][][][][]^;</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">        x$;</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">End     </P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in">}</P>
+<P STYLE="margin-left: 0.5in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">This program implicitly declares a
+function inc, which takes an argument that is effectively used as a
+pointer, and increments the value stored there. The implicit symbol
+declaration leaves its correlated address on the stack (the calling
+address for the function, in this case), which is then called. The
+implicit declaration of x in the first set of [] passes its own
+address to inc. inc by default returns its own calling address. Since
+its calling address is again atop the stack, it can be immediately
+re-called without any arguments, which means the function assumes
+whatever arguments were most recently contained in the unprovided
+parameter (still x).</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">At the end of the line with the
+implicit function declaration is a ^. This operator pops the stack,
+disregarding its value. In the provided example, it is used to remove
+the address correlated to inc from the stack.</P>
+</BODY>
+</HTML>
