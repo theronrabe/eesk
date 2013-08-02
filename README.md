@@ -1,6 +1,6 @@
 eesk
 ====
 
-Eesk programming language
+The Eesk programming language
 
-Direct your attention to readme.html
+To use Eesk, clone and read the file manual.html
