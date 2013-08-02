@@ -62,8 +62,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	while(!endOfStatement && tokLen != -1) {
 		tokLen = getToken(tok, src, SC, lineCount);
 //printf("token:\t%s\n", tok);
-		if(!tok[0]) {
-			printf("Error: Expected } symbol.\n");
+		if(!tok[0] && dst) {
+			printf("%d: Expected } symbol.\n", *lineCount);
 			//exit(0);
 		}
 		tempTable = tableLookup(keyWords, tok, &fakeLC);
