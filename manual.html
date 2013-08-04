@@ -73,13 +73,14 @@
 
 <p>To begin using Eesk, take a look at a simple example program, manual_examples/prints.ee:</p>
 
-<div class="highlight"><pre><span class="o">#</span><span class="kt">This</span> <span class="n">program</span> <span class="n">prints</span> <span class="n">some</span> <span class="n">text</span>
-<span class="p">{</span>
-<span class="kt">Begin</span>
-    <span class="n">prints</span> <span class="err">“</span><span class="kt">You're</span> <span class="n">a</span> <span class="n">grapefruitses</span><span class="o">.\</span><span class="n">n</span><span class="err">”</span><span class="p">;</span>
-<span class="kt">End</span>
-<span class="p">}</span>
-</pre></div>
+<pre><code>
+#This program prints some text
+{
+Begin
+	prints "You're a grapefruitses.\n";
+End
+}
+</code></pre>
 
 <p>Upon analysis, you might correctly assume that the # symbol leading the first line is indicative of a comment. Any text between a # and a new line will be ignored by ee. This, along with symbol delimiting, are the only times whitespace characters affect the meaning of an Eesk statement.</p>
 
@@ -96,16 +97,17 @@
 
 <p>The string in the previous code is an example of one of the operands that occupy the stack. Anything that is not an operator or a keyword is an operand, and it will be pushed to the stack simply because it is encountered. From this, you can gather what the following Eesk statement means, from manual_examples/theStack.ee:</p>
 
-<div class="highlight"><pre><span class="o">#</span><span class="n">This</span> <span class="n">program</span> <span class="n">illustrates</span> <span class="n">manipulation</span> <span class="n">of</span> <span class="n">the</span> <span class="n">stack</span>
-<span class="p">{</span>
-<span class="n">Begin</span>
-        <span class="mi">3</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-        <span class="o">-</span> <span class="o">+</span> <span class="mi">3</span> <span class="mi">2</span> <span class="mi">1</span><span class="p">;</span>
-        <span class="mi">3</span> <span class="mi">2</span> <span class="o">-</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-        <span class="mi">3</span> <span class="mi">2</span> <span class="mi">1</span> <span class="o">-</span> <span class="o">+</span><span class="p">;</span>
-<span class="n">End</span>
-<span class="p">}</span>
-</pre></div>
+<pre><code>
+#This program illustrates manipulation of the stack
+{
+Begin 
+	3 - 2 + 1; 
+	- + 3 2 1; 
+	3 2 - + 1;
+	3 2 1 - +;
+End
+}
+</code></pre>
 
 <p>When you run this program, you'll see an output of four 0s depicted on a stack. That is because all four lines between Begin and End mean the same thing. They place a 3, a 2, and a 1 on the stack, then perform an addition followed by a subtraction. These binary operators are right-associative, so the repeated line could more concretely be written as (3 – (2 + 1)).</p>
 
