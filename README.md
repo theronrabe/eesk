@@ -10,7 +10,7 @@ $ git clone https://github.com/theronrabe/eesk.git
 $ cd <eesk>/compiler;make
 $ cd ../vm; make
 ```
-The included manual file contains a comprehensive documentation of Eesk. This manual can also be found here: [The Eesk Programming Language](manual.html)
+The included manual file contains a comprehensive documentation of Eesk.
 
 ### How to contribute to Eesk
 Use the language. Try it for your next project. If things go smoothly, then keep using it. If not, contact me through github (@theronrabe), and I'll make it better for the next person. Have you done something to improve Eesk? Send a pull request!
