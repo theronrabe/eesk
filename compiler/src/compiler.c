@@ -195,11 +195,13 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 			case(k_oBracket):
 				if(!context->nativeFlag) {
 					//set aside call address/string for now
+					/*
 					writeObj(dst, PUSH, LC);		writeObj(dst, 2, LC);	//jump over word of call data
 					writeObj(dst, HOP, LC);
 					nameAddr = *LC;
 					writeObj(dst, 0, LC);	//storage for call address
 					writeObj(dst, POPTO, LC);	writeObj(dst, -1, LC); //writeObj(dst, nameAddr - *LC + 1, LC);
+					*/
 
 					//find length of arguments
 					fakeSC = *SC;
@@ -207,14 +209,14 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 
 					//push return address of call
-					writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+5, LC);			//push return address
+					writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+3, LC);			//push return address
 
 					//compile arguments
 					compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
 					subContext.instructionFlag = context->instructionFlag;
 
 					//make call
-					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
+					//writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
 					writeObj(dst, JSR, LC);
 
 					//return to right here
