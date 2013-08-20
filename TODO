@@ -1,8 +1,18 @@
 Compiler to-do list:
+	-command line options
+		-include path
+		-verbose mode
 
 Virtual Machine to-do list:
-	-Implement new instructions for bit shifting
+	-start switching over to native conventions
+		-use inline assembly to optimize virtual instructions
+		-use native stack
 
 Eesk Environment to-do list:
 	-keep making header files to link the standard C library.
-	-write a manual
+	-continue work on manual
+
+Currently working on:
+	-learning AMD64 architecture
+	-learning System V calling conventions
+	-considering design of a JIT for eesk
