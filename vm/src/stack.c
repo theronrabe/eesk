@@ -1,5 +1,5 @@
 /*
-stack.h
+stack.c
 
 	An array-based integer stack implementation.
 
@@ -19,18 +19,30 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _stack.h_
-#define _stack.h_
+#include <stack.h>
 #include <stdlib.h>
 
-typedef struct Stack {
-	long *array;
-	int sp;
-} Stack;
+Stack *stackCreate(int size) {
+	Stack *ret = malloc(sizeof(Stack));
+	ret->array = malloc(sizeof(long) * size);
+	ret->sp = 0;
+	ret->array[0] = 0;
+	return ret;
+}
 
-Stack *stackCreate(int size);
-void stackFree(Stack *st);
-void stackPush(Stack *st, long val);
-long stackPop(Stack *st);
+void stackFree(Stack *st) {
+	free(st->array);
+	free(st);
+}
 
-#endif
+void stackPush(Stack *st, long val) {
+	st->array[st->sp++] = val;
+}
+
+long stackPop(Stack *st) {
+	if(st->sp) {
+		return st->array[--st->sp];
+	} else {
+		return -1;
+	}
+}
