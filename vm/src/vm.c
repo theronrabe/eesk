@@ -93,8 +93,8 @@ void execute(long *MEM, Stack *STACK, long *address) {
 	Stack *activationStack = stackCreate(10000);
 	Stack *counterStack = stackCreate(128);
 	stackPush(counterStack, 0);
-	register long tempVal;
-	register long *tempAddr;
+	long tempVal;
+	long *tempAddr;
 	int i;
 	double tempFloat1, tempFloat2, floatResult;
 	char string[256];
@@ -219,13 +219,15 @@ void execute(long *MEM, Stack *STACK, long *address) {
 			//Activation Stack
 			case(JSR):
 				stackPush(counterStack, activationStack->sp);
-				tempAddr = &STACK->array[STACK->sp-2];	//stackPop(STACK);
+				tempAddr = STACK->array[STACK->sp-2];	//stackPop(STACK);
 
-				tempVal = *(((long *)(*tempAddr))+1) - (counterStack->array[counterStack->sp-1] - counterStack->array[counterStack->sp-2]);
+				//tempVal = *(((long *)(*tempAddr))+1) - (counterStack->array[counterStack->sp-1] - counterStack->array[counterStack->sp-2]);
+				tempVal = *(tempAddr-1) - (counterStack->array[counterStack->sp-1] - counterStack->array[counterStack->sp-2]);
+						//read above as (wordsNeeded) - ((topArg) - (bottomArg))
 				activationStack->sp += tempVal;
 				counterStack->array[counterStack->sp-1] += tempVal;	//account for stack memory that wasn't passed as arguments
 
-				tempAddr = (long *)*tempAddr + *(long *)(*tempAddr);	//combine contents with offset
+				//tempAddr = (long *)*tempAddr + *(long *)(*tempAddr);	//combine contents with offset
 				
 				//if(verboseFlag) printf("%p:\tJSR\t%p, counter = %d\n", PC, tempAddr, activationStack->sp);
 				PC = tempAddr;
@@ -315,7 +317,7 @@ void execute(long *MEM, Stack *STACK, long *address) {
 			//Float manipulation
 			case(FTOD):
 				tempVal = stackPop(STACK);
-				//tempFloat1 = *(float *) &tempVal;
+				tempFloat1 = *(float *) &tempVal;
 				tempVal = (long) tempFloat1;
 
 				stackPush(STACK, tempVal);
@@ -328,15 +330,15 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				break;
 			case(PRTF):
 				tempVal = stackPop(STACK);
-				//tempFloat1 = *(double *) &tempVal;
-				//printf("%p:\tPRINTS:\t%lf from value %lx\n", PC, tempFloat1, tempVal);
+				tempFloat1 = *(double *) &tempVal;
+				printf("%p:\tPRINTS:\t%lf from value %lx\n", PC, tempFloat1, tempVal);
 				++PC;
 				break;
 			case(FADD):
 				tempVal = stackPop(STACK);
-				//tempFloat1 = *(float *) &tempVal;
+				tempFloat1 = *(float *) &tempVal;
 				tempVal = stackPop(STACK);
-				//tempFloat2 = *(float * )&tempVal;
+				tempFloat2 = *(float * )&tempVal;
 				floatResult = tempFloat1 + tempFloat2;
 
 				stackPush(STACK, *(long *)&floatResult);
@@ -345,9 +347,9 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				break;
 			case(FSUB):
 				tempVal = stackPop(STACK);
-				//tempFloat1 = *(float *)&tempVal;
+				tempFloat1 = *(float *)&tempVal;
 				tempVal = stackPop(STACK);
-				//tempFloat2 = *(float *)&tempVal;
+				tempFloat2 = *(float *)&tempVal;
 				floatResult = tempFloat2 - tempFloat1;
 
 				stackPush(STACK, *(long *)&floatResult);
@@ -356,20 +358,20 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				break;
 			case(FMUL):
 				tempVal = stackPop(STACK);
-				//tempFloat1 = *(float *) &tempVal;
+				tempFloat1 = *(float *) &tempVal;
 				tempVal = stackPop(STACK);
 				//tempFloat2 = *(float *) &tempVal;
 				floatResult = tempFloat1 * tempFloat2;
 
 				stackPush(STACK, *(long *)&floatResult);
-				//if(verboseFlag) printf("%p:\tFMUL\n", PC);
+				if(verboseFlag) printf("%p:\tFMUL\n", PC);
 				++PC;
 				break;
 			case(FDIV):
 				tempVal = stackPop(STACK);
-				//tempFloat1 = *(float *)&tempVal;
+				tempFloat1 = *(float *)&tempVal;
 				tempVal = stackPop(STACK);
-				//tempFloat2 = *(float *)&tempVal;
+				tempFloat2 = *(float *)&tempVal;
 				floatResult = tempFloat2 / tempFloat1;
 
 				stackPush(STACK, *(long *)&floatResult);
