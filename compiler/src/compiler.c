@@ -32,6 +32,7 @@ This file is part of Eesk.
 #include <symbolTable.h>
 #include <ffi.h>
 #include <dlfcn.h>
+#include <writer.h>
 
 int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC, Context *context, int *lineCount) {
 	int endOfStatement = 0;		//tells us whether or not to unstack operators
@@ -139,19 +140,26 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				subContext.instructionFlag = 0;
 				
 				if(context->instructionFlag) {
-					writeObj(dst, PUSH, LC);	writeObj(dst, DC[1]+DC[2]+6, LC);
+					writeObj(dst, PUSH, LC);	writeObj(dst, DC[1]+DC[2]+5, LC);
 					writeObj(dst, HOP, LC);		//Hop over the definition
 				}
 
-				writeObj(dst, (DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
-				writeObj(dst, DC[0], LC);
+				//writeObj(dst, (DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
+
+				//reset calling address
+				nameAddr = *LC + DC[1] + 1;
+				tableAddSymbol(symbols->parent->layerRoot, tok, nameAddr, context->staticFlag, context->parameterFlag);
+
 				fakeLC = 0;
 				subContext.parameterFlag = 1;
 				compileStatement(keyWords, symbols, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);	//compiled parameters section
 				subContext.parameterFlag = 0;
-				//*LC += fakeLC;
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled data section
 				subContext.instructionFlag = 1;
+
+				writeObj(dst, DC[0], LC);	//write argument number at callAddress-1
+				//reset calling address to right here
+
 				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled statement section
 				subContext.instructionFlag = context->instructionFlag;
 				writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC + 1, LC);
@@ -689,38 +697,6 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 	return *LC - oldLC;
 }
 
-void writeObj(FILE *fn, long val, int *LC) {
-	//writes a word into the output file
-	if (fn) {
-		fwrite(&val, sizeof(long), 1, fn);
-		//printf("%x:%lx\n", *LC, val);
-		//if(val < 0) printf("\tValue to write: -%lx (relatively %lx)\n", -val, *LC + val - 1);
-	}
-	//(*LC) += WRDSZ;
-	++(*LC);
-}
-
-void writeStr(FILE *fn, char *str, int *LC) {
-	//write a string of characters to the output file, padding null characters to align words
-	int len = strlen(str) + 1;	//+1 to account for \0
-	int words = (len%WRDSZ)?len/WRDSZ+1:len/WRDSZ;
-	int padding = (len%WRDSZ)?WRDSZ - len%WRDSZ:0;
-	char pad = '\0';
-	int i;
-
-	if(fn) {
-		//write the string
-		fwrite(str, sizeof(char), len, fn);
-
-		//write padding, if needed
-		for(i=0;i<padding;i++) {
-			fwrite(&pad, sizeof(char), 1, fn);
-		}
-	}
-
-	//increase location counter
-	(*LC) += words;
-}
 
 int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, Context *context, int *lineCount) {
 	//this function figures out what address a non-keyword token should correlate to
