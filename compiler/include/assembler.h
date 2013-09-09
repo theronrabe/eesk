@@ -20,19 +20,14 @@ This file is part of Eesk.
 #ifndef _assembler.h_
 #define _assembler.h_
 
-typedef struct codeLib {
-	long eeskVal;
+typedef struct translation {
 	char *code;
 	int param;
-	
-	codeLib *right;
-	codeLib *left;
-} codeLib;
+} translation;
 
-codeLib *codeLibCreate();
-codeLib *codeLibAdd(codeLib *m, long eeskVal, char *code, int param);
-codeLib *codeLibLookup(codeLib *m, long eeskVal);
-void codeLibFree(codeLib *m);
+translation *translationCreate();
+void translationAdd(translation *m, int eeskVal, char *code, int param);
+void translationFree(translation *m);
 
-char *formCode(codeLib *m, long eeskVal, long arg);
+char *translationFormCode(translation *m, int eeskVal, long arg);
 #endif

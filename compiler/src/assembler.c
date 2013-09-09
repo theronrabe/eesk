@@ -20,3 +20,27 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include <assembler.h>
+#include <eeskIR.h>
+#include <stdlib.h>
+
+translation *translationCreate() {
+	translation *ret = malloc(sizeof(translation *) * TRANSLATION_SIZE);
+	return ret;
+}
+
+void translationAdd(translation *m, int eeskVal, char *code, int param) {
+	m[eeskVal].code = code;
+	m[eeskVal].param = param;
+}
+
+void translationFree(translation *m) {
+	free(m);
+}
+
+char *translationFormCode(translation *m, int eeskVal, long arg) {
+	long *param = (long *) m[eeskVal].code[m[eeskVal].param];
+	param = arg;
+	return m[eeskVal].code;
+}
