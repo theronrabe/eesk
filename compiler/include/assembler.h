@@ -21,13 +21,16 @@ This file is part of Eesk.
 #define _assembler.h_
 
 typedef struct translation {
-	char *code;
 	int param;
+	char dWord;
+	int length;
+	unsigned char *code;
 } translation;
 
 translation *translationCreate();
-void translationAdd(translation *m, int eeskVal, char *code, int param);
+void translationAdd(translation *m, int eeskVal, unsigned char *code, int param, char dWord);
+void translationExtend(translation *m);
 void translationFree(translation *m);
 
-char *translationFormCode(translation *m, int eeskVal, long arg);
+unsigned char *translationFormCode(translation *m, int eeskVal, long arg, int *C);
 #endif

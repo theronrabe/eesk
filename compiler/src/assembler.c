@@ -24,23 +24,47 @@ This file is part of Eesk.
 #include <assembler.h>
 #include <eeskIR.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 translation *translationCreate() {
-	translation *ret = malloc(sizeof(translation *) * TRANSLATION_SIZE);
+	translation *ret = malloc(sizeof(translation) * TRANSLATION_SIZE);
 	return ret;
 }
 
-void translationAdd(translation *m, int eeskVal, char *code, int param) {
+void translationAdd(translation *m, int eeskVal, unsigned char *code, int param, char dWord) {
 	m[eeskVal].code = code;
 	m[eeskVal].param = param;
+	m[eeskVal].dWord = dWord;
+	
+	m[eeskVal].length = 0;
+	for(int i=0; !(code[i] == 0xC3 && code[i+1] == 0xC3); i++)	//0xC3 is the retq instruction. Two consecutive 0xC3 bytes mark the end of a code translation.
+		m[eeskVal].length++;
+}
+
+void translationExtend(translation *m) {
+	for(int i=0; i<TRANSLATION_SIZE; i++) {
+		if(!m[i].code) {
+			unsigned char c_nop[] = {0x90, 0xC3, 0xC3};
+			translationAdd(m, i, c_nop, -1, 0);
+		}
+	}
 }
 
 void translationFree(translation *m) {
 	free(m);
 }
 
-char *translationFormCode(translation *m, int eeskVal, long arg) {
-	long *param = (long *) m[eeskVal].code[m[eeskVal].param];
-	param = arg;
-	return m[eeskVal].code;
+unsigned char *translationFormCode(translation *m, int eeskVal, long arg, int *C) {
+	translation *a = &(m[eeskVal]);
+	if(a->param >= 0) {
+		if(a->dWord) {
+			int *param = (int *) a->code[a->param];
+			param = (int) arg;
+		} else {
+			long *param = (long *) (a->code[a->param]);
+			param = arg;
+		}
+	}
+	(*C) += a->length;
+	return a->code;
 }
