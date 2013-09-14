@@ -25,8 +25,10 @@ This file is part of Eesk.
 #include <ffi.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <kernel.h>
+#include <sys/mman.h>
 
-long *PC = 0;
+char *PC = 0;
 long SP = 0;
 long LEN = 0;
 char verboseFlag = 0;
@@ -34,25 +36,28 @@ Stack *libStack;
 
 long *load(char *fn) {
 	FILE *fp;
-	long *ret = NULL;
+	unsigned char *ret = NULL;
 	long i=0, j=0;
 
 	fp = fopen(fn, "rt");
 	fseek(fp, 0, SEEK_END);
 	i = ftell(fp);
 	rewind(fp);
-	ret = (long *)malloc(sizeof(char) * (i));
+	//ret = (unsigned char *)malloc(sizeof(char) * (i));
+	ret = mmap(0, i, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, 0, 0);
 	fread(ret,sizeof(char),i,fp);
+	mprotect(ret, i, PROT_READ|PROT_WRITE|PROT_EXEC);
 	fclose(fp);
 
-	long offset = ret[i/WRDSZ - 1];
+	//long offset = ret[i/WRDSZ - 1];
+	long offset = * (long *)&ret[i-7];
 	//PC = (long *)(((long) &ret[0]) + offset);
 	PC = ret + offset;
 	if(verboseFlag) printf("PC = %lx + %lx = %lx\n", ret, offset, PC);
 
 	if(verboseFlag) {
-		for(j=0;j<=i/sizeof(long);j++) {
-			printf("%lx\t%lx:\t%lx\n", (long)&ret[j], j*WRDSZ, ret[j]);
+		for(j=0;j<=i;j++) {
+			printf("%lx:\t%02x\n", (long)&ret[j], ret[j]);
 		}
 	}
 
@@ -61,30 +66,56 @@ long *load(char *fn) {
 
 void main(int argc, char **argv) {
 	if(argc>2) verboseFlag = 1;
+	long *MEM = load(argv[1]);
+	long *activationStack = malloc(1000);
+	activationStack += 1000;
+	long *counterStack = malloc(1000);
+	counterStack += 1000;
 
+	
+	asm volatile (
+			"movq %%rsp, %%rbp\n\t"	//save root stack position in rbp
+			"pushq %0\n\t"		//place address space on stack
+			"pushq %1\n\t"		//push kernel location
+			"pushq %2\n\t"		//push activation stack
+			"pushq %3\n\t"		//push counter stack
+			"callq *%4\n\t"		//pass control to user's program
+			:
+			:"r" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC)
+			);
+	kernel(HALT, main);
+
+	/*
 	Stack *STACK = stackCreate(10000);
 	libStack = stackCreate(32);
-	long *MEM = load(argv[1]);
 
 	if(verboseFlag) printf("________________________________________________________________________________\n\n");
 	execute(MEM, STACK, PC);
 	
 	stackFree(STACK);
+	*/
 }
 
-void quit(long *MEM, Stack *STACK, long PC) {
-	//printf("Machine halts on address %lx\n\n", PC);
-	
-	int i;
-	for(i=STACK->sp-1; i>=0; i--) {
-		printf("| %4lx |\n", STACK->array[i]);
+void quit() {
+	long *rsp, *rbp;
+	asm("movq %%rsp, %0\n\t": "=m" (rsp)::"memory");
+	asm("movq %%rbp, %0\n\t": "=m" (rbp)::"memory");
+
+	rsp += 4;
+	rbp -= 5;
+	printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
+	//for(i=STACK->sp-1; i>=0; i--) {
+	for(;rsp < rbp; rsp++){
+		printf("| %4lx |\n", *rsp);
 	}
 		printf("|______|\n");
 	
 	//Unload libStack
-	for(i=0;i<libStack->sp;i++) {
+	/*
+	for(int i=0;i<libStack->sp;i++) {
 		dlclose(libStack->array[i]);
 	}
+	*/
 	
 	exit(0);
 }
@@ -105,7 +136,7 @@ void execute(long *MEM, Stack *STACK, long *address) {
 		switch(*PC) {
 			//Machine Control
 			case(HALT):
-				quit(MEM, STACK, PC);
+			//	quit(MEM, STACK, PC);
 				//if(verboseFlag) printf("%lp:\tHALT\n", PC);
 				break;
 			case(JMP):

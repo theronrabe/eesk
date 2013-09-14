@@ -1,5 +1,10 @@
 /*
-assembler.h
+kernel.c
+
+	This file contains the eesk kernel. The kernel is a function that takes an eeskir instruction
+	and a return address. It then performs the correlating actions at a higher level than the machine 
+	code can easily do, and in a safer environment. Process control is then returned to the return
+	address. The kernel's calling address is remembered at eesk startup for easy calling at any time.
 
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
@@ -17,22 +22,18 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _assembler.h_
-#define _assembler.h_
 
-typedef struct translation {
-	int param;
-	char dWord;
-	int length;
-	unsigned char *code;
-} translation;
+#include <vm.h>
+#include <kernel.h>
 
-translation *translationCreate();
-void translationAdd(translation *m, int eeskVal, unsigned char *code, int param, char dWord);
-void translationExtend(translation *m);
-void translationFree(translation *m);
-
-unsigned char *translationFormCode(translation *m, long eeskVal, long arg, int *C);
-
-void codeCopy(unsigned char *src, unsigned char *dst, int n);
-#endif
+void kernel(long eeskir, void *returnAddress) {
+	switch(eeskir) {
+		case(HALT):
+			quit();
+			break;
+		case(NTV):
+			break;
+		case(NEW):
+			break;
+	}
+}
