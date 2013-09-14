@@ -21,16 +21,26 @@ This file is part of Eesk.
 */
 #include <writer.h>
 #include <string.h>
+#include <assembler.h>
+#include <eeskIR.h>
 
-void writeObj(FILE *fn, long val, int *LC) {
-	//writes a word into the output file
+void writeObj(FILE *fn, long instr, long param, translation *m, int *LC) {
+	//This function turns an eeskIR instruction and argument, translates it, and writes its code.
+	int len = 0;
+	printf("\nTrying to write eeskir: %lx\n", instr);
 	if (fn) {
-		fwrite(&val, sizeof(long), 1, fn);
-		//printf("%x:%lx\n", *LC, val);
+		unsigned char *out = translationFormCode(m, instr, param, &len);
+		fwrite(out, 1, len, fn);
+
+		printf("%x:", *LC);
+		for(int i=0; i<len; i++) {
+			printf("%02x ", out[i]);
+		}
+		printf("\n");
 		//if(val < 0) printf("\tValue to write: -%lx (relatively %lx)\n", -val, *LC + val - 1);
 	}
 	//(*LC) += WRDSZ;
-	++(*LC);
+	(*LC) += len;
 }
 
 void writeStr(FILE *fn, char *str, int *LC) {

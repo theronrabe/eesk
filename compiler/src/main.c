@@ -1,7 +1,7 @@
 /*
 main.c
 
-	This file compiles another file that was written in Eesk for the Eesk Virtual Machine.
+	This file compiles a file containing Eesk code for the Eesk Virtual Machine.
 
 Copyright 2013 Theron Rabe
 This file is part of Eesk.
@@ -21,6 +21,8 @@ This file is part of Eesk.
 */
 
 #include <compiler.h>
+#include <eeskIR.h>
+#include <writer.h>
 
 int main(int argc, char **argv) {
 	char *src = loadFile(argv[1]);
@@ -28,6 +30,7 @@ int main(int argc, char **argv) {
 	Table *keyWords = prepareKeywords();
 	Table *symbols = tableCreate();
 	Context context;
+	translation *dictionary = prepareTranslation();
 	int SC = 0, LC = 0, lineCount = 1;
 	
 	callStack = stackCreate(32);
@@ -42,8 +45,9 @@ int main(int argc, char **argv) {
 	context.parameterFlag = 0;
 	context.instructionFlag = 0;
 	
-	compileStatement(keyWords, symbols, src, &SC, dst, &LC, &context, &lineCount);
-	writeObj(dst, transferAddress, &LC);
+	compileStatement(keyWords, symbols, dictionary, src, &SC, dst, &LC, &context, &lineCount);
+	writeObj(dst, DATA, transferAddress, dictionary, &LC);
+printf("transfer address: %lx\n", transferAddress);
 
 	free(src);
 	fclose(dst);

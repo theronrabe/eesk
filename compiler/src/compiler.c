@@ -3,7 +3,7 @@ compiler.c
 
 
 	This is the compiler. It basically works as a large finite state machine, where each iteration of the compileStatement
-	function corresponds to a new token-decided state, along with a context. Any state has the potential to write pneumonic 
+	function corresponds to a new token-decided state, along with a context. Any state has the potential to write mnemonic
 	machine code to the output file using the writeObj function, or oftentimes recurse into compiling a substatement, then
 	advancing to the next state.
 
@@ -33,8 +33,10 @@ This file is part of Eesk.
 #include <ffi.h>
 #include <dlfcn.h>
 #include <writer.h>
+#include <eeskIR.h>
+#include <translations.h>
 
-int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC, Context *context, int *lineCount) {
+int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, char *src, int *SC, FILE *dst, int *LC, Context *context, int *lineCount) {
 	int endOfStatement = 0;		//tells us whether or not to unstack operators
 	int oldLC = *LC;		//for measuring output progress
 	int fakeLC = 0;			//for measuring relative addresses sub-statement
@@ -82,19 +84,20 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				//get length of statement
 				fakeSC = *SC;
 				subContext.instructionFlag = 1;
-				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition
-				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//clause
-				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//else
+				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition
+				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//clause
+				DC[2] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//else
 
-				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+DC[1]+6, LC);	//else address
-				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condition
-				writeObj(dst, BNE, LC);								//decide
+				//fakeLC = m[RPUSH].length + m[BNE].length + m[RPUSH].length + m[JMP].length;
+				writeObj(dst, RPUSH, DC[0]+DC[1]+6, dictionary, LC);						//else address
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condition
+				writeObj(dst, BNE, 0, dictionary, LC);								//decide
 
-				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, lineCount);		//compiled statement
-				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[2]+3, LC);	//push end address
-				writeObj(dst, JMP, LC);		//jump to end
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, lineCount);		//compiled statement
+				writeObj(dst, RPUSH, DC[2]+3, dictionary, LC);						//push end address
+				writeObj(dst, JMP, 0, dictionary, LC);							//jump to end
 
-				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled else
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled else
 				break;
 
 
@@ -105,15 +108,15 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				//get section lengths
 				fakeSC = *SC;
 				subContext.instructionFlag = 1;
-				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition length
-				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//loop length
+				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition length
+				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//loop length
 
-				writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+DC[1]+6, LC);	//end address
-				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
-				writeObj(dst, BNE, LC);								//decide
-				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);			//compiled loop
-				writeObj(dst, RPUSH, LC);	writeObj(dst, -(DC[0]+DC[1]+3), LC);			//begin address
-				writeObj(dst, JMP, LC);								//iterate
+				writeObj(dst, RPUSH, DC[0]+DC[1]+6, dictionary, LC);	//end address
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
+				writeObj(dst, BNE, 0, dictionary, LC);								//decide
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);			//compiled loop
+				writeObj(dst, RPUSH, -(DC[0]+DC[1]+3), dictionary, LC);			//begin address
+				writeObj(dst, JMP, 0, dictionary, LC);								//iterate
 				break;
 
 
@@ -131,17 +134,17 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				fakeLC = 0;
 				subContext.parameterFlag = 1;
 				subContext.instructionFlag = 0;
-				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//param length
+				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//param length
 				subContext.parameterFlag = 0;
 				fakeLC = 0;	//because parameters don't increment location counter
-				DC[1] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//data length
+				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//data length
 				subContext.instructionFlag = 1;
-				DC[2] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//statement length
+				DC[2] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//statement length
 				subContext.instructionFlag = 0;
 				
 				if(context->instructionFlag) {
-					writeObj(dst, PUSH, LC);	writeObj(dst, DC[1]+DC[2]+5, LC);
-					writeObj(dst, HOP, LC);		//Hop over the definition
+					writeObj(dst, PUSH, DC[1]+DC[2]+5, dictionary, LC);
+					writeObj(dst, HOP, 0, dictionary, LC);		//Hop over the definition
 				}
 
 				//writeObj(dst, (DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
@@ -152,22 +155,22 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				fakeLC = 0;
 				subContext.parameterFlag = 1;
-				compileStatement(keyWords, symbols, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);	//compiled parameters section
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);	//compiled parameters section
 				subContext.parameterFlag = 0;
-				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled data section
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled data section
 				subContext.instructionFlag = 1;
 
-				writeObj(dst, DC[0], LC);	//write argument number at callAddress-1
+				writeObj(dst, DATA, DC[0], dictionary, LC);	//write argument number at callAddress-1
 				//reset calling address to right here
 
-				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled statement section
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled statement section
 				subContext.instructionFlag = context->instructionFlag;
-				writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC + 1, LC);
-				writeObj(dst, RSR, LC);
+				writeObj(dst, RPUSH, nameAddr - *LC + 1, dictionary, LC);
+				writeObj(dst, RSR, 0, dictionary, LC);
 	
 				if(context->instructionFlag) {
 					//basically, act like a lambda function
-					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);
+					writeObj(dst, RPUSH, nameAddr - *LC+1, dictionary, LC);
 				}
 
 				//no longer in this namespace
@@ -182,20 +185,20 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_cBrace):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				endOfStatement = 1;
 				break;
 
 
 			case(k_oParen):
 				subContext.instructionFlag = 1;
-				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, lineCount);
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, lineCount);
 				subContext.instructionFlag = context->instructionFlag;
 				break;
 
 
 			case(k_cParen):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				endOfStatement = 1;
 				break;
 
@@ -214,60 +217,60 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					//find length of arguments
 					fakeSC = *SC;
 					subContext.instructionFlag = 1;
-					DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
+					DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 
 					//push return address of call
-					writeObj(dst, RPUSH, LC);	writeObj(dst, DC[0]+3, LC);			//push return address
+					writeObj(dst, RPUSH, DC[0]+3, dictionary, LC);			//push return address
 
 					//compile arguments
-					compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
+					compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
 					subContext.instructionFlag = context->instructionFlag;
 
 					//make call
 					//writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
-					writeObj(dst, JSR, LC);
+					writeObj(dst, JSR, 0, dictionary, LC);
 
 					//return to right here
 
 				} else {
 					//compiled argument section
 					subContext.instructionFlag = 1;
-					compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
+					compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
 					subContext.instructionFlag = context->instructionFlag;
 
 					//make call
-					writeObj(dst, NTV, LC);
+					writeObj(dst, NTV, 0, dictionary, LC);
 				}
 				break;
 
 
 			case(k_cBracket):
-				fillOperations(dst, LC, operationStack);
-				if(*LC - oldLC) writeObj(dst, APUSH, LC);
+				fillOperations(dst, LC, operationStack, dictionary);
+				if(*LC - oldLC) writeObj(dst, APUSH, 0, dictionary, LC);
 				endOfStatement = 1;
 				break;
 
 
 			case(k_prnt):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				stackPush(operationStack, PRNT);
 				break;
 
 
 			case(k_prtf):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				stackPush(operationStack, PRTF);
 				break;
 
 
 			case(k_prtc):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				stackPush(operationStack, PRTC);
 				break;
 
 
 			case(k_prts):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				stackPush(operationStack, PRTS);
 				break;
 
@@ -279,16 +282,16 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 			case(k_singleQuote):
 				tokLen = getToken(tok, src, SC, lineCount);
-				writeObj(dst, PUSH, LC);	writeObj(dst, tok[0], LC);
+				writeObj(dst, PUSH, tok[0], dictionary, LC);
 				break;
 
 
 			case(k_doubleQuote):
 				DC[0] = getQuote(tok, src, SC);
 				if(!context->literalFlag) {
-					writeObj(dst, RPUSH, LC);	writeObj(dst, 5, LC);	//push start of string
-					writeObj(dst, RPUSH, LC);	writeObj(dst, 3+DC[0], LC);	//push end of string
-					writeObj(dst, JMP, LC);						//skip over string leaving it on stack
+					writeObj(dst, RPUSH, 5, dictionary, LC);	//push start of string
+					writeObj(dst, RPUSH, 3+DC[0], dictionary, LC);	//push end of string
+					writeObj(dst, JMP, 0, dictionary, LC);						//skip over string leaving it on stack
 				}
 				writeStr(dst, tok, LC);
 				break;
@@ -309,9 +312,9 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				if(numeric(tok[0])) {		//is this an array?
 					//create a symbol and some memory
 					DC[0] = atoi(tok);
-					writeObj(dst, *LC, LC);
+					writeObj(dst, DATA, *LC, dictionary, LC);
 					for(i=0;i<DC[0];i++)
-						writeObj(dst, DC[0], LC);
+						writeObj(dst, DATA, DC[0], dictionary, LC);
 					tokLen = getToken(tok, src, SC, lineCount);
 					if(dst) {
 						tempTable = tableAddSymbol(symbols, tok, *LC-DC[0]-1, context->staticFlag, context->parameterFlag);
@@ -321,10 +324,11 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					tempTable = tableAddSymbol(symbols, tok, *LC + ((context->instructionFlag)?1:0), context->staticFlag, context->parameterFlag);
 					if(!context->parameterFlag) {
 						if(context->publicFlag) publicize(tempTable);
-						if(context->instructionFlag) writeObj(dst, GRAB, LC);
-						writeObj(dst, 0, LC);
+						if(context->instructionFlag) writeObj(dst, GRAB, 0, dictionary, LC);
+						writeObj(dst, DATA, 0, dictionary, LC);
 					} else {
-						++(*LC);
+						//++(*LC);
+						(*LC) += WRDSZ;
 					}
 				}
 				break;
@@ -342,18 +346,18 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_halt):
-				writeObj(dst, HALT, LC);
+				writeObj(dst, HALT, 0, dictionary, LC);
 				break;
 
 
 			case(k_clr):
-				writeObj(dst, CLR, LC);
+				writeObj(dst, CLR, 0, dictionary, LC);
 				break;
 
 
 			case(k_endStatement):
 				//unstack operators and reset flags
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				subContext.publicFlag = 0;
 				context->publicFlag = 0;
 				subContext.nativeFlag = 0;
@@ -363,18 +367,18 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				break;
 
 			case(k_argument):
-				fillOperations(dst, LC, operationStack);
-				if(!context->parameterFlag) writeObj(dst, APUSH, LC);
+				fillOperations(dst, LC, operationStack, dictionary);
+				if(!context->parameterFlag) writeObj(dst, APUSH, 0, dictionary, LC);
 				break;
 
 
 			case(k_cont):
-				writeObj(dst, CONT, LC);
+				writeObj(dst, CONT, 0, dictionary, LC);
 				break;
 
 
 			case(k_not):
-				writeObj(dst, NOT, LC);
+				writeObj(dst, NOT, 0, dictionary, LC);
 				break;
 
 
@@ -384,31 +388,31 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_is):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				stackPush(operationStack, POP);
 				break;
 
 
 			case(k_set):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				stackPush(operationStack, BPOP);
 				break;
 
 
 			case(k_eq):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				stackPush(operationStack, EQ);
 				break;
 
 
 			case(k_gt):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				stackPush(operationStack, GT);
 				break;
 
 
 			case(k_lt):
-				fillOperations(dst, LC, operationStack);
+				fillOperations(dst, LC, operationStack, dictionary);
 				stackPush(operationStack, LT);
 				break;
 
@@ -502,25 +506,25 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				fakeSC = *SC;
 				fakeLC = 1;
 				subContext.instructionFlag = 0;
-				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
+				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 
 				//hop over the definition
 				if(context->instructionFlag) {
-					writeObj(dst, PUSH, LC);	writeObj(dst, DC[0] + 2, LC);
-					writeObj(dst, HOP, LC);
+					writeObj(dst, PUSH, DC[0] + 2, dictionary, LC);
+					writeObj(dst, HOP, 0, dictionary, LC);
 				}
 
 				//write its length, and its body (addressed relative to right here)
-				writeObj(dst, DC[0], LC);
+				writeObj(dst, DATA, DC[0], dictionary, LC);
 				fakeLC = 1;
 				subContext.instructionFlag = 0;
-				compileStatement(keyWords, symbols, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);
 				subContext.instructionFlag = context->instructionFlag;
 				*LC += fakeLC - 1; //accommodate for change in location
 
 				//push newing address, if we're in the middle of instructions
 				if(context->instructionFlag) {
-					writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);
+					writeObj(dst, RPUSH, nameAddr - *LC+1, dictionary, LC);
 				}
 				
 				//clean up
@@ -539,18 +543,18 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				fakeSC = *SC;
 				fakeLC = 0;
 				subContext.instructionFlag = 0;
-				DC[0] = compileStatement(keyWords, symbols, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
+				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 				subContext.instructionFlag = context->instructionFlag;
 
 				//hop over the definition
 				if(context->instructionFlag) {
-					writeObj(dst, PUSH, LC);	writeObj(dst, DC[0] + 1, LC);
-					writeObj(dst, HOP, LC);
+					writeObj(dst, PUSH, DC[0] + 1, dictionary, LC);
+					writeObj(dst, HOP, 0, dictionary, LC);
 				}
 
 				//compile the body
 				subContext.instructionFlag = 0;
-				compileStatement(keyWords, symbols, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
 				subContext.instructionFlag = context->instructionFlag;
 
 				//clean up
@@ -584,7 +588,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				char *inc = loadFile(tok);
 				trimComments(inc);
 				fakeSC = 0;
-				compileStatement(keyWords, symbols, inc, &fakeSC, dst, LC, &subContext, (dst)?lineCount:&i);
+				compileStatement(keyWords, symbols, dictionary, inc, &fakeSC, dst, LC, &subContext, (dst)?lineCount:&i);
 				free(inc);
 				break; 
 
@@ -611,7 +615,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 
 			case(k_redir):
-				writeObj(dst, CONT, LC);
+				writeObj(dst, CONT, 0, dictionary, LC);
 				tokLen = getToken(tok, src, SC, lineCount);
 				tempTable = tableLookup(symbols, tok, &fakeLC);
 				if(!tempTable) {
@@ -624,8 +628,8 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 				} else {
 					DC[0] = tempTable->val;
 				}
-				writeObj(dst, PUSH, LC);	writeObj(dst, DC[0]*WRDSZ, LC);
-				writeObj(dst, ADD, LC);
+				writeObj(dst, PUSH, DC[0]*WRDSZ, dictionary, LC);
+				writeObj(dst, ADD, 0, dictionary, LC);
 				break;
 
 
@@ -650,18 +654,18 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 
 				charPtr = strtok(string, "():");	//grab function name
 
-				writeObj(dst, 0, LC);		//space for function pointer
+				writeObj(dst, DATA, 0, dictionary, LC);		//space for function pointer
 
 				//get return type
 				charPtr2 = strtok(NULL, "():");
-				writeObj(dst, charPtr2[0], LC);
+				writeObj(dst, DATA, charPtr2[0], dictionary, LC);
 
 				//get argument information
 				charPtr2 = strtok(NULL, "():");
-				writeObj(dst, strlen(charPtr2), LC);	//write argument count
+				writeObj(dst, DATA, strlen(charPtr2), dictionary, LC);	//write argument count
 				
 				for(i=0;i<strlen(charPtr2);i++) {
-					writeObj(dst, (long) charPtr2[i], LC);
+					writeObj(dst, DATA, (long) charPtr2[i], dictionary, LC);
 				}
 
 				//write function name
@@ -677,16 +681,19 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 					//this is a numeric literal
 					if(isFloat(tok)) {
 						tempFloat = atof(tok);
-						if(!context->literalFlag) writeObj(dst, PUSH, LC);
-						if(dst) {
-							writeObj(dst, *(long *) &tempFloat, LC);
+						if(!context->literalFlag) {
+							writeObj(dst, PUSH, *(long *) &tempFloat, dictionary, LC);
+						} else {
+							if(dst) {
+								writeObj(dst, DATA, *(long *) &tempFloat, dictionary, LC);
+							}
 						}
 					} else {
-						if(!context->literalFlag) writeObj(dst, PUSH, LC);
-						writeObj(dst, atol(tok), LC);	//push its value
+						if(!context->literalFlag) writeObj(dst, PUSH, atol(tok), dictionary, LC);
+						else writeObj(dst, DATA, atol(tok), dictionary, LC);	//push its value
 					}
 				} else {
-					writeAddressCalculation(dst, tok, symbols, LC, context, lineCount);
+					writeAddressCalculation(dst, tok, symbols, dictionary, LC, context, lineCount);
 				}
 				break;
 		}
@@ -698,7 +705,7 @@ int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *
 }
 
 
-int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, Context *context, int *lineCount) {
+int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation *dictionary, int *LC, Context *context, int *lineCount) {
 	//this function figures out what address a non-keyword token should correlate to
 	//and writes that address to the output file
 	int oldLC = *LC;
@@ -713,11 +720,11 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, Con
 			//This is an implicitly declared variable
 			if(dst) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", *lineCount, sym->token, sym->val, sym->staticFlag);
 			if(context->publicFlag) publicize(sym);
-			if(!context->literalFlag && context->instructionFlag) writeObj(dst, GRAB, LC);
-			writeObj(dst, 0, LC);
+			if(!context->literalFlag && context->instructionFlag) writeObj(dst, GRAB, 0, dictionary, LC);
+			writeObj(dst, DATA, 0, dictionary, LC);
 		} else {
 			//this is a parameter declaration, count it and carry on
-			(*LC)++;
+			(*LC) += WRDSZ;
 		}
 		return *LC - oldLC;
 	}
@@ -725,39 +732,40 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, int *LC, Con
 	int value = sym->val + fakeLC;
 	
 	if(sym->parameterFlag) {
-		writeObj(dst, AGET, LC);
-		writeObj(dst, value, LC);
+		writeObj(dst, AGET, value, dictionary, LC);
 	} else {
 		if(!sym->staticFlag) {
 			if(!fakeLC) {
 				//symbol is not being called for within a collection
 				//if(dst) printf("%d:\t%s, to dynamic, no transversal\n", *lineCount, sym->token);
 				if(!context->literalFlag) {
-					writeObj(dst, RPUSH, LC);
+					writeObj(dst, RPUSH, value - *LC + 1, dictionary, LC);
+				} else {
+					writeObj(dst, DATA, value - *LC + 1, dictionary, LC);
 				}
-				writeObj(dst, value - *LC + 1, LC);
 			} else {
 				//if(dst) printf("%d:\t%s to static from dynamic\n", *lineCount, sym->token);
-				writeObj(dst, PUSH, LC);	writeObj(dst, sym->val, LC);
-				writeObj(dst, LOC, LC);
+				writeObj(dst, PUSH, sym->val, dictionary, LC);
+				writeObj(dst, LOC, 0, dictionary, LC);
 			}
 		} else {
 			//if(dst) printf("%d:\t%s to static from somewhere\n", *lineCount, sym->token);
-			if(!context->literalFlag) writeObj(dst, PUSH, LC);
-			writeObj(dst, value, LC);
-			writeObj(dst, LOC, LC);
+			if(!context->literalFlag) writeObj(dst, PUSH, value, dictionary, LC);
+			else writeObj(dst, DATA, value, dictionary, LC);
+			writeObj(dst, LOC, 0, dictionary, LC);
 		}
 	}
 	return *LC - oldLC;
 }
 
-void fillOperations(FILE *dst, int *LC, Stack *operationStack) {
+void fillOperations(FILE *dst, int *LC, Stack *operationStack, translation *dictionary) {
 	//unstacks operators
-	int op;
+	long op;
 
 	while((op = stackPop(operationStack))) {
 		if(op == -1) break;
-		writeObj(dst, op, LC);
+		writeObj(dst, op, 0, dictionary, LC);
+		printf("op = %x:%lx\nop->length = %x\nop->param = %x\nop->code = %lx\n", op, &dictionary[op], dictionary[op].length, dictionary[op].param, dictionary[op].code);
 	}
 }
 
@@ -826,5 +834,41 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "load", k_load, 0, 0);
 	tableAddSymbol(ret, "Native", k_nativeFunction, 0, 0);
 
+	return ret;
+}
+
+translation *prepareTranslation() {
+	translation *ret = translationCreate(); 
+	translationAdd(ret, HALT, c_halt, -1, 0); 
+	translationAdd(ret, JMP, c_jmp, -1, 0); 
+	translationAdd(ret, HOP, c_hop, -1, 0); 
+	translationAdd(ret, BRN, c_brn, -1, 0); 
+	translationAdd(ret, BNE, c_bne, -1, 0); 
+	translationAdd(ret, NTV, c_ntv, -1, 0); 
+	translationAdd(ret, LOC, c_loc, -1, 0); 
+	translationAdd(ret, PUSH, c_push, 2, 0); 
+	translationAdd(ret, RPUSH, c_rpush, 3, 1); 
+	translationAdd(ret, GRAB, c_grab, -1, 0); 
+	translationAdd(ret, POP, c_pop, -1, 0); 
+	translationAdd(ret, BPOP, c_bpop, -1, 0); 
+	translationAdd(ret, CONT, c_cont, -1, 0); 
+	translationAdd(ret, CLR, c_clr, -1, 0); 
+	translationAdd(ret, JSR, c_jsr, -1, 0); 
+	translationAdd(ret, RSR, c_rsr, -1, 0); 
+	translationAdd(ret, APUSH, c_apush, -1, 0); 
+	translationAdd(ret, AGET, c_aget, 2, 0);
+	translationAdd(ret, ADD, c_add, -1, 0);
+	translationAdd(ret, SUB, c_sub, -1, 0);
+	translationAdd(ret, MUL, c_mul, -1, 0);
+	translationAdd(ret, DIV, c_div, -1, 0);
+	translationAdd(ret, MOD, c_mod, -1, 0);
+	translationAdd(ret, AND, c_and, -1, 0);
+	translationAdd(ret, OR, c_or, -1, 0);
+	translationAdd(ret, NOT, c_not, -1, 0);
+	translationAdd(ret, GT, c_gt, -1, 0);
+	translationAdd(ret, LT, c_lt, -1, 0);
+	translationAdd(ret, EQ, c_eq, -1, 0);
+	translationAdd(ret, DATA, c_data, 0, 0);
+	
 	return ret;
 }

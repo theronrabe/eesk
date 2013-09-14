@@ -25,6 +25,6 @@ This file is part of Eesk.
 #include <compiler.h>
 
 void writeVals(FILE *file, char *vals, int length);		//writes length number of bytes from vals[]
-void writeObj(FILE *fn, long val, int *LC);			//writes an eesk instruction
+void writeObj(FILE *fn, long instr, long param, translation *m, int *LC);			//writes an eesk instruction
 void writeStr(FILE *fn, char *str, int *LC);			//writes an eesk string
 #endif

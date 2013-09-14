@@ -23,8 +23,7 @@ This file is part of Eesk.
 #include <symbolTable.h>
 #include <fileIO.h>
 #include <stdio.h>
-
-#define WRDSZ 8
+#include <assembler.h>
 
 int transferAddress;
 Stack *callStack;
@@ -39,74 +38,13 @@ typedef struct Context {
 	char instructionFlag;
 } Context;
 
-int compileStatement(Table *keyWords, Table *symbols, char *src, int *SC, FILE *dst, int *LC, Context *con, int *lineCounter);
-int writeAddressCalculation(FILE *fn, char *token, Table *symbols, int *LC, Context *context, int *lineCounter);
+int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, char *src, int *SC, FILE *dst, int *LC, Context *con, int *lineCounter);
+int writeAddressCalculation(FILE *fn, char *token, Table *symbols, translation *dictionary, int *LC, Context *context, int *lineCounter);
 Table *prepareKeywords();
-void fillOperations(FILE *dst, int *LC, Stack *operationStack);
+translation *prepareTranslation();
+void fillOperations(FILE *dst, int *LC, Stack *operationStack, translation *dictionary);
 
 typedef enum {
-	//machine control
-	HALT,
-	JMP,
-	HOP,
-	BRN,
-	BNE,
-	NTV,
-	LOC,
-	DLOC,
-	PRNT,
-
-	//stack control
-	PUSH,	//6
-	RPUSH,
-	GRAB,
-	POPTO,
-	POP,
-	BPOP,
-	CONT,
-	CLR,
-
-	//activation stack
-	JSR,
-	RSR,
-	APUSH,
-	AGET,
-
-	//value manipulation
-	ADD,	//10
-	SUB,
-	MUL,
-	DIV,
-	MOD,
-	AND,
-	OR,
-	NOT,
-	SHIFT,
-
-	//float manipulation
-	FTOD,	//18
-	DTOF,
-	PRTF,
-	FADD,
-	FSUB,
-	FMUL,
-	FDIV,
-
-	//string manipulation
-	PRTC,	//25
-	PRTS,
-
-	//comparison
-	GT,	//27
-	LT,
-	EQ,
-
-	//memory handling
-	ALOC,	//30
-	NEW,
-	FREE,
-	LOAD,
-
 	//language keywords
 	k_if, k_while,
 	k_Function,
@@ -132,6 +70,6 @@ typedef enum {
 	k_argument,
 	k_redir,
 	k_load, k_nativeFunction
-} OPCODE;
+} KEYWORD;
 
 #endif
