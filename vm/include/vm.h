@@ -84,7 +84,7 @@ typedef enum {
 
 long *load(char *fn);
 void execute(long *MEM, Stack *STACK, long *address);
-void quit();
+void quit(long *rsp, long *rbp);
 long nativeCall(long *call, void *handle, Stack *STACK);
 long loc(long start, long offset);
 long dloc(long start, long address);

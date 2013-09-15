@@ -96,14 +96,14 @@ void main(int argc, char **argv) {
 	*/
 }
 
-void quit() {
-	long *rsp, *rbp;
+void quit(long *rsp, long *rbp) {
+	//long *rsp, *rbp;
 	asm("movq %%rsp, %0\n\t": "=m" (rsp)::"memory");
 	asm("movq %%rbp, %0\n\t": "=m" (rbp)::"memory");
 
-	rsp += 4;
+	rsp += 8;
 	rbp -= 5;
-	printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
+	//printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
 	//for(i=STACK->sp-1; i>=0; i--) {
 	for(;rsp < rbp; rsp++){
 		printf("| %4lx |\n", *rsp);
@@ -477,7 +477,7 @@ void execute(long *MEM, Stack *STACK, long *address) {
 				tempVal = dlerror();
 				if(tempVal) {
 					printf("Error opening shared library: %s\n", (char *)tempVal);
-					quit(MEM, STACK, PC);
+					//quit(MEM, STACK, PC);
 				}
 				//if(verboseFlag) printf("%p:\tLOAD\t%s\n", PC, (char *)tempAddr);
 				++PC;

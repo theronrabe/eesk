@@ -27,9 +27,17 @@ This file is part of Eesk.
 #include <kernel.h>
 
 void kernel(long eeskir, void *returnAddress) {
+	long *rsp, *rbp;
 	switch(eeskir) {
 		case(HALT):
-			quit();
+			asm volatile (
+					"movq %%rsp, %0\n\t"
+					"movq %%rbp, %1\n\t"
+					:"=m" (rsp), "=m" (rbp)
+					:
+					:"memory"
+					);
+			quit(rsp, rbp);
 			break;
 		case(NTV):
 			break;
