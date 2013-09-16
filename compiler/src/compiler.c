@@ -88,8 +88,8 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//clause
 				DC[2] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//else
 
-				//fakeLC = m[RPUSH].length + m[BNE].length + m[RPUSH].length + m[JMP].length;
-				writeObj(dst, RPUSH, DC[0]+DC[1]+6, dictionary, LC);						//else address
+				fakeLC = dictionary[RPUSH].length + dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length;
+				writeObj(dst, RPUSH, DC[0]+DC[1]+fakeLC, dictionary, LC);						//else address
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condition
 				writeObj(dst, BNE, 0, dictionary, LC);								//decide
 
@@ -714,7 +714,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 	Table *sym = tableLookup(symbols, token, &fakeLC);
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
-		if(dst) tableAddSymbol(symbols, token, *LC+((context->instructionFlag && !context->literalFlag)?1:0), context->staticFlag, context->parameterFlag);
+		if(dst) tableAddSymbol(symbols, token, *LC+((context->instructionFlag && !context->literalFlag)?dictionary[GRAB].param:0), context->staticFlag, context->parameterFlag);
 		sym = tableLookup(symbols, token, &fakeLC);
 		if(!context->parameterFlag) {
 			//This is an implicitly declared variable
@@ -765,7 +765,6 @@ void fillOperations(FILE *dst, int *LC, Stack *operationStack, translation *dict
 	while((op = stackPop(operationStack))) {
 		if(op == -1) break;
 		writeObj(dst, op, 0, dictionary, LC);
-		printf("op = %x:%lx\nop->length = %x\nop->param = %x\nop->code = %lx\n", op, &dictionary[op], dictionary[op].length, dictionary[op].param, dictionary[op].code);
 	}
 }
 

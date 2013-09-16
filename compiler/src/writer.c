@@ -27,8 +27,14 @@ This file is part of Eesk.
 void writeObj(FILE *fn, long instr, long param, translation *m, int *LC) {
 	//This function turns an eeskIR instruction and argument, translates it, and writes its code.
 	int len = 0;
-	printf("\nTrying to write eeskir: %lx\n", instr);
 	if (fn) {
+		if(instr == RPUSH) {
+			int rip = m[RPUSH].param + (m[RPUSH].dWord?WRDSZ/2:WRDSZ) + 1;	//because RIP contains the next instruction, but LC contains the current instruction
+			param -= rip;							//subtract reality from what the compiler presumes
+			printf("\nWriting eeskir: %lx, %lx [%lx]\n", instr, param, *LC+param-1+rip);
+		} else {
+			printf("\nWriting eeskir: %lx, %lx\n", instr, param);
+		}
 		unsigned char *out = translationFormCode(m, instr, param, &len);
 		fwrite(out, 1, len, fn);
 
@@ -37,7 +43,7 @@ void writeObj(FILE *fn, long instr, long param, translation *m, int *LC) {
 			printf("%02x ", out[i]);
 		}
 		printf("\n");
-		//if(val < 0) printf("\tValue to write: -%lx (relatively %lx)\n", -val, *LC + val - 1);
+		//if(param < 0) printf("\tValue to write: -%lx (relatively %lx)\n", -val, *LC + val - 1);
 	}
 	//(*LC) += WRDSZ;
 	(*LC) += len;
