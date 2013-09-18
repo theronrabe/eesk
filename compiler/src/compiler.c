@@ -88,13 +88,16 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//clause
 				DC[2] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//else
 
-				fakeLC = dictionary[RPUSH].length + dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length;
+				fakeLC = dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length + 1;
+				printf("else address = %lx + %lx + %lx = %lx\n", *LC, DC[0]+DC[1], fakeLC, *LC+DC[0]+DC[1]+fakeLC);
 				writeObj(dst, RPUSH, DC[0]+DC[1]+fakeLC, dictionary, LC);						//else address
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condition
 				writeObj(dst, BNE, 0, dictionary, LC);								//decide
 
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, lineCount);		//compiled statement
-				writeObj(dst, RPUSH, DC[2]+3, dictionary, LC);						//push end address
+				fakeLC = dictionary[JMP].length + 1;
+				printf("end address = %lx + %lx + %lx = %lx\n", *LC, DC[2], fakeLC, *LC+DC[2]+fakeLC);
+				writeObj(dst, RPUSH, DC[2]+fakeLC, dictionary, LC);						//push end address
 				writeObj(dst, JMP, 0, dictionary, LC);							//jump to end
 
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled else
@@ -111,11 +114,13 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition length
 				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//loop length
 
-				writeObj(dst, RPUSH, DC[0]+DC[1]+6, dictionary, LC);	//end address
+				fakeLC = dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length;
+				writeObj(dst, RPUSH, DC[0]+DC[1]+fakeLC, dictionary, LC);	//end address
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
 				writeObj(dst, BNE, 0, dictionary, LC);								//decide
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);			//compiled loop
-				writeObj(dst, RPUSH, -(DC[0]+DC[1]+3), dictionary, LC);			//begin address
+				fakeLC = dictionary[RPUSH].length*2 + dictionary[BNE].length;
+				writeObj(dst, RPUSH, -(DC[0]+DC[1]+fakeLC)+1, dictionary, LC);			//begin address
 				writeObj(dst, JMP, 0, dictionary, LC);								//iterate
 				break;
 
@@ -714,14 +719,16 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 	Table *sym = tableLookup(symbols, token, &fakeLC);
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
-		if(dst) tableAddSymbol(symbols, token, *LC+((context->instructionFlag && !context->literalFlag)?dictionary[GRAB].param:0), context->staticFlag, context->parameterFlag);
+		int offset = (context->instructionFlag && !context->literalFlag)? 5: 0;	//TODO: replace that 6 with a means of figuring out the grab offset per translation
+		printf("grab offset: %lx\n", offset);
+		if(dst) tableAddSymbol(symbols, token, *LC+offset, context->staticFlag, context->parameterFlag);
 		sym = tableLookup(symbols, token, &fakeLC);
 		if(!context->parameterFlag) {
 			//This is an implicitly declared variable
 			if(dst) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", *lineCount, sym->token, sym->val, sym->staticFlag);
 			if(context->publicFlag) publicize(sym);
 			if(!context->literalFlag && context->instructionFlag) writeObj(dst, GRAB, 0, dictionary, LC);
-			writeObj(dst, DATA, 0, dictionary, LC);
+			else writeObj(dst, DATA, 0, dictionary, LC);
 		} else {
 			//this is a parameter declaration, count it and carry on
 			(*LC) += WRDSZ;
@@ -739,7 +746,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 				//symbol is not being called for within a collection
 				//if(dst) printf("%d:\t%s, to dynamic, no transversal\n", *lineCount, sym->token);
 				if(!context->literalFlag) {
-					writeObj(dst, RPUSH, value - *LC + 1, dictionary, LC);
+					writeObj(dst, RPUSH, value - *LC - dictionary[RPUSH].length + 1, dictionary, LC);
 				} else {
 					writeObj(dst, DATA, value - *LC + 1, dictionary, LC);
 				}
