@@ -50,14 +50,16 @@ long *load(char *fn) {
 	fclose(fp);
 
 	//long offset = ret[i/WRDSZ - 1];
-	long offset = * (long *)&ret[i-7];
+	long offset = * (long *)&ret[i-8];
 	//PC = (long *)(((long) &ret[0]) + offset);
 	PC = ret + offset;
 	if(verboseFlag) printf("PC = %lx + %lx = %lx\n", ret, offset, PC);
 
 	if(verboseFlag) {
 		for(j=0;j<=i;j++) {
-			printf("%lx:\t%02x\n", (long)&ret[j], ret[j]);
+			if(!(j%8)) printf("%lx: ", (long)&ret[j]);
+			printf("\t%02x\t", ret[j]);
+			if((j%8)==7) printf("\n");
 		}
 	}
 
@@ -103,7 +105,7 @@ void quit(long *rsp, long *rbp) {
 
 	rsp += 8;
 	rbp -= 5;
-	//printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
+	//if(verboseFlag) printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
 	//for(i=STACK->sp-1; i>=0; i--) {
 	for(;rsp < rbp; rsp++){
 		printf("| %4lx |\n", *rsp);
