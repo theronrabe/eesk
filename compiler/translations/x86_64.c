@@ -5,8 +5,7 @@ void main(){};
 void halt() {
 	asm volatile (
 			"movq $0x0, %%rdi\n\t"
-			"movq -0x10(%%rbp), %%rax\n\t"
-			"callq *%%rax\n\t"
+			"callq *%%r9\n\t"
 			:::);
 }
 
@@ -89,6 +88,7 @@ void grab() {
 	asm volatile (
 			"callq _grab\n\t"
 			//make sure there is a quadword-aligned 64-bits of data here by preceding callq with nops"
+			"nop;nop;nop;nop;  nop;nop;nop;nop\n\t"
 			"_grab:\n\t"
 			:::
 			);
@@ -134,24 +134,26 @@ void clr() {
 void jsr() {
 	asm volatile (
 			//push activationStack onto counterStack, and grab numArgsPassed
-			"movq %%rsp, %%r8\n\t"
-			"movq 0x18(%%rbp), %%rsp\n\t"	//counterStack is the active stack
-			"movq 0x10(%%rbp), %%rcx\n\t"	//activationStack in rcx
-			"movq 0x8(%%rsp), %%rdx\n\t"	//past activationStack in rdx
+			"movq %%rsp, %%r8\n\t"		//back up stack pointer
+			"movq %%r11, %%rsp\n\t"		//counterStack is the active stack
+			"movq %%r10, %%rcx\n\t"		//activationStack in rcx
+			"movq (%%rsp), %%rdx\n\t"	//past activationStack in rdx
 			"pushq %%rcx\n\t"		//remember activationStack
 			"subq %%rdx, %%rcx\n\t"		//rcx contains numArgsPassed
-			"movq %%rsp, 0x18(%%rbp)\n\t"	//replace counterStack
+			"movq %%rsp, %%r11\n\t"		//replace counterStack
 			"movq %%r8, %%rsp\n\t"		//back on regular stack
 
 			//grab call address and resolve activation stack
-			"movq 0x10(%%rsp), %%rax\n\t"	//calling address
-			"movq (%%rax), %%rbx\n\t"	//stack request
+			"movq -0x8(%%rsp), %%rax\n\t"	//calling address
+			"movq -0x8(%%rax), %%rbx\n\t"	//stack request
 			"subq %%rcx, %%rbx\n\t"		//how many args weren't passed?
-			"addq %%rbx, 0x10(%%rbp)\n\t"	//correct activationStack to reflect stack request
-			"movq 0x18(%%rbp), %%rdx\n\t"	//grab counterStack
-			"addq %%rbx, 0x8(%%rdx)\n\t"	//correct counterStack to reflect stack request
+			"addq %%rbx, %%r10\n\t"		//correct activationStack to reflect stack request
+			"popq %%rax\n\t"		//grab return address
+			"movq %%rax, (%%r10)\n\t"	//put return address on activationStack
+			"addq %%rbx, (%%r11)\n\t"	//correct counterStack to reflect stack request
 
 			//place call
+			"popq %%rax\n\t"		//grab calling address
 			"jmp *%%rax\n\t"
 			:::
 			);
@@ -159,6 +161,7 @@ void jsr() {
 
 void rsr() {
 	asm volatile (
+			/*
 			"popq %%rax\n\t"	//grab result
 			"popq %%rbx\n\t"	//grab return address
 			"popq %%rcx\n\t"	//remove call address from stack
@@ -168,6 +171,16 @@ void rsr() {
 			"movq 0x8(%%rax), %%rax\n\t"		//find top address of counterStack
 			"movq %%rax, 0x10(%%rbp)\n\t"	//replace activationStack
 			"jmp *%%rcx\n\t"	//return
+
+			Things this needs to do: activationStack <- (counterStack), clear counterStack, return
+			*/
+			"movq %%rsp, %%r8\n\t"		//back up stack pointer
+			"movq %%r11, %%rsp\n\t"		//counterStack is active stack
+			"movq (%%r10), %%rax\n\t"	//grab return address
+			"popq %%r10\n\t"		//activationStack resets
+			"movq %%rsp, %%r11\n\t"		//replace counterStack
+			"movq %%r8, %%rsp\n\t"		//back on regular stack
+			"jmp *%%rax\n\t"		//return
 			:::
 			);
 }
