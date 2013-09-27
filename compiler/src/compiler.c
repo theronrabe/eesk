@@ -89,14 +89,12 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				DC[2] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//else
 
 				fakeLC = dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length + 1;
-				printf("else address = %lx + %lx + %lx = %lx\n", *LC, DC[0]+DC[1], fakeLC, *LC+DC[0]+DC[1]+fakeLC);
 				writeObj(dst, RPUSH, DC[0]+DC[1]+fakeLC, dictionary, LC);						//else address
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condition
 				writeObj(dst, BNE, 0, dictionary, LC);								//decide
 
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, lineCount);		//compiled statement
 				fakeLC = dictionary[JMP].length + 1;
-				printf("end address = %lx + %lx + %lx = %lx\n", *LC, DC[2], fakeLC, *LC+DC[2]+fakeLC);
 				writeObj(dst, RPUSH, DC[2]+fakeLC, dictionary, LC);						//push end address
 				writeObj(dst, JMP, 0, dictionary, LC);							//jump to end
 
@@ -155,8 +153,8 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				//writeObj(dst, (DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
 
 				//reset calling address
-				nameAddr = *LC + DC[1] + 1;
-				tableAddSymbol(symbols->parent->layerRoot, tok, nameAddr, context->staticFlag, context->parameterFlag);
+				nameAddr = *LC + DC[1] + WRDSZ;
+				tableAddSymbol(symbols->parent->layerRoot, tok, nameAddr, context->staticFlag, context->parameterFlag);		//overwrite previous definition
 
 				fakeLC = 0;
 				subContext.parameterFlag = 1;
@@ -165,7 +163,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled data section
 				subContext.instructionFlag = 1;
 
-				writeObj(dst, DATA, DC[0], dictionary, LC);	//write argument number at callAddress-1
+				writeObj(dst, DATA, DC[0]+WRDSZ, dictionary, LC);	//write argument number at callAddress-1, extra word for return address
 				//reset calling address to right here
 
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled statement section
@@ -225,7 +223,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 					DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 
 					//push return address of call
-					writeObj(dst, RPUSH, DC[0]+3, dictionary, LC);			//push return address
+					writeObj(dst, RPUSH, DC[0]+dictionary[JSR].length+1, dictionary, LC);			//push return address
 
 					//compile arguments
 					compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
