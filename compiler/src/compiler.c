@@ -168,7 +168,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled statement section
 				subContext.instructionFlag = context->instructionFlag;
-				writeObj(dst, RPUSH, nameAddr - *LC + 1, dictionary, LC);
+				writeObj(dst, RPUSH, nameAddr - *LC + 1 - WRDSZ, dictionary, LC);
 				writeObj(dst, RSR, 0, dictionary, LC);
 	
 				if(context->instructionFlag) {
@@ -249,7 +249,9 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 			case(k_cBracket):
 				fillOperations(dst, LC, operationStack, dictionary);
-				if(*LC - oldLC) writeObj(dst, APUSH, 0, dictionary, LC);
+				if(*LC - oldLC) {
+					writeObj(dst, APUSH, 0, dictionary, LC);
+				}
 				endOfStatement = 1;
 				break;
 
@@ -718,7 +720,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
 		int offset = (context->instructionFlag && !context->literalFlag)? 5: 0;	//TODO: replace that 6 with a means of figuring out the grab offset per translation
-		printf("grab offset: %lx\n", offset);
+		//printf("grab offset: %lx\n", offset);
 		if(dst) tableAddSymbol(symbols, token, *LC+offset, context->staticFlag, context->parameterFlag);
 		sym = tableLookup(symbols, token, &fakeLC);
 		if(!context->parameterFlag) {
@@ -737,7 +739,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 	int value = sym->val + fakeLC;
 	
 	if(sym->parameterFlag) {
-		writeObj(dst, AGET, value, dictionary, LC);
+		writeObj(dst, AGET, value + WRDSZ, dictionary, LC);
 	} else {
 		if(!sym->staticFlag) {
 			if(!fakeLC) {
