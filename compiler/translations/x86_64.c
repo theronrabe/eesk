@@ -144,16 +144,17 @@ void jsr() {
 			"movq %%r8, %%rsp\n\t"		//back on regular stack
 
 			//grab call address and resolve activation stack
-			"movq -0x8(%%rsp), %%rax\n\t"	//calling address
+			"movq 0x8(%%rsp), %%rax\n\t"	//calling address
 			"movq -0x8(%%rax), %%rbx\n\t"	//stack request
 			"subq %%rcx, %%rbx\n\t"		//how many args weren't passed?
-			"addq %%rbx, %%r10\n\t"		//correct activationStack to reflect stack request
+			"subq %%rbx, %%r10\n\t"		//correct activationStack to reflect stack request
 			"popq %%rax\n\t"		//grab return address
 			"movq %%rax, (%%r10)\n\t"	//put return address on activationStack
-			"addq %%rbx, (%%r11)\n\t"	//correct counterStack to reflect stack request
+			"subq %%rbx, (%%r11)\n\t"	//correct counterStack to reflect stack request
 
 			//place call
 			"popq %%rax\n\t"		//grab calling address
+				//"movq (%%r15), %%r15\n\t" //crash here
 			"jmp *%%rax\n\t"
 			:::
 			);
@@ -189,9 +190,9 @@ void apush() {
 	asm volatile (
 			"popq %%rax\n\t"		//grab value
 			"movq %%rsp, %%r8\n\t"		//set aside stack
-			"movq 0x10(%%rbp), %%rsp\n\t"	//activationStack is active
+			"movq %%r10, %%rsp\n\t"	//activationStack is active
 			"pushq %%rax\n\t"		//push it
-			"movq %%rsp, 0x10(%%rbp)\n\t"	//replace activationStack
+			"movq %%rsp, %%r10\n\t"	//replace activationStack
 			"movq %%r8, %%rsp\n\t"		//reactivate stack
 			:::
 			);
@@ -199,10 +200,10 @@ void apush() {
 
 void aget() {
 	asm volatile (
-			"movq $0x0123456789abcdef, %%rax\n\t"	//grab parameter
-			"movq 0x18(%%rbp), %%rdx\n\t"		//grab counterStack
-			"subq 0x10(%%rdx), %%rax\n\t"		//find argument's address
-			"pushq (%%rax)\n\t"			//push argument to stack
+			"movq $0x0123456789abcdef, %%rax\n\t"	//grab offset parameter
+			"movq 0x8(%%r11), %%rbx\n\t"		//grab base address (previous activationStack)
+			"subq %%rax, %%rbx\n\t"			//combine base with offset
+			"pushq %%rbx\n\t"		//push argument to stack
 			:::
 			);
 }
