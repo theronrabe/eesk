@@ -69,18 +69,22 @@ long *load(char *fn) {
 void main(int argc, char **argv) {
 	if(argc>2) verboseFlag = 1;
 	long *MEM = load(argv[1]);
-	long *activationStack = malloc(1000);
-	activationStack += 1000;
-	long *counterStack = malloc(1000);
+	long *activationStack = malloc(1000*sizeof(long));
+	activationStack += 1001;
+	long *counterStack = malloc(1000*sizeof(long));
 	counterStack += 1000;
 
-	
+	*counterStack = activationStack;
+	counterStack -= 1;
+	*counterStack = activationStack;
+	//counterStack -= 1;
+	//printf("activationStack = %lx\n\t", activationStack);
 	asm volatile (
 			"movq %%rsp, %%rbp\n\t"	//save root stack position in rbp
 			"pushq %0\n\t"		//place address space on stack
-			"pushq %1\n\t"		//push kernel location
-			"pushq %2\n\t"		//push activation stack
-			"pushq %3\n\t"		//push counter stack
+			"movq %1, %%r9\n\t"		//push kernel location
+			"movq %2, %%r10\n\t"		//push activation stack
+			"movq %3, %%r11\n\t"		//push counter stack
 			"callq *%4\n\t"		//pass control to user's program
 			:
 			:"r" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC)
@@ -104,9 +108,10 @@ void quit(long *rsp, long *rbp) {
 	asm("movq %%rbp, %0\n\t": "=m" (rbp)::"memory");
 
 	rsp += 8;
-	rbp -= 5;
+	rbp -= 2;
 	//if(verboseFlag) printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
 	//for(i=STACK->sp-1; i>=0; i--) {
+	printf("\n");
 	for(;rsp < rbp; rsp++){
 		printf("| %4lx |\n", *rsp);
 	}
