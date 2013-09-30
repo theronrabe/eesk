@@ -2,17 +2,15 @@ Compiler to-do list:
 	-command line options
 		-include path
 		-verbose mode
-
+	
 Virtual Machine to-do list:
-	-start switching over to native conventions
-		-use inline assembly to optimize virtual instructions
-		-use native stack
 
 Eesk Environment to-do list:
 	-keep making header files to link the standard C library.
 	-continue work on manual
 
 Currently working on:
-	-learning AMD64 architecture
-	-learning System V calling conventions
-	-considering design of a JIT for eesk
+	-Just realized that consecutively fake-compiled statements need to have their own symbol layer that
+		gets removed again before they are compiled for writing. Otherwise, symbols aren't remembered
+		between fake statements, or are remembered (when they shouldn't be) when it comes time to output
+		the compiled statement.
