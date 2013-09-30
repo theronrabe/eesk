@@ -179,6 +179,7 @@ void rsr() {
 			"movq %%r11, %%rsp\n\t"		//counterStack is active stack
 			"movq (%%r10), %%rax\n\t"	//grab return address
 			"popq %%r10\n\t"		//activationStack resets
+				"movq (%%rsp), %%r10\n\t"	//The actual correct one?
 			"movq %%rsp, %%r11\n\t"		//replace counterStack
 			"movq %%r8, %%rsp\n\t"		//back on regular stack
 			"jmp *%%rax\n\t"		//return
