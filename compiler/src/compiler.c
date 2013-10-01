@@ -84,9 +84,11 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				//get length of statement
 				fakeSC = *SC;
 				subContext.instructionFlag = 1;
+				symbols = tableAddLayer(symbols, tok, 0);
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition
 				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//clause
 				DC[2] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//else
+				symbols = tableRemoveLayer(symbols);
 
 				fakeLC = dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length + 1;
 				writeObj(dst, RPUSH, DC[0]+DC[1]+fakeLC, dictionary, LC);						//else address
@@ -108,17 +110,24 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 				//get section lengths
 				fakeSC = *SC;
+				fakeLC = 0;
 				subContext.instructionFlag = 1;
+				symbols = tableAddLayer(symbols, tok, 0);
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition length
 				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//loop length
+				symbols = tableRemoveLayer(symbols);
+			printf("dc0 = %lx, dc1 = %lx, fakeLC = %lx\n", DC[0], DC[1], fakeLC);
 
-				fakeLC = dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length;
+				fakeLC = dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length + 1;
 				writeObj(dst, RPUSH, DC[0]+DC[1]+fakeLC, dictionary, LC);	//end address
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
+
+				DC[0] = compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
 				writeObj(dst, BNE, 0, dictionary, LC);								//decide
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);			//compiled loop
-				fakeLC = dictionary[RPUSH].length*2 + dictionary[BNE].length;
-				writeObj(dst, RPUSH, -(DC[0]+DC[1]+fakeLC)+1, dictionary, LC);			//begin address
+				DC[1] = compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);			//compiled loop
+			printf("dc0 = %lx, dc1 = %lx, fakeLC = %lx\n", DC[0], DC[1], fakeLC);
+
+				fakeLC = dictionary[RPUSH].length;
+				writeObj(dst, RPUSH, /*-(DC[0]+DC[1]+fakeLC)+1*/nameAddr - *LC - fakeLC + 1, dictionary, LC);			//begin address
 				writeObj(dst, JMP, 0, dictionary, LC);								//iterate
 				break;
 
@@ -137,12 +146,14 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				fakeLC = 0;
 				subContext.parameterFlag = 1;
 				subContext.instructionFlag = 0;
+				symbols = tableAddLayer(symbols, tok, 0);
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//param length
 				subContext.parameterFlag = 0;
 				fakeLC = 0;	//because parameters don't increment location counter
 				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//data length
 				subContext.instructionFlag = 1;
 				DC[2] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//statement length
+				symbols = tableRemoveLayer(symbols);
 				subContext.instructionFlag = 0;
 				
 				if(context->instructionFlag) {
@@ -721,7 +732,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 	if(sym == NULL) {	//does the symbol not exist yet?
 		int offset = (context->instructionFlag && !context->literalFlag)? 5: 0;	//TODO: replace that 6 with a means of figuring out the grab offset per translation
 		//printf("grab offset: %lx\n", offset);
-		if(dst) tableAddSymbol(symbols, token, *LC+offset, context->staticFlag, context->parameterFlag);
+		/*if(dst)*/ tableAddSymbol(symbols, token, *LC+offset, context->staticFlag, context->parameterFlag); //you have to do this with no dst, otherwise fake-compiled sections will grab instead of rpush later
 		sym = tableLookup(symbols, token, &fakeLC);
 		if(!context->parameterFlag) {
 			//This is an implicitly declared variable
