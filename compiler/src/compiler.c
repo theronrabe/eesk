@@ -231,7 +231,9 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 					//find length of arguments
 					fakeSC = *SC;
 					subContext.instructionFlag = 1;
+					symbols = tableAddLayer(symbols, tok, 0);
 					DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
+					symbols = tableRemoveLayer(symbols);
 
 					//push return address of call
 					writeObj(dst, RPUSH, DC[0]+dictionary[JSR].length+1, dictionary, LC);			//push return address
@@ -522,7 +524,9 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				fakeSC = *SC;
 				fakeLC = 1;
 				subContext.instructionFlag = 0;
+				symbols = tableAddLayer(symbols, tok, 0);
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
+				symbols = tableRemoveLayer(symbols);
 
 				//hop over the definition
 				if(context->instructionFlag) {
@@ -559,7 +563,9 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				fakeSC = *SC;
 				fakeLC = 0;
 				subContext.instructionFlag = 0;
+				symbols = tableAddLayer(symbols, tok, 0);
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
+				symbols = tableRemoveLayer(symbols);
 				subContext.instructionFlag = context->instructionFlag;
 
 				//hop over the definition
