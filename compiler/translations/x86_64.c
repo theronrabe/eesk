@@ -1,11 +1,13 @@
-//We'll say RBP contains the base of eesk's stack, ((RBP)) = eesk MEM space, (RBP+8) = kernel location
-//(RBP+10) = activationStack, (RBP+18) = counterStack
 void main(){};
 
 void halt() {
 	asm volatile (
 			"movq $0x0, %%rdi\n\t"
-			"callq *%%r9\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r11, %%rsp\n\t"
+			"callq *%%r12\n\t"
+			"movq %%rsp, %%r11\n\t"
+			"movq %%r13, %%rsp\n\t"
 			:::);
 }
 
@@ -68,6 +70,18 @@ void loc() {
 
 void dloc() {
 	//this instruction is never used by the ee compiler
+}
+
+void prnt() {
+	asm volatile (
+			"movq $0x8, %%rdi\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r11, %%rsp\n\t"
+			"callq *%%r12\n\t"
+			"movq %%rsp, %%r11\n\t"
+			"movq %%r13, %%rsp\n\t"
+			"addq $0x8, %%rsp\n\t"
+			:::);
 }
 
 void push() {
@@ -179,7 +193,7 @@ void rsr() {
 			"movq %%r11, %%rsp\n\t"		//counterStack is active stack
 			"movq (%%r10), %%rax\n\t"	//grab return address
 			"popq %%r10\n\t"		//activationStack resets
-				"movq (%%rsp), %%r10\n\t"	//The actual correct one?
+			"movq (%%rsp), %%r10\n\t"	//The actual correct activationStack
 			"movq %%rsp, %%r11\n\t"		//replace counterStack
 			"movq %%r8, %%rsp\n\t"		//back on regular stack
 			"jmp *%%rax\n\t"		//return

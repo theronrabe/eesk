@@ -25,19 +25,27 @@ This file is part of Eesk.
 
 #include <vm.h>
 #include <kernel.h>
+#include <stdio.h>
 
-void kernel(long eeskir, void *returnAddress) {
+void kernel(long eeskir) {
 	long *rsp, *rbp;
+	asm volatile (
+			"movq %%r13, %0\n\t"
+			"movq %%rbp, %1\n\t"
+			:"=m" (rsp), "=m" (rbp)
+			:
+			:"memory"
+			);
+
 	switch(eeskir) {
 		case(HALT):
-			asm volatile (
-					"movq %%rsp, %0\n\t"
-					"movq %%rbp, %1\n\t"
-					:"=m" (rsp), "=m" (rbp)
-					:
-					:"memory"
-					);
 			quit(rsp, rbp);
+			break;
+		case(PRNT):
+			printf("%d\n", *rsp);
+			break;
+		case(ALOC):
+			//allocate(rsp);
 			break;
 		case(NTV):
 			break;

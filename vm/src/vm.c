@@ -82,14 +82,14 @@ void main(int argc, char **argv) {
 	asm volatile (
 			"movq %%rsp, %%rbp\n\t"	//save root stack position in rbp
 			"pushq %0\n\t"		//place address space on stack
-			"movq %1, %%r9\n\t"		//push kernel location
+			"movq %1, %%r12\n\t"		//push kernel location
 			"movq %2, %%r10\n\t"		//push activation stack
 			"movq %3, %%r11\n\t"		//push counter stack
 			"callq *%4\n\t"		//pass control to user's program
 			:
 			:"r" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC)
 			);
-	kernel(HALT, main);
+	kernel(HALT);
 
 	/*
 	Stack *STACK = stackCreate(10000);
@@ -104,10 +104,10 @@ void main(int argc, char **argv) {
 
 void quit(long *rsp, long *rbp) {
 	//long *rsp, *rbp;
-	asm("movq %%rsp, %0\n\t": "=m" (rsp)::"memory");
-	asm("movq %%rbp, %0\n\t": "=m" (rbp)::"memory");
+	//asm("movq %%rsp, %0\n\t": "=m" (rsp)::"memory");
+	//asm("movq %%rbp, %0\n\t": "=m" (rbp)::"memory");
 
-	rsp += 8;
+	//rsp += 8;
 	rbp -= 2;
 	//if(verboseFlag) printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
 	//for(i=STACK->sp-1; i>=0; i--) {
