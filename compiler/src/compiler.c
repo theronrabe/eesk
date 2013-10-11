@@ -116,7 +116,6 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition length
 				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//loop length
 				symbols = tableRemoveLayer(symbols);
-			printf("dc0 = %lx, dc1 = %lx, fakeLC = %lx\n", DC[0], DC[1], fakeLC);
 
 				fakeLC = dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length + 1;
 				writeObj(dst, RPUSH, DC[0]+DC[1]+fakeLC, dictionary, LC);	//end address
@@ -124,7 +123,6 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
 				writeObj(dst, BNE, 0, dictionary, LC);								//decide
 				DC[1] = compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);			//compiled loop
-			printf("dc0 = %lx, dc1 = %lx, fakeLC = %lx\n", DC[0], DC[1], fakeLC);
 
 				fakeLC = dictionary[RPUSH].length;
 				writeObj(dst, RPUSH, /*-(DC[0]+DC[1]+fakeLC)+1*/nameAddr - *LC - fakeLC + 1, dictionary, LC);			//begin address
@@ -890,6 +888,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, AND, c_and, -1, 0);
 	translationAdd(ret, OR, c_or, -1, 0);
 	translationAdd(ret, NOT, c_not, -1, 0);
+	translationAdd(ret, PRTS, c_prts, -1, 0);
 	translationAdd(ret, GT, c_gt, -1, 0);
 	translationAdd(ret, LT, c_lt, -1, 0);
 	translationAdd(ret, EQ, c_eq, -1, 0);
