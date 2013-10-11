@@ -157,8 +157,9 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				subContext.instructionFlag = 0;
 				
 				if(context->instructionFlag) {
-					writeObj(dst, PUSH, DC[1]+DC[2]+5, dictionary, LC);
-					writeObj(dst, HOP, 0, dictionary, LC);		//Hop over the definition
+					fakeLC = dictionary[JMP].length + dictionary[DATA].length + dictionary[RPUSH].length + dictionary[RSR].length + 1;
+					writeObj(dst, RPUSH, DC[1]+DC[2]+fakeLC, dictionary, LC);	//this used to be a PUSH
+					writeObj(dst, JMP, 0, dictionary, LC);		//Hop over the definition	//this used to be a HOP
 				}
 
 				//writeObj(dst, (DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
@@ -184,7 +185,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 	
 				if(context->instructionFlag) {
 					//basically, act like a lambda function
-					writeObj(dst, RPUSH, nameAddr - *LC+1, dictionary, LC);
+					writeObj(dst, RPUSH, nameAddr - *LC+1 - WRDSZ, dictionary, LC);
 				}
 
 				//no longer in this namespace
@@ -869,6 +870,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, BNE, c_bne, -1, 0); 
 	translationAdd(ret, NTV, c_ntv, -1, 0); 
 	translationAdd(ret, LOC, c_loc, -1, 0); 
+	translationAdd(ret, PRNT, c_prnt, -1, 0);
 	translationAdd(ret, PUSH, c_push, 2, 0); 
 	translationAdd(ret, RPUSH, c_rpush, 3, 1); 
 	translationAdd(ret, GRAB, c_grab, -1, 0); 
