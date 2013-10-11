@@ -82,9 +82,10 @@ void main(int argc, char **argv) {
 	asm volatile (
 			"movq %%rsp, %%rbp\n\t"	//save root stack position in rbp
 			"pushq %0\n\t"		//place address space on stack
-			"movq %1, %%r12\n\t"		//push kernel location
-			"movq %2, %%r10\n\t"		//push activation stack
-			"movq %3, %%r11\n\t"		//push counter stack
+			"movq %1, %%r12\n\t"		//remember kernel location
+			//r13 used for data stack
+			"movq %2, %%r14\n\t"		//remember activation stack
+			"movq %3, %%r15\n\t"		//remember counter stack
 			"callq *%4\n\t"		//pass control to user's program
 			:
 			:"r" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC)
