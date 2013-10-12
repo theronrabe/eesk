@@ -69,6 +69,8 @@ long *load(char *fn) {
 void main(int argc, char **argv) {
 	if(argc>2) verboseFlag = 1;
 	long *MEM = load(argv[1]);
+	long *dataStack = malloc(1000*sizeof(long));
+	dataStack += 1001;
 	long *activationStack = malloc(1000*sizeof(long));
 	activationStack += 1001;
 	long *counterStack = malloc(1000*sizeof(long));
@@ -80,15 +82,15 @@ void main(int argc, char **argv) {
 	//counterStack -= 1;
 	//printf("activationStack = %lx\n\t", activationStack);
 	asm volatile (
+			"movq %5, %%rsp\n\t"	//start using the data stack
 			"movq %%rsp, %%rbp\n\t"	//save root stack position in rbp
 			"pushq %0\n\t"		//place address space on stack
 			"movq %1, %%r12\n\t"		//remember kernel location
-			//r13 used for data stack
 			"movq %2, %%r14\n\t"		//remember activation stack
 			"movq %3, %%r15\n\t"		//remember counter stack
 			"callq *%4\n\t"		//pass control to user's program
 			:
-			:"r" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC)
+			:"r" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC), "r" (dataStack)
 			);
 	kernel(HALT);
 
@@ -126,6 +128,18 @@ void quit(long *rsp, long *rbp) {
 	*/
 	
 	exit(0);
+}
+
+void newCollection(char **rsp) {
+	char *old = *rsp;
+	int i, len = *old;
+	*rsp = malloc(len);
+	printf("allocating memory: %lx\n", *rsp);
+	**((long **)rsp) = *((long *) old);
+	for(i=0; i<len; i++) {
+		printf("%d: copying %lx to %lx\n", i, old+i+8, *rsp+i+8);
+		*(*rsp+i+8) = *(old+i+8);
+	}
 }
 
 void execute(long *MEM, Stack *STACK, long *address) {
