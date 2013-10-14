@@ -33,6 +33,8 @@ long SP = 0;
 long LEN = 0;
 char verboseFlag = 0;
 Stack *libStack;
+long *dataStack, *activationStack, *counterStack, *MEM;
+long *oldDStack, *oldAStack, *oldCStack, MEMlength;
 
 long *load(char *fn) {
 	FILE *fp;
@@ -42,6 +44,7 @@ long *load(char *fn) {
 	fp = fopen(fn, "rt");
 	fseek(fp, 0, SEEK_END);
 	i = ftell(fp);
+	MEMlength = i;
 	rewind(fp);
 	//ret = (unsigned char *)malloc(sizeof(char) * (i));
 	ret = mmap(0, i, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, 0, 0);
@@ -68,13 +71,15 @@ long *load(char *fn) {
 
 void main(int argc, char **argv) {
 	if(argc>2) verboseFlag = 1;
-	long *MEM = load(argv[1]);
-	long *dataStack = malloc(1000*sizeof(long));
-	dataStack += 1001;
-	long *activationStack = malloc(1000*sizeof(long));
-	activationStack += 1001;
-	long *counterStack = malloc(1000*sizeof(long));
-	counterStack += 1000;
+	MEM = load(argv[1]);
+	oldDStack = malloc(1000*sizeof(long));
+	dataStack = oldDStack+1001;
+
+	oldAStack = malloc(1000*sizeof(long));
+	activationStack = oldAStack+1001;
+
+	oldCStack = malloc(1000*sizeof(long));
+	counterStack = oldCStack+1000;
 
 	*counterStack = activationStack;
 	counterStack -= 1;
@@ -126,20 +131,32 @@ void quit(long *rsp, long *rbp) {
 		dlclose(libStack->array[i]);
 	}
 	*/
+	free(oldDStack);
+	free(oldAStack);
+	free(oldCStack);
+	//here's the crash:
+	//free(MEM);
+	munmap(MEM, MEMlength);
 	
 	exit(0);
 }
 
 void newCollection(char **rsp) {
 	char *old = *rsp;
-	int i, len = *old;
-	*rsp = malloc(len);
-	printf("allocating memory: %lx\n", *rsp);
-	**((long **)rsp) = *((long *) old);
+	long i, len = (*old) + WRDSZ;
+	printf("allocating memory from %lx: %lx len: %lx\n", old, *rsp, len);
+	//*rsp = malloc(len);	//an extra word to store its length
+	*rsp = mmap(0, len, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, 0, 0);
+	mprotect(rsp, len, PROT_READ|PROT_WRITE|PROT_EXEC);
+	//**((long **)rsp) = *((long *) old);
+	printf("copying as string from %p to %p.\n", old, *rsp);
+	memcpy(*rsp, old, len);
+
+	/*
 	for(i=0; i<len; i++) {
-		printf("%d: copying %lx to %lx\n", i, old+i+8, *rsp+i+8);
-		*(*rsp+i+8) = *(old+i+8);
+		printf("%lx: %x\n", (*rsp)+i, *((char *)(*rsp)+i));
 	}
+	*/
 }
 
 void execute(long *MEM, Stack *STACK, long *address) {
