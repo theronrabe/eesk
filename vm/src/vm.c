@@ -134,22 +134,16 @@ void quit(long *rsp, long *rbp) {
 	free(oldDStack);
 	free(oldAStack);
 	free(oldCStack);
-	//here's the crash:
-	//free(MEM);
 	munmap(MEM, MEMlength);
 	
 	exit(0);
 }
 
-void newCollection(char **rsp) {
-	char *old = *rsp;
+void newCollection(long **rsp) {
+	long *old = *rsp;
 	long i, len = (*old) + WRDSZ;
-	printf("allocating memory from %lx: %lx len: %lx\n", old, *rsp, len);
-	//*rsp = malloc(len);	//an extra word to store its length
 	*rsp = mmap(0, len, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, 0, 0);
 	mprotect(rsp, len, PROT_READ|PROT_WRITE|PROT_EXEC);
-	//**((long **)rsp) = *((long *) old);
-	printf("copying as string from %p to %p.\n", old, *rsp);
 	memcpy(*rsp, old, len);
 
 	/*

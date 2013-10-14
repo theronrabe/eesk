@@ -28,7 +28,7 @@ This file is part of Eesk.
 #include <stdio.h>
 
 void kernel(long eeskir) {
-	long *rsp, *rbp;
+	long **rsp, *rbp;
 	asm volatile (
 			"movq %%r13, %0\n\t"
 			"movq %%rbp, %1\n\t"
@@ -42,14 +42,21 @@ void kernel(long eeskir) {
 			quit(rsp, rbp);
 			break;
 		case(PRNT):
-			printf("%d\n", *rsp);
+			printf("%lx\n", *rsp);
+			break;
+		case(PRTS):
+			printf("%s", *rsp);
 			break;
 		case(ALOC):
-			//allocate(rsp);
-			break;
-		case(NTV):
+			*rsp = malloc(*rsp);
 			break;
 		case(NEW):
+			newCollection(rsp);
+			break;
+		case(FREE):
+			munmap(*rsp, **rsp);
+			break;
+		case(NTV):
 			break;
 	}
 }
