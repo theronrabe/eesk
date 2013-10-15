@@ -531,8 +531,9 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 				//hop over the definition
 				if(context->instructionFlag) {
-					writeObj(dst, PUSH, DC[0] + 2, dictionary, LC);
-					writeObj(dst, HOP, 0, dictionary, LC);
+					fakeLC = dictionary[JMP].length + WRDSZ + 1;
+					writeObj(dst, RPUSH, DC[0] + fakeLC, dictionary, LC);
+					writeObj(dst, JMP, 0, dictionary, LC);
 				}
 
 				//write its length, and its body (addressed relative to right here)
