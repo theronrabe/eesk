@@ -136,7 +136,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				stackPush(nameStack, nameAddr);
 				tokLen = getToken(tok, src, SC, lineCount);
 				symbols = tableAddSymbol(symbols, tok, nameAddr, context->staticFlag, context->parameterFlag);	//change to this scope
-				if(context->publicFlag) { publicize(symbols); context->publicFlag = 0; }
+				if(context->publicFlag) { publicize(symbols); }
 				symbols = tableAddLayer(symbols, tok, 0);
 	
 				//count length of parameters, data, and statement sections
@@ -165,6 +165,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				//reset calling address
 				nameAddr = *LC + DC[1] + WRDSZ;
 				tableAddSymbol(symbols->parent->layerRoot, tok, nameAddr, context->staticFlag, context->parameterFlag);		//overwrite previous definition
+				if(context->publicFlag) { publicize(symbols->parent); }
 
 				fakeLC = 0;
 				subContext.parameterFlag = 1;
@@ -363,6 +364,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 
 			case(k_halt):
+				fillOperations(dst, LC, operationStack, dictionary);
 				writeObj(dst, HALT, 0, dictionary, LC);
 				break;
 
@@ -521,9 +523,9 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 				//get its own length:
 				fakeSC = *SC;
-				fakeLC = 1;
+				fakeLC = 8;
 				subContext.instructionFlag = 0;
-				symbols = tableAddLayer(symbols, tok, 0);
+				symbols = tableAddLayer(symbols, tok, 1);
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 				symbols = tableRemoveLayer(symbols);
 
@@ -535,11 +537,11 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 				//write its length, and its body (addressed relative to right here)
 				writeObj(dst, DATA, DC[0], dictionary, LC);
-				fakeLC = 1;
+				fakeLC = 8;
 				subContext.instructionFlag = 0;
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);
 				subContext.instructionFlag = context->instructionFlag;
-				*LC += fakeLC - 1; //accommodate for change in location
+				*LC += fakeLC - 8; //accommodate for change in location
 
 				//push newing address, if we're in the middle of instructions
 				if(context->instructionFlag) {
@@ -649,7 +651,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				} else {
 					DC[0] = tempTable->val;
 				}
-				writeObj(dst, PUSH, DC[0]*WRDSZ, dictionary, LC);
+				writeObj(dst, PUSH, DC[0], dictionary, LC);
 				writeObj(dst, ADD, 0, dictionary, LC);
 				break;
 
@@ -736,7 +738,6 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
 		int offset = (context->instructionFlag && !context->literalFlag)? 5: 0;	//TODO: replace that 6 with a means of figuring out the grab offset per translation
-		//printf("grab offset: %lx\n", offset);
 		/*if(dst)*/ tableAddSymbol(symbols, token, *LC+offset, context->staticFlag, context->parameterFlag); //you have to do this with no dst, otherwise fake-compiled sections will grab instead of rpush later
 		sym = tableLookup(symbols, token, &fakeLC);
 		if(!context->parameterFlag) {
@@ -768,8 +769,13 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 				}
 			} else {
 				//if(dst) printf("%d:\t%s to static from dynamic\n", *lineCount, sym->token);
+				/*
 				writeObj(dst, PUSH, sym->val, dictionary, LC);
 				writeObj(dst, LOC, 0, dictionary, LC);
+				*/
+				writeObj(dst, RPUSH, - (*LC + dictionary[RPUSH].length) + 1, dictionary, LC);
+				writeObj(dst, PUSH, sym->val, dictionary, LC);
+				writeObj(dst, ADD, 0, dictionary, LC);
 			}
 		} else {
 			//if(dst) printf("%d:\t%s to static from somewhere\n", *lineCount, sym->token);
@@ -892,6 +898,9 @@ translation *prepareTranslation() {
 	translationAdd(ret, GT, c_gt, -1, 0);
 	translationAdd(ret, LT, c_lt, -1, 0);
 	translationAdd(ret, EQ, c_eq, -1, 0);
+	translationAdd(ret, ALOC, c_aloc, -1, 0);
+	translationAdd(ret, NEW, c_new, -1, 0);
+	translationAdd(ret, FREE, c_free, -1, 0);
 	translationAdd(ret, DATA, c_data, 0, 0);
 	
 	return ret;
