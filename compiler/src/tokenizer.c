@@ -59,7 +59,7 @@ int symbolic(char c) {
 }
 
 int alphabetic(char c) {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '.');
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '.') || (c == '_');
 }
 
 int numeric(char c) {
@@ -131,5 +131,5 @@ int getQuote(char *tok, char *src, int *SC) {
 
 	*SC += i;
 	words = (j%8)?j/8+1: j/8;
-	return words;
+	return j; //words;
 }

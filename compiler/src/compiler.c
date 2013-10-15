@@ -307,8 +307,8 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 			case(k_doubleQuote):
 				DC[0] = getQuote(tok, src, SC);
 				if(!context->literalFlag) {
-					writeObj(dst, RPUSH, 5, dictionary, LC);	//push start of string
-					writeObj(dst, RPUSH, 3+DC[0], dictionary, LC);	//push end of string
+					writeObj(dst, RPUSH, dictionary[RPUSH].length+dictionary[JMP].length+1, dictionary, LC);	//push start of string
+					writeObj(dst, RPUSH, DC[0] + dictionary[JMP].length+1, dictionary, LC);	//push end of string
 					writeObj(dst, JMP, 0, dictionary, LC);						//skip over string leaving it on stack
 				}
 				writeStr(dst, tok, LC);
