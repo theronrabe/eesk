@@ -29,10 +29,12 @@ This file is part of Eesk.
 
 void kernel(long eeskir) {
 	long **rsp, *rbp;
+	long *aStack;
 	asm volatile (
 			"movq %%r13, %0\n\t"
 			"movq %%rbp, %1\n\t"
-			:"=m" (rsp), "=m" (rbp)
+			"movq %%r14, %2\n\t"
+			:"=m" (rsp), "=m" (rbp), "=m" (aStack)
 			:
 			:"memory"
 			);
@@ -57,6 +59,10 @@ void kernel(long eeskir) {
 			munmap(*rsp, **rsp);
 			break;
 		case(NTV):
+			*(rsp+1) = nativeCall(*(rsp+1), *rsp, aStack);
+			break;
+		case(LOAD):
+			loadLib(rsp);
 			break;
 	}
 }

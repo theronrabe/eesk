@@ -902,6 +902,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, ALOC, c_aloc, -1, 0);
 	translationAdd(ret, NEW, c_new, -1, 0);
 	translationAdd(ret, FREE, c_free, -1, 0);
+	translationAdd(ret, LOAD, c_load, -1, 0);
 	translationAdd(ret, DATA, c_data, 0, 0);
 	
 	return ret;

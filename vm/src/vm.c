@@ -71,6 +71,7 @@ long *load(char *fn) {
 
 void main(int argc, char **argv) {
 	if(argc>2) verboseFlag = 1;
+	libStack = stackCreate(100);
 	MEM = load(argv[1]);
 	oldDStack = malloc(1000*sizeof(long));
 	dataStack = oldDStack+1001;
@@ -84,8 +85,7 @@ void main(int argc, char **argv) {
 	*counterStack = activationStack;
 	counterStack -= 1;
 	*counterStack = activationStack;
-	//counterStack -= 1;
-	//printf("activationStack = %lx\n\t", activationStack);
+	
 	asm volatile (
 			"movq %5, %%rsp\n\t"	//start using the data stack
 			"movq %%rsp, %%rbp\n\t"	//save root stack position in rbp
@@ -126,11 +126,10 @@ void quit(long *rsp, long *rbp) {
 		printf("|______|\n");
 	
 	//Unload libStack
-	/*
 	for(int i=0;i<libStack->sp;i++) {
 		dlclose(libStack->array[i]);
 	}
-	*/
+	
 	free(oldDStack);
 	free(oldAStack);
 	free(oldCStack);
@@ -151,6 +150,19 @@ void newCollection(long **rsp) {
 		printf("%lx: %x\n", (*rsp)+i, *((char *)(*rsp)+i));
 	}
 	*/
+}
+
+void loadLib(char **rsp) {
+	printf("loading lib... %s\n", *rsp);
+
+	//void *handle = dlopen("/lib/x86_64-linux-gnu/libm.so.6", RTLD_LAZY);
+	*rsp = dlopen(*rsp, RTLD_LAZY);
+	stackPush(libStack, *rsp);
+
+	char *error = dlerror();
+	if(error) {
+		printf("Error opening shared library %s\n", error);
+	}
 }
 
 void execute(long *MEM, Stack *STACK, long *address) {
@@ -522,7 +534,7 @@ void execute(long *MEM, Stack *STACK, long *address) {
 	}
 }
 
-long nativeCall(long *call, void *handle, Stack *STACK) {
+long nativeCall(long *call, void *handle, long *aStack) {
 	void (*function)();
 	int i;
 	void *result = 0;
@@ -536,7 +548,8 @@ long nativeCall(long *call, void *handle, Stack *STACK) {
 	
 	//pop parameter values from stack
 	for(i=0;i<argc;i++) {
-		argv[i] = &STACK->array[STACK->sp - (argc-i)];
+		//argv[i] = &STACK->array[STACK->sp - (argc-i)];
+		argv[i] = aStack + (argc-1) - i;
 		//if(verboseFlag) printf("... grabbing argument:\t%d\t%p: %lx\n", argc-i-1, argv[argc-i-1], *argv[argc-i-1]);
 	}
 
