@@ -2,7 +2,8 @@ void main(){};
 
 void halt() {
 	asm volatile (
-			"movq (%%rdi), %%rax\n\t" //crash line
+			"movq (%%r9), %%rax\n\t" //crash line
+			"movq $0x0, %%rdi\n\t"
 			"movq %%rsp, %%r13\n\t"
 			"movq %%r15, %%rsp\n\t"
 			"callq *%%r12\n\t"
@@ -49,18 +50,22 @@ void bne() {
 			);
 }
 
-void ntv() {
-	asm volatile (	"popq %%rsi\n\t"
-			"popq %%rdi\n\t"
-			"movq 16(%%rbp), %%rdx\n\t"
-			"mov (%%rbp), %%rax\n\t"
-			"callq *(%%rax)\n\t"
+void ntv(){
+	asm volatile (
+			"movq $0x5, %%rdi\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r15, %%rsp\n\t"
+			"callq *%%r12\n\t"
+			"movq %%rsp, %%r15\n\t"
+			"movq %%r13, %%rsp\n\t"
+			"addq $0x08, %%rsp\n\t"
+			"movq (%%r15), %%r14\n\t"	//remove NTV arguments from activationStack
 			:::
 			);
 }
 
 void loc() {
-	asm volatile (	"movq (%%rbp), %%rax\n\t"
+	asm volatile (	"movq -0x8(%%rbp), %%rax\n\t"
 			"popq %%rbx\n\t"
 			"lea (%%rax, %%rbx, 8), %%rax\n\t"
 			"pushq %%rax\n\t"
@@ -121,6 +126,15 @@ void pop() {
 			);
 }
 
+void rpop() {
+	asm volatile (
+			"popq %%rax\n\t"
+			"popq %%rbx\n\t"
+			"movq %%rbx, (%%rax)\n\t"
+			:::
+			);
+}
+
 void bpop() {
 	asm volatile (
 			"popq %%rbx\n\t"
@@ -150,10 +164,11 @@ void jsr() {
 			//push activationStack onto counterStack, and grab numArgsPassed
 			"movq %%rsp, %%r13\n\t"		//back up stack pointer
 			"movq %%r15, %%rsp\n\t"		//counterStack is the active stack
-			"movq %%r14, %%rcx\n\t"		//activationStack in rcx
-			"movq (%%rsp), %%rdx\n\t"	//past activationStack in rdx
-			"pushq %%rcx\n\t"		//remember activationStack
+			"movq %%r14, %%rdx\n\t"		//activationStack in rdx
+			"movq (%%rsp), %%rcx\n\t"	//past activationStack in rcx
+			"pushq %%rdx\n\t"		//remember activationStack
 			"subq %%rdx, %%rcx\n\t"		//rcx contains numArgsPassed
+		//asdfasdf
 			"movq %%rsp, %%r15\n\t"		//replace counterStack
 			"movq %%r13, %%rsp\n\t"		//back on regular stack
 
@@ -294,6 +309,19 @@ void not() {
 			);
 }
 
+void prts(){
+	asm volatile (
+			"movq $0x26, %%rdi\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r15, %%rsp\n\t"
+			"callq *%%r12\n\t"
+			"movq %%rsp, %%r15\n\t"
+			"movq %%r13, %%rsp\n\t"
+			"addq $0x08, %%rsp\n\t"
+			:::
+			);
+}
+
 void gt() {
 	asm volatile (
 			"popq %%rax\n\t"
@@ -334,4 +362,52 @@ void eq() {
 			"_eqn:\n\t"
 			:::
 			);
+}
+
+void aloc() {
+	asm volatile (
+			"movq $0x2a, %%rdi\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r15, %%rsp\n\t"
+			"callq *%%r12\n\t"
+			"movq %%rsp, %%r15\n\t"
+			"movq %%r13, %%rsp\n\t"
+			:::
+			);
+}
+
+void FREE() {
+	asm volatile (
+			"movq $0x2c, %%rdi\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r15, %%rsp\n\t"
+			"callq *%%r12\n\t"
+			"movq %%rsp, %%r15\n\t"
+			"movq %%r13, %%rsp\n\t"
+			"addq $0x08, %%rsp\n\t"
+			:::
+			);
+}
+
+void new() {
+	asm volatile (
+			"movq $0x2b, %%rdi\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r15, %%rsp\n\t"
+			"callq *%%r12\n\t"
+			"movq %%rsp, %%r15\n\t"
+			"movq %%r13, %%rsp\n\t"
+			:::
+			);
+}
+
+void load() {
+	asm volatile (
+			"movq $0x2d, %%rdi\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r15, %%rsp\n\t"
+			"callq *%%r12\n\t"
+			"movq %%rsp, %%r15\n\t"
+			"movq %%r13, %%rsp\n\t"
+			:::);
 }
