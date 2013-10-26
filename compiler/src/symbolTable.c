@@ -43,7 +43,7 @@ Table *tableCreate() {
 void publicize(Table *node) {
 	if(node) {
 		//printf("%s staticity: %d\n", node->token, node->staticFlag);
-		//printf("publicizing node %s\n", node->token);
+		//printf("publicizing node %s\n\n", node->token);
 		char publicToken[128];
 		if(node->parent) {
 			strcpy(publicToken, node->parent->token);

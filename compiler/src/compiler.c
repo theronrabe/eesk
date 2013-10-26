@@ -411,6 +411,10 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				stackPush(operationStack, POP);
 				break;
 
+			case(k_isr):
+				fillOperations(dst, LC, operationStack, dictionary);
+				stackPush(operationStack, RPOP);
+				break;
 
 			case(k_set):
 				fillOperations(dst, LC, operationStack, dictionary);
@@ -565,6 +569,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				fakeSC = *SC;
 				fakeLC = 0;
 				subContext.instructionFlag = 0;
+				subContext.staticFlag = 0;
 				symbols = tableAddLayer(symbols, tok, 0);
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
 				symbols = tableRemoveLayer(symbols);
@@ -578,6 +583,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 				//compile the body
 				subContext.instructionFlag = 0;
+				subContext.staticFlag = 0;
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
 				subContext.instructionFlag = context->instructionFlag;
 
@@ -633,7 +639,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 
 			case(k_static):
-				subContext.staticFlag = 1;
+				//subContext.staticFlag = 1;
 				context->staticFlag = 1;
 				break;
 
@@ -659,6 +665,10 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 			case(k_load):
 				stackPush(operationStack, LOAD);
+				break;
+
+			case(k_r14):
+				writeObj(dst, R14, 0, dictionary, LC);
 				break;
 
 			case(k_nativeFunction):
@@ -770,19 +780,24 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 				}
 			} else {
 				//if(dst) printf("%d:\t%s to static from dynamic\n", *lineCount, sym->token);
-				/*
+				if(dst) printf("%d:\there for %s\tsym = %lx\n", *lineCount, sym->token, sym->val);
 				writeObj(dst, PUSH, sym->val, dictionary, LC);
 				writeObj(dst, LOC, 0, dictionary, LC);
-				*/
+				/*
 				writeObj(dst, RPUSH, - (*LC + dictionary[RPUSH].length) + 1, dictionary, LC);
 				writeObj(dst, PUSH, sym->val, dictionary, LC);
 				writeObj(dst, ADD, 0, dictionary, LC);
+				*/
 			}
 		} else {
 			//if(dst) printf("%d:\t%s to static from somewhere\n", *lineCount, sym->token);
-			if(!context->literalFlag) writeObj(dst, PUSH, value, dictionary, LC);
-			else writeObj(dst, DATA, value, dictionary, LC);
-			writeObj(dst, LOC, 0, dictionary, LC);
+			if(!context->literalFlag) {
+				writeObj(dst, RPUSH, - (*LC +dictionary[RPUSH].length) + 1, dictionary, LC);
+				writeObj(dst, PUSH, value, dictionary, LC);
+				writeObj(dst, ADD, 0, dictionary, LC);
+			} else {
+				writeObj(dst, DATA, value, dictionary, LC);
+			}
 		}
 	}
 	return *LC - oldLC;
@@ -831,6 +846,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "!", k_not, 0, 0);
 	tableAddSymbol(ret, ">>", k_shift, 0, 0);
 	tableAddSymbol(ret, "=", k_is, 0, 0);
+	tableAddSymbol(ret, "=>", k_isr, 0, 0);
 	tableAddSymbol(ret, "set", k_set, 0, 0);
 	tableAddSymbol(ret, "==", k_eq, 0, 0);
 	tableAddSymbol(ret, ">", k_gt, 0, 0);
@@ -862,6 +878,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "->", k_redir, 0, 0);
 	tableAddSymbol(ret, "load", k_load, 0, 0);
 	tableAddSymbol(ret, "Native", k_nativeFunction, 0, 0);
+	tableAddSymbol(ret, "r14", k_r14, 0, 0);
 
 	return ret;
 }
@@ -880,6 +897,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, RPUSH, c_rpush, 3, 1); 
 	translationAdd(ret, GRAB, c_grab, -1, 0); 
 	translationAdd(ret, POP, c_pop, -1, 0); 
+	translationAdd(ret, RPOP, c_rpop, -1, 0);
 	translationAdd(ret, BPOP, c_bpop, -1, 0); 
 	translationAdd(ret, CONT, c_cont, -1, 0); 
 	translationAdd(ret, CLR, c_clr, -1, 0); 
@@ -904,6 +922,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, FREE, c_free, -1, 0);
 	translationAdd(ret, LOAD, c_load, -1, 0);
 	translationAdd(ret, DATA, c_data, 0, 0);
+	translationAdd(ret, R14, c_r14, -1, 0);
 	
 	return ret;
 }

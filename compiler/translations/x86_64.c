@@ -56,7 +56,7 @@ void ntv(){
 			"movq %%rsp, %%r13\n\t"
 			"movq %%r15, %%rsp\n\t"
 			"callq *%%r12\n\t"
-			"movq %%rsp, %%r15\n\t"
+			//"movq %%rsp, %%r15\n\t"	//does this really need to be replaced?
 			"movq %%r13, %%rsp\n\t"
 			"addq $0x08, %%rsp\n\t"
 			"movq (%%r15), %%r14\n\t"	//remove NTV arguments from activationStack
@@ -67,7 +67,8 @@ void ntv(){
 void loc() {
 	asm volatile (	"movq -0x8(%%rbp), %%rax\n\t"
 			"popq %%rbx\n\t"
-			"lea (%%rax, %%rbx, 8), %%rax\n\t"
+			//"lea (%%rax, %%rbx, 1), %%rax\n\t"
+			"addq %%rbx, %%rax\n\t"
 			"pushq %%rax\n\t"
 			:::
 			);
@@ -168,7 +169,6 @@ void jsr() {
 			"movq (%%rsp), %%rcx\n\t"	//past activationStack in rcx
 			"pushq %%rdx\n\t"		//remember activationStack
 			"subq %%rdx, %%rcx\n\t"		//rcx contains numArgsPassed
-		//asdfasdf
 			"movq %%rsp, %%r15\n\t"		//replace counterStack
 			"movq %%r13, %%rsp\n\t"		//back on regular stack
 
@@ -407,7 +407,13 @@ void load() {
 			"movq %%rsp, %%r13\n\t"
 			"movq %%r15, %%rsp\n\t"
 			"callq *%%r12\n\t"
-			"movq %%rsp, %%r15\n\t"
+			//"movq %%rsp, %%r15\n\t"
 			"movq %%r13, %%rsp\n\t"
+			:::);
+}
+
+void r14() {
+	asm volatile (
+			"pushq %%r14\n\t"
 			:::);
 }

@@ -64,6 +64,7 @@ long *load(char *fn) {
 			printf("\t%02x\t", ret[j]);
 			if((j%8)==7) printf("\n");
 		}
+		printf("\n");
 	}
 
 	return ret;
@@ -85,6 +86,8 @@ void main(int argc, char **argv) {
 	*counterStack = activationStack;
 	counterStack -= 1;
 	*counterStack = activationStack;
+
+	//printf("MEM = %lx\n", MEM);
 	
 	asm volatile (
 			"movq %5, %%rsp\n\t"	//start using the data stack
@@ -95,7 +98,7 @@ void main(int argc, char **argv) {
 			"movq %3, %%r15\n\t"		//remember counter stack
 			"callq *%4\n\t"		//pass control to user's program
 			:
-			:"r" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC), "r" (dataStack)
+			:"m" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC), "r" (dataStack)
 			);
 	kernel(HALT);
 
@@ -153,9 +156,6 @@ void newCollection(long **rsp) {
 }
 
 void loadLib(char **rsp) {
-	printf("loading lib... %s\n", *rsp);
-
-	//void *handle = dlopen("/lib/x86_64-linux-gnu/libm.so.6", RTLD_LAZY);
 	*rsp = dlopen(*rsp, RTLD_LAZY);
 	stackPush(libStack, *rsp);
 
