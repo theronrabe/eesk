@@ -734,7 +734,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 	}
 	
 	stackFree(operationStack);
-	writeObj(dst, HALT, 0, dictionary, LC);
+	if(tokVal == -1) writeObj(dst, HALT, 0, dictionary, LC);
 
 	return *LC - oldLC;
 }
