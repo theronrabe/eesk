@@ -43,11 +43,10 @@ int main(int argc, char **argv) {
 	context.nativeFlag = 0;
 	context.staticFlag = 0;
 	context.parameterFlag = 0;
-	context.instructionFlag = 0;
+	context.instructionFlag = 1;
 	
 	compileStatement(keyWords, symbols, dictionary, src, &SC, dst, &LC, &context, &lineCount);
 	writeObj(dst, DATA, transferAddress, dictionary, &LC);
-printf("transfer address: %lx\n", transferAddress);
 
 	free(src);
 	fclose(dst);

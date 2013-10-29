@@ -66,7 +66,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 		tokLen = getToken(tok, src, SC, lineCount);
 //printf("token:\t%s\n", tok);
 		if(!tok[0] && dst) {
-			printf("%d: Expected } symbol.\n", *lineCount);
+			if(dst) printf("%d: Expected } symbol.\n", *lineCount);
 			//exit(0);
 		}
 		tempTable = tableLookup(keyWords, tok, &fakeLC);
@@ -734,6 +734,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 	}
 	
 	stackFree(operationStack);
+	writeObj(dst, HALT, 0, dictionary, LC);
 
 	return *LC - oldLC;
 }
@@ -780,7 +781,6 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 				}
 			} else {
 				//if(dst) printf("%d:\t%s to static from dynamic\n", *lineCount, sym->token);
-				if(dst) printf("%d:\there for %s\tsym = %lx\n", *lineCount, sym->token, sym->val);
 				writeObj(dst, PUSH, sym->val, dictionary, LC);
 				writeObj(dst, LOC, 0, dictionary, LC);
 				/*
