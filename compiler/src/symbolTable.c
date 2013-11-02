@@ -37,10 +37,12 @@ Table *tableCreate() {
 	ret->staticFlag = 1;
 	ret->searchUp = 0;
 	ret->parameterFlag = 0;
+	ret->offset = 0;
 	return ret;
 }
 
 void publicize(Table *node) {
+	int offset;
 	if(node) {
 		//printf("%s staticity: %d\n", node->token, node->staticFlag);
 		//printf("publicizing node %s\n\n", node->token);
@@ -49,7 +51,12 @@ void publicize(Table *node) {
 			strcpy(publicToken, node->parent->token);
 			strcat(publicToken, ".");
 			strcat(publicToken, node->token);
+			if(!node->parent->searchUp) {
+				//This symbol was relatively addressed, remember an offset
+				offset = node->offset + node->parent->val;
+			}
 			node = tableAddSymbol(node->parent, publicToken, node->val, node->staticFlag, 0);
+			node->offset = offset;
 			publicize(node);
 		}
 	}

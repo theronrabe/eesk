@@ -132,7 +132,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 			case(k_Function):
 				//in a new namespace
-				nameAddr = *LC + ((context->instructionFlag)?3:0);	//if these are instructions, jump over this
+				//nameAddr = *LC + ((context->instructionFlag)?3:0);	//if these are instructions, jump over this
 				stackPush(nameStack, nameAddr);
 				tokLen = getToken(tok, src, SC, lineCount);
 				symbols = tableAddSymbol(symbols, tok, nameAddr, context->staticFlag, context->parameterFlag);	//change to this scope
@@ -521,7 +521,10 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 			case(k_collect):
 				//set the scope
 				tokLen = getToken(tok, src, SC, lineCount);
-				nameAddr = *LC + ((context->instructionFlag)?3:0);	//add 3 if instructions
+				nameAddr = *LC;
+				if(context->instructionFlag) {
+					nameAddr +=  dictionary[RPUSH].length + dictionary[JMP].length + dictionary[DATA].length;
+				}
 				symbols = tableAddSymbol(symbols, tok, nameAddr, context->staticFlag, context->parameterFlag);
 				symbols = tableAddLayer(symbols, tok, 1);
 
@@ -542,11 +545,11 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 				//write its length, and its body (addressed relative to right here)
 				writeObj(dst, DATA, DC[0], dictionary, LC);
-				fakeLC = 8;
+				fakeLC = WRDSZ;
 				subContext.instructionFlag = 0;
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);
 				subContext.instructionFlag = context->instructionFlag;
-				*LC += fakeLC - 8; //accommodate for change in location
+				*LC += fakeLC - WRDSZ; //accommodate for change in location
 
 				//push newing address, if we're in the middle of instructions
 				if(context->instructionFlag) {
@@ -773,14 +776,14 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 		if(!sym->staticFlag) {
 			if(!fakeLC) {
 				//symbol is not being called for within a collection
-				//if(dst) printf("%d:\t%s, to dynamic, no transversal\n", *lineCount, sym->token);
+				if(dst) printf("%d:\t%s, to dynamic, no transversal\n", *lineCount, sym->token);
 				if(!context->literalFlag) {
-					writeObj(dst, RPUSH, value - *LC - dictionary[RPUSH].length + 1, dictionary, LC);
+					writeObj(dst, RPUSH, value - *LC - dictionary[RPUSH].length + 1 + sym->offset, dictionary, LC);
 				} else {
 					writeObj(dst, DATA, value - *LC + 1, dictionary, LC);
 				}
 			} else {
-				//if(dst) printf("%d:\t%s to static from dynamic\n", *lineCount, sym->token);
+				if(dst) printf("%d:\t%s to static from dynamic\n", *lineCount, sym->token);
 				writeObj(dst, PUSH, sym->val, dictionary, LC);
 				writeObj(dst, LOC, 0, dictionary, LC);
 				/*
@@ -913,6 +916,8 @@ translation *prepareTranslation() {
 	translationAdd(ret, AND, c_and, -1, 0);
 	translationAdd(ret, OR, c_or, -1, 0);
 	translationAdd(ret, NOT, c_not, -1, 0);
+	translationAdd(ret, PRTF, c_prtf, -1, 0);
+	translationAdd(ret, FADD, c_fadd, -1, 0);
 	translationAdd(ret, PRTS, c_prts, -1, 0);
 	translationAdd(ret, GT, c_gt, -1, 0);
 	translationAdd(ret, LT, c_lt, -1, 0);

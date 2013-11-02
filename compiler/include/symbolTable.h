@@ -25,6 +25,7 @@ You should have received a copy of the GNU General Public License
 typedef struct Table {
 	char *token;
 	int val;
+	int offset;
 	char staticFlag;
 	char searchUp;
 	char parameterFlag;
