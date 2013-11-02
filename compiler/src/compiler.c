@@ -148,22 +148,24 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//param length
 				subContext.parameterFlag = 0;
 				fakeLC = 0;	//because parameters don't increment location counter
-				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//data length
+				//DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//data length
+				DC[1] = 0;
 				subContext.instructionFlag = 1;
 				DC[2] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//statement length
 				symbols = tableRemoveLayer(symbols);
 				subContext.instructionFlag = 0;
 				
 				if(context->instructionFlag) {
-					fakeLC = dictionary[JMP].length + dictionary[DATA].length + dictionary[RPUSH].length + dictionary[RSR].length + 1;
+					fakeLC = dictionary[JMP].length + dictionary[DATA].length*2 + dictionary[RPUSH].length + dictionary[RSR].length + 1;
 					writeObj(dst, RPUSH, DC[1]+DC[2]+fakeLC, dictionary, LC);	//this used to be a PUSH
 					writeObj(dst, JMP, 0, dictionary, LC);		//Hop over the definition	//this used to be a HOP
+					printf("Jumping over implicit funtion to %lx\n", DC[1]+DC[2]+fakeLC);
 				}
 
 				//writeObj(dst, (DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
 
 				//reset calling address
-				nameAddr = *LC + DC[1] + WRDSZ;
+				nameAddr = *LC + DC[1] + WRDSZ*2;	//an extra word for total length (for newing), and an extra word for stack request
 				tableAddSymbol(symbols->parent->layerRoot, tok, nameAddr, context->staticFlag, context->parameterFlag);		//overwrite previous definition
 				if(context->publicFlag) { publicize(symbols->parent); }
 
@@ -171,9 +173,10 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				subContext.parameterFlag = 1;
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);	//compiled parameters section
 				subContext.parameterFlag = 0;
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled data section
+				//compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled data section
 				subContext.instructionFlag = 1;
 
+				writeObj(dst, DATA, WRDSZ*2 + DC[2] + dictionary[RPUSH].length + dictionary[RSR].length, dictionary, LC);	//a word containing total function length
 				writeObj(dst, DATA, DC[0]+WRDSZ, dictionary, LC);	//write argument number at callAddress-1, extra word for return address
 				//reset calling address to right here
 
@@ -183,6 +186,8 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				subContext.instructionFlag = context->instructionFlag;
 				writeObj(dst, RPUSH, nameAddr - *LC + 1 - WRDSZ, dictionary, LC);
 				writeObj(dst, RSR, 0, dictionary, LC);
+
+				//instructionFlagged functions should jump to right here
 	
 				if(context->instructionFlag) {
 					//basically, act like a lambda function
@@ -778,14 +783,14 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 		if(!sym->staticFlag) {
 			if(!fakeLC) {
 				//symbol is not being called for within a collection
-				//if(dst) printf("%d:\t%s, to child symbol. Val = %d, Offset = %d\n", *lineCount, sym->token, sym->val, sym->offset);
+				//if(dst) printf("%d:\tto child symbol %s. Val = %x, Offset = %x\n", *lineCount, sym->token, sym->val, sym->offset);
 				if(!context->literalFlag) {
 					writeObj(dst, RPUSH, value - *LC - dictionary[RPUSH].length + 1 + sym->offset, dictionary, LC);
 				} else {
 					writeObj(dst, DATA, value - *LC + 1, dictionary, LC);
 				}
 			} else {
-				//if(dst) printf("%d:\t%s to parent symbol from child\n", *lineCount, sym->token);
+				//if(dst) printf("%d:\tto parent symbol %s. Val = %x, Offset = %x\n", *lineCount, sym->token, sym->val, sym->offset);
 				/*
 				writeObj(dst, PUSH, sym->val, dictionary, LC);
 				writeObj(dst, LOC, 0, dictionary, LC);

@@ -90,6 +90,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF, char pF) {
 			T->left->staticFlag = sF;
 			T->left->searchUp = T->searchUp;
 			T->left->parameterFlag = pF;
+			T->left->offset = 0;
 			//printf("Inserting %s as %x left of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->left->staticFlag);
 			return T->left;
 		}
@@ -108,6 +109,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF, char pF) {
 			T->right->staticFlag = sF;
 			T->right->searchUp = T->searchUp;
 			T->right->parameterFlag = pF;
+			T->right->offset = 0;
 			//printf("Inserting %s as %x right of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->right->staticFlag);
 			return T->right;
 		}

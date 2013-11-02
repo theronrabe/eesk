@@ -75,13 +75,13 @@ void main(int argc, char **argv) {
 	libStack = stackCreate(100);
 	MEM = load(argv[1]);
 	oldDStack = malloc(1000*sizeof(long));
-	dataStack = oldDStack+1001;
+	dataStack = oldDStack+999;
 
 	oldAStack = malloc(1000*sizeof(long));
-	activationStack = oldAStack+1001;
+	activationStack = oldAStack+999;
 
 	oldCStack = malloc(1000*sizeof(long));
-	counterStack = oldCStack+1000;
+	counterStack = oldCStack+999;
 
 	*counterStack = activationStack;
 	counterStack -= 1;
@@ -123,10 +123,11 @@ void quit(long *rsp, long *rbp) {
 	//if(verboseFlag) printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
 	//for(i=STACK->sp-1; i>=0; i--) {
 	printf("\n");
+	
 	for(;rsp < rbp; rsp++){
-		printf("| %4lx |\n", *rsp);
+		printf("| %12lx |\n", *rsp, *(double *)rsp);
 	}
-		printf("|______|\n");
+		printf("|______________|\n");
 	
 	//Unload libStack
 	for(int i=0;i<libStack->sp;i++) {
@@ -142,11 +143,12 @@ void quit(long *rsp, long *rbp) {
 }
 
 void newCollection(long **rsp) {
-	long *old = *rsp;
+	long *old = (*rsp)-2;	//two words behind the calling address is the length of the symbol
 	long i, len = (*old) + WRDSZ;
 	*rsp = mmap(0, len, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, 0, 0);
 	mprotect(rsp, len, PROT_READ|PROT_WRITE|PROT_EXEC);
 	memcpy(*rsp, old, len);
+	*rsp += 2;	//accommodate for length and stack request words
 
 	/*
 	for(i=0; i<len; i++) {

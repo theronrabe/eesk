@@ -29,12 +29,13 @@ This file is part of Eesk.
 
 void kernel(long eeskir) {
 	long **rsp, *rbp;
-	long *aStack;
+	long *aStack, *cStack;
 	asm volatile (
 			"movq %%r13, %0\n\t"
 			"movq %%rbp, %1\n\t"
 			"movq %%r14, %2\n\t"
-			:"=m" (rsp), "=m" (rbp), "=m" (aStack)
+			"movq %%r15, %3\n\t"
+			:"=m" (rsp), "=m" (rbp), "=m" (aStack), "=m" (cStack)
 			:
 			:"memory"
 			);
@@ -49,6 +50,12 @@ void kernel(long eeskir) {
 		case(PRTS):
 			printf("%s", *rsp);
 			break;
+		case(PRTC):
+			printf("%c", *rsp);
+			break;
+		case(PRTF):
+			printf("%f", *(double *)rsp);
+			break;
 		case(ALOC):
 			*rsp = malloc(*rsp);
 			break;
@@ -56,7 +63,7 @@ void kernel(long eeskir) {
 			newCollection(rsp);
 			break;
 		case(FREE):
-			munmap(*rsp, **rsp);
+			munmap((*rsp)-2, *((*rsp)-2));
 			break;
 		case(NTV):
 			*(rsp+1) = nativeCall(*(rsp+1), *rsp, aStack);
@@ -65,4 +72,5 @@ void kernel(long eeskir) {
 			loadLib(rsp);
 			break;
 	}
+	//printf("kernel returning to address %lx\n", *aStack);
 }
