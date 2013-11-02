@@ -55,7 +55,7 @@ void publicize(Table *node) {
 				//This symbol was relatively addressed, remember an offset
 				offset = node->offset + node->parent->val;
 			}
-			node = tableAddSymbol(node->parent, publicToken, node->val, node->staticFlag, 0);
+			node = tableAddSymbol(node->parent, publicToken, node->val + node->offset, node->staticFlag, 0);
 			node->offset = offset;
 			publicize(node);
 		}

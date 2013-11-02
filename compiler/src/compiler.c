@@ -137,14 +137,14 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				tokLen = getToken(tok, src, SC, lineCount);
 				symbols = tableAddSymbol(symbols, tok, nameAddr, context->staticFlag, context->parameterFlag);	//change to this scope
 				if(context->publicFlag) { publicize(symbols); }
-				symbols = tableAddLayer(symbols, tok, 0);
+				symbols = tableAddLayer(symbols, tok, 1);
 	
 				//count length of parameters, data, and statement sections
 				fakeSC = *SC;
 				fakeLC = 0;
 				subContext.parameterFlag = 1;
 				subContext.instructionFlag = 0;
-				symbols = tableAddLayer(symbols, tok, 0);
+				symbols = tableAddLayer(symbols, tok, 1);
 				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//param length
 				subContext.parameterFlag = 0;
 				fakeLC = 0;	//because parameters don't increment location counter
@@ -177,7 +177,9 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				writeObj(dst, DATA, DC[0]+WRDSZ, dictionary, LC);	//write argument number at callAddress-1, extra word for return address
 				//reset calling address to right here
 
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled statement section
+				fakeLC = 0;
+				compileStatement(keyWords, symbols, dictionary, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);	//compiled statement section, addressed relatively
+				(*LC) += fakeLC;
 				subContext.instructionFlag = context->instructionFlag;
 				writeObj(dst, RPUSH, nameAddr - *LC + 1 - WRDSZ, dictionary, LC);
 				writeObj(dst, RSR, 0, dictionary, LC);
@@ -758,7 +760,7 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 		if(!context->parameterFlag) {
 			//This is an implicitly declared variable
 			if(dst) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", *lineCount, sym->token, sym->val, sym->staticFlag);
-			if(context->publicFlag) publicize(sym);
+			if(context->publicFlag && dst) publicize(sym);
 			if(!context->literalFlag && context->instructionFlag) writeObj(dst, GRAB, 0, dictionary, LC);
 			else writeObj(dst, DATA, 0, dictionary, LC);
 		} else {
@@ -776,21 +778,21 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 		if(!sym->staticFlag) {
 			if(!fakeLC) {
 				//symbol is not being called for within a collection
-				if(dst) printf("%d:\t%s, to dynamic, no transversal\n", *lineCount, sym->token);
+				//if(dst) printf("%d:\t%s, to child symbol. Val = %d, Offset = %d\n", *lineCount, sym->token, sym->val, sym->offset);
 				if(!context->literalFlag) {
 					writeObj(dst, RPUSH, value - *LC - dictionary[RPUSH].length + 1 + sym->offset, dictionary, LC);
 				} else {
 					writeObj(dst, DATA, value - *LC + 1, dictionary, LC);
 				}
 			} else {
-				if(dst) printf("%d:\t%s to static from dynamic\n", *lineCount, sym->token);
+				//if(dst) printf("%d:\t%s to parent symbol from child\n", *lineCount, sym->token);
+				/*
 				writeObj(dst, PUSH, sym->val, dictionary, LC);
 				writeObj(dst, LOC, 0, dictionary, LC);
-				/*
-				writeObj(dst, RPUSH, - (*LC + dictionary[RPUSH].length) + 1, dictionary, LC);
+				*/
+				writeObj(dst, RPUSH, - (*LC + fakeLC + dictionary[RPUSH].length) + 1, dictionary, LC);
 				writeObj(dst, PUSH, sym->val, dictionary, LC);
 				writeObj(dst, ADD, 0, dictionary, LC);
-				*/
 			}
 		} else {
 			//if(dst) printf("%d:\t%s to static from somewhere\n", *lineCount, sym->token);
