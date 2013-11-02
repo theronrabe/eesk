@@ -53,7 +53,7 @@ void publicize(Table *node) {
 			strcat(publicToken, node->token);
 			if(!node->parent->searchUp) {
 				//This symbol was relatively addressed, remember an offset
-				offset = node->offset + node->parent->val;
+				offset = node->parent->val;
 			}
 			node = tableAddSymbol(node->parent, publicToken, node->val + node->offset, node->staticFlag, 0);
 			node->offset = offset;
