@@ -43,8 +43,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 	int fakeSC;			//for measuring relative addresses on sub-statement
 	char tok[256];			//needs to be big in case of string
 	char string[256];		//additional string space
-	char *charPtr;			
-	char *charPtr2;
+	char *charPtr, *charPtr2, *charPtr3;
 	long nameAddr;			//for marking important working addresses
 	long DC[3];			//data counters
 	int i;				//iterator
@@ -156,10 +155,9 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				subContext.instructionFlag = 0;
 				
 				if(context->instructionFlag) {
-					fakeLC = dictionary[JMP].length + dictionary[DATA].length*2 + dictionary[RPUSH].length + dictionary[RSR].length + 1;
+					fakeLC = dictionary[JMP].length + dictionary[DATA].length*2 + /*dictionary[RPUSH].length +*/ dictionary[RSR].length + 1;
 					writeObj(dst, RPUSH, DC[1]+DC[2]+fakeLC, dictionary, LC);	//this used to be a PUSH
 					writeObj(dst, JMP, 0, dictionary, LC);		//Hop over the definition	//this used to be a HOP
-					printf("Jumping over implicit funtion to %lx\n", DC[1]+DC[2]+fakeLC);
 				}
 
 				//writeObj(dst, (DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
@@ -184,7 +182,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				compileStatement(keyWords, symbols, dictionary, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);	//compiled statement section, addressed relatively
 				(*LC) += fakeLC;
 				subContext.instructionFlag = context->instructionFlag;
-				writeObj(dst, RPUSH, nameAddr - *LC + 1 - WRDSZ, dictionary, LC);
+				//writeObj(dst, RPUSH, nameAddr - *LC + 1 - WRDSZ, dictionary, LC);
 				writeObj(dst, RSR, 0, dictionary, LC);
 
 				//instructionFlagged functions should jump to right here
@@ -346,7 +344,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 					}
 				} else {
 					//create a symbol and a word
-					tempTable = tableAddSymbol(symbols, tok, *LC + ((context->instructionFlag)?1:0), context->staticFlag, context->parameterFlag);
+					tempTable = tableAddSymbol(symbols, tok, *LC + ((context->instructionFlag)?5:0), context->staticFlag, context->parameterFlag);
 					if(!context->parameterFlag) {
 						if(context->publicFlag) publicize(tempTable);
 						if(context->instructionFlag) writeObj(dst, GRAB, 0, dictionary, LC);
@@ -691,22 +689,27 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 					function name;
 				*/
 				tokLen = getToken(tok, src, SC, lineCount);
-				tempTable = tableAddSymbol(symbols, tok, *LC, context->staticFlag, context->parameterFlag);
+				nameAddr = dictionary[RPUSH].length + dictionary[JMP].length + 1;
+				tempTable = tableAddSymbol(symbols, tok, *LC + nameAddr, context->staticFlag, context->parameterFlag);
 				getQuote(tok, src, SC);		//once first, to accommodate for opening "
 				getQuote(tok, src, SC);
 				strcpy(string, tok);
 
 				charPtr = strtok(string, "():");	//grab function name
+				charPtr2 = strtok(NULL, "():");		//grab return type
+				charPtr3 = strtok(NULL, "():");		//grab argument types
+
+				writeObj(dst, RPUSH, nameAddr, dictionary, LC);		//push Native structure
+				writeObj(dst, RPUSH, 3*WRDSZ + strlen(charPtr3)*WRDSZ + dictionary[JMP].length + strlen(charPtr) + 2, dictionary, LC);	//hop over definition
+				writeObj(dst, JMP, 0, dictionary, LC);
 
 				writeObj(dst, DATA, 0, dictionary, LC);		//space for function pointer
 
-				//get return type
-				charPtr2 = strtok(NULL, "():");
+				//return type
 				writeObj(dst, DATA, charPtr2[0], dictionary, LC);
 
-				//get argument information
-				charPtr2 = strtok(NULL, "():");
-				writeObj(dst, DATA, strlen(charPtr2), dictionary, LC);	//write argument count
+				//argument information
+				writeObj(dst, DATA, strlen(charPtr3), dictionary, LC);	//write argument count
 				
 				for(i=0;i<strlen(charPtr2);i++) {
 					writeObj(dst, DATA, (long) charPtr2[i], dictionary, LC);
@@ -889,6 +892,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "load", k_load, 0, 0);
 	tableAddSymbol(ret, "Native", k_nativeFunction, 0, 0);
 	tableAddSymbol(ret, "r14", k_r14, 0, 0);
+	tableAddSymbol(ret, "Set", k_Function, 0, 0);
 
 	return ret;
 }
