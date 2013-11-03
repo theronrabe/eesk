@@ -46,6 +46,7 @@ int main(int argc, char **argv) {
 	context.instructionFlag = 1;
 	
 	compileStatement(keyWords, symbols, dictionary, src, &SC, dst, &LC, &context, &lineCount);
+	writeObj(dst, HALT, 0, dictionary, &LC);
 	writeObj(dst, DATA, transferAddress, dictionary, &LC);
 
 	free(src);
