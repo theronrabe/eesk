@@ -688,9 +688,9 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 					...
 					function name;
 				*/
-				tokLen = getToken(tok, src, SC, lineCount);
+				//tokLen = getToken(tok, src, SC, lineCount);
 				nameAddr = dictionary[RPUSH].length + dictionary[JMP].length + 1;
-				tempTable = tableAddSymbol(symbols, tok, *LC + nameAddr, context->staticFlag, context->parameterFlag);
+				//tempTable = tableAddSymbol(symbols, tok, *LC + nameAddr + 7, context->staticFlag, context->parameterFlag);
 				getQuote(tok, src, SC);		//once first, to accommodate for opening "
 				getQuote(tok, src, SC);
 				strcpy(string, tok);
@@ -712,7 +712,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				writeObj(dst, DATA, strlen(charPtr3), dictionary, LC);	//write argument count
 				
 				for(i=0;i<strlen(charPtr2);i++) {
-					writeObj(dst, DATA, (long) charPtr2[i], dictionary, LC);
+					writeObj(dst, DATA, (long) charPtr3[i], dictionary, LC);
 				}
 
 				//write function name

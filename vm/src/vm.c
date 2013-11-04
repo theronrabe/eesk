@@ -604,7 +604,7 @@ long nativeCall(long *call, void *handle, long *aStack) {
 					*(call+3+i) = &ffi_type_uchar;
 					break;
 				default:
-					printf("Unknown argument type:\t%p: %x\n",(char) *(call+3+i));
+					printf("Unknown argument type:\t%p: %c\n", (call+3+i), (char) *(call+3+i));
 					exit(1);
 					break;
 			}
