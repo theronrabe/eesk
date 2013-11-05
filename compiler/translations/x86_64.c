@@ -304,7 +304,11 @@ void or() {
 
 void not() {
 	asm volatile (
-			"notq 0x8(%%rsp)\n\t"
+			"popq %%rax\n\t"
+			"negq %%rax\n\t"
+			"sbbq %%rax, %%rax\n\t"
+			"incq %%rax\n\t"
+			"pushq %%rax\n\t"
 			:::
 			);
 }
@@ -415,5 +419,27 @@ void load() {
 void r14() {
 	asm volatile (
 			"pushq %%r14\n\t"
+			:::);
+}
+
+void printf() {
+	asm volatile (
+			"movq $0x20, %%rdi\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r15, %%rsp\n\t"
+			"callq *%%r12\n\t"
+			"movq %%rsp, %%r15\n\t"
+			"movq %%r13, %%rsp\n\t"
+			"addq $0x8, %%rsp\n\t"
+			:::);
+}
+
+void fadd() {
+	asm volatile (
+			"fld (%%rsp)\n\t"
+			"fld 0x8(%%rsp)\n\t"
+			"faddp\n\t"
+			"fstp 0x8(%%rsp)\n\t"
+			"popq %%rax\n\t"
 			:::);
 }
