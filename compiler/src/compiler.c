@@ -205,6 +205,12 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 			case(k_cBrace):
 				fillOperations(dst, LC, operationStack, dictionary);
+				subContext.publicFlag = 0;
+				context->publicFlag = 0;
+				subContext.nativeFlag = 0;
+				context->nativeFlag = 0;
+				subContext.staticFlag = 0;
+				context->staticFlag = 0;
 				endOfStatement = 1;
 				break;
 

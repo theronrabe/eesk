@@ -125,7 +125,7 @@ void quit(long *rsp, long *rbp) {
 	printf("\n");
 	
 	for(;rsp < rbp; rsp++){
-		printf("| %12lx |\n", *rsp, *(double *)rsp);
+		printf("| %12lx |\n", *rsp);
 	}
 		printf("|______________|\n");
 	
