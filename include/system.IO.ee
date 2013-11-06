@@ -1,22 +1,19 @@
 {
-	public Field IO {
-		private given libc
-		private define libPath	\"libc.so.6"\
+	public Set IO {} {
+		private given libc^
+
+		private Set init {} {
+			libc = load "libc.so.6"
+		}[]
 	
-		public Function init {} {} {libc = load libPath}
-	
-		global public Function putc {given c} {
-			private Native call "putchar:v(c)";
-		} {
-			if {libc$!} {init[]^} {}
-			call@libc$[c$]^;
-		}
-	
-		public Function puts {given str} {
-			private Native call "puts:v(p)";
-		} {
-			if {libc$!} {init[]^} {}
-			call@libc$[str$]^;
-		}
+		public Set putc {c} {
+			if {libc$!} {init[]} {}
+			Native "putchar:c(d)" @ libc$ [c$]
+		}^
+
+		public Set puts {str} {
+			if {libc$!} {init[]} {}
+			Native "puts:v(p)" @ libc$ [str$]
+		}^
 	}
 }

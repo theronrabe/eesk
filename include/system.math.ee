@@ -1,190 +1,139 @@
 {
-	public Field math {
-		private given libm;
-		private define libPath 	\"libm.so"\
+	public Set math {} {
+		private given libm = load "libm.so";
 
-		private Function init {} {} {libm = load libPath}
+		private Set init {} {
+			libm = load "libm.so"
+		}^
 
-		public Function cos {x} {
-				private Native call "cos:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set cos {x} {
+			if {libm$!} {init[]} {}
+			Native "cos:f(f)" @ libm$ [x$]
+		}^
 
-		public Function sin {x} {
-				private Native call "sin:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set sin {x} {
+			if {libm$!} {init[]} {}
+			Native "sin:f(f)" @ libm$ [x$]
+		}^
 
-		public Function tan {x} {
-				private Native call "tan:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set tan {x} {
+			if {libm$!} {init[]} {}
+			Native "tan:f(f)" @ libm$ [x$]
+		}^
 		
-		public Function acos {x} {
-				private Native call "acos:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set acos {x} {
+			if {libm$!} {init[]} {}
+			Native "acos:f(f)" @ libm$ [x$]
+		}^
 		
-		public Function asin {x} {
-				private Native call "asin:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set asin {x} {
+			if {libm$!} {init[]} {}
+			Native "asin:f(f)" @ libm$ [x$]
+		}^
 
 		public Function atan {x} {
-				private Native call "atan:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+			if {libm$!} {init[]} {}
+			Native call "atan:f(f)" @ libm$ [x$]
+		}^
 
-		public Function atanTwo {x,y} {
-				private Native call "atan2:f(ff)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$, y$];
-			}
+		public Set atanTwo {x,y} {
+			if {libm$!} {init[]} {}
+			Native call "atan2:f(ff)" @ libm$ [x$, y$]
+		}^
 
-		public Function cosh {x} {
-				private Native call "cosh:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set cosh {x} {
+			if {libm$!} {init[]} {}
+			Native call "cosh:f(f)" @ libm$ [x$]
+		}^
 
-		public Function sinh {x} {
-				private Native call "sinh:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set sinh {x} {
+			if {libm$!} {init[]} {}
+			Native call "sinh:f(f)" @ libm$ [x$]
+		}^
 
-		public Function tanh {x} {
-				private Native call "tanh:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set tanh {x} {
+			if {libm$!} {init[]} {}
+			Native call "tanh:f(f)" @ libm$ [x$]
+		}^
 
-		public Function acosh {x} {
-				private Native call "acosh:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set acosh {x} {
+			if {libm$!} {init[]} {}
+			Native call "acosh:f(f)" @ libm$ [x$]
+		}^
 
-		public Function asinh {x} {
-				private Native call "asinh:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set asinh {x} {
+			if {libm$!} {init[]} {}
+			Native call "asinh:f(f)" @ libm$ [x$]
+		}^
 
-		public Function atanh {x} {
-				private Native call "atanh:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set atanh {x} {
+			if {libm$!} {init[]} {}
+			Native call "atanh:f(f)" @ libm$ [x$]
+		}^
 	
-		public Function pow {x,y} {
-				private Native call "pow:f(ff)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$, y$];
-			}
+		public Set pow {x,y} {
+			if {libm$!} {init[]} {}
+			Native call "pow:f(ff)" @ libm$ [x$, y$]
+		}^
 
-		public Function sqrt {x} {
-				private Native call "sqrt:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set sqrt {x} {
+			if {libm$!} {init[]} {}
+			Native call "sqrt:f(f)" @ libm$ [x$]
+		}^
 	
-		public Function exp {x} {
-				private Native call "exp:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set exp {x} {
+			if {libm$!} {init[]} {}
+			Native call "exp:f(f)" @ libm$ [x$]
+		}^
 
-		public Function log {x} {
-				private Native call "log:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set log {x} {
+			if {libm$!} {init[]} {}
+			Native call "log:f(f)" @ libm$ [x$]
+		}^
 
-		public Function log10 {x} {
-				private Native call "log10:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set log10 {x} {
+			if {libm$!} {init[]} {}
+			Native call "log10:f(f)" @ libm$ [x$]
+		}^
 
-		public Function exp2 {x} {
-				private Native call "exp2:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set exp2 {x} {
+			if {libm$!} {init[]} {}
+			Native call "exp2:f(f)" @ libm$ [x$]
+		}^
 
-		public Function log2 {x} {
-				private Native call "log2:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set log2 {x} {
+			if {libm$!} {init[]} {}
+			Native call "log2:f(f)" @ libm$ [x$]
+		}^
 
-		public Function ceil {x} {
-				private Native call "ceil:i(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set ceil {x} {
+			if {libm$!} {init[]} {}
+			Native call "ceil:i(f)" @ libm$ [x$]
+		}^
 
-		public Function floor {x} {
-				private Native call "floor:i(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set floor {x} {
+			if {libm$!} {init[]} {}
+			Native call "floor:i(f)" @ libm$ [x$]
+		}^
 
-		public Function fmod {x,y} {
-				private Native call "fmod:f(ff)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$, y$];
-			}
+		public Set fmod {x,y} {
+			if {libm$!} {init[]} {}
+			Native call "fmod:f(ff)" @ libm$ [x$, y$]
+		}^
 
-		public Function trunc {x} {
-				private Native call "trunc:i(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set trunc {x} {
+			if {libm$!} {init[]} {}
+			Native call "trunc:i(f)" @ libm$ [x$]
+		}^
 	
-		public Function fabs {x} {
-				private Native call "fabs:f(f)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set fabs {x} {
+			if {libm$!} {init[]} {}
+			Native call "fabs:f(f)" @ libm$ [x$]
+		}^
 
-		public Function abs {x} {
-				private Native call "abs:i(i)";
-			} {
-				if {libm$!} {init[]^} {}
-				return call@libm$[x$];
-			}
+		public Set abs {x} {
+			if {libm$!} {init[]} {}
+			Native call "abs:i(i)" @ libm$ [x$]
+		}^
 	}
 }
