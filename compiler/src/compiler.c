@@ -685,6 +685,10 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				writeObj(dst, R14, 0, dictionary, LC);
 				break;
 
+			case(k_imply):
+				stackPush(operationStack, IMPL);
+				break;
+
 			case(k_nativeFunction):
 				/*builds a struct like this:
 					function pointer;
@@ -799,13 +803,13 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 					writeObj(dst, DATA, value - *LC + 1, dictionary, LC);
 				}
 			} else {
-				//if(dst) printf("%d:\tto parent symbol %s. Val = %x, Offset = %x\n", *lineCount, sym->token, sym->val, sym->offset);
+				//if(dst) printf("%d:\tto parent symbol %s. Val = %x, Offset = %x, Backset = %x\n", *lineCount, sym->token, sym->val, sym->offset, fakeLC);
 				/*
 				writeObj(dst, PUSH, sym->val, dictionary, LC);
 				writeObj(dst, LOC, 0, dictionary, LC);
 				*/
 				writeObj(dst, RPUSH, - (*LC + fakeLC + dictionary[RPUSH].length) + 1, dictionary, LC);
-				writeObj(dst, PUSH, sym->val, dictionary, LC);
+				writeObj(dst, PUSH, sym->val + sym->offset, dictionary, LC);
 				writeObj(dst, ADD, 0, dictionary, LC);
 			}
 		} else {
@@ -899,6 +903,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "Native", k_nativeFunction, 0, 0);
 	tableAddSymbol(ret, "r14", k_r14, 0, 0);
 	tableAddSymbol(ret, "Set", k_Function, 0, 0);
+	tableAddSymbol(ret, "<-", k_imply, 0, 0);
 
 	return ret;
 }
@@ -945,6 +950,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, LOAD, c_load, -1, 0);
 	translationAdd(ret, DATA, c_data, 0, 0);
 	translationAdd(ret, R14, c_r14, -1, 0);
+	translationAdd(ret, IMPL, c_impl, -1, 0);
 	
 	return ret;
 }
