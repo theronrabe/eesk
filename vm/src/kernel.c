@@ -30,6 +30,8 @@ This file is part of Eesk.
 void kernel(long eeskir) {
 	long **rsp, *rbp;
 	long *aStack, *cStack;
+
+	//Handle Eesk -> System V environment interactions
 	asm volatile (
 			"movq %%r13, %0\n\t"
 			"movq %%rbp, %1\n\t"
