@@ -36,6 +36,15 @@ This file is part of Eesk.
 #include <eeskIR.h>
 #include <translations.h>
 
+/*
+	This function is our recursive finite state machine. It switches to a state (which writes instructions through the writer,
+	or in some way alters the context) according to an incoming symbol from the tokenizer.
+
+	TODO:
+		- Each state really should be made into a seperate function for the sake of modularity. This is getting pretty
+		ridiculous
+
+*/
 int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, char *src, int *SC, FILE *dst, int *LC, Context *context, int *lineCount) {
 	int endOfStatement = 0;		//tells us whether or not to unstack operators
 	int oldLC = *LC;		//for measuring output progress
@@ -230,15 +239,6 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 			case(k_oBracket):
 				if(!context->nativeFlag) {
-					//set aside call address/string for now
-					/*
-					writeObj(dst, PUSH, LC);		writeObj(dst, 2, LC);	//jump over word of call data
-					writeObj(dst, HOP, LC);
-					nameAddr = *LC;
-					writeObj(dst, 0, LC);	//storage for call address
-					writeObj(dst, POPTO, LC);	writeObj(dst, -1, LC); //writeObj(dst, nameAddr - *LC + 1, LC);
-					*/
-
 					//find length of arguments
 					fakeSC = *SC;
 					subContext.instructionFlag = 1;
@@ -528,85 +528,6 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				context->literalFlag = !context->literalFlag;
 				break;
 
-
-			case(k_collect):
-				//set the scope
-				tokLen = getToken(tok, src, SC, lineCount);
-				nameAddr = *LC;
-				if(context->instructionFlag) {
-					nameAddr +=  dictionary[RPUSH].length + dictionary[JMP].length + dictionary[DATA].length;
-				}
-				symbols = tableAddSymbol(symbols, tok, nameAddr, context->staticFlag, context->parameterFlag);
-				symbols = tableAddLayer(symbols, tok, 1);
-
-				//get its own length:
-				fakeSC = *SC;
-				fakeLC = 8;
-				subContext.instructionFlag = 0;
-				symbols = tableAddLayer(symbols, tok, 1);
-				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
-				symbols = tableRemoveLayer(symbols);
-
-				//hop over the definition
-				if(context->instructionFlag) {
-					fakeLC = dictionary[JMP].length + WRDSZ + 1;
-					writeObj(dst, RPUSH, DC[0] + fakeLC, dictionary, LC);
-					writeObj(dst, JMP, 0, dictionary, LC);
-				}
-
-				//write its length, and its body (addressed relative to right here)
-				writeObj(dst, DATA, DC[0], dictionary, LC);
-				fakeLC = WRDSZ;
-				subContext.instructionFlag = 0;
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);
-				subContext.instructionFlag = context->instructionFlag;
-				*LC += fakeLC - WRDSZ; //accommodate for change in location
-
-				//push newing address, if we're in the middle of instructions
-				if(context->instructionFlag) {
-					writeObj(dst, RPUSH, nameAddr - *LC+1, dictionary, LC);
-				}
-				
-				//clean up
-				symbols = tableRemoveLayer(symbols);
-				break;
-
-
-			case(k_field):
-				//set the scope
-				tokLen = getToken(tok, src, SC, lineCount);
-				nameAddr = *LC + ((context->instructionFlag)?3:0);
-				symbols = tableAddSymbol(symbols, tok, nameAddr, 0, context->parameterFlag);
-				symbols = tableAddLayer(symbols, tok, 0);
-
-				//get its own length:
-				fakeSC = *SC;
-				fakeLC = 0;
-				subContext.instructionFlag = 0;
-				subContext.staticFlag = 0;
-				symbols = tableAddLayer(symbols, tok, 0);
-				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
-				symbols = tableRemoveLayer(symbols);
-				subContext.instructionFlag = context->instructionFlag;
-
-				//hop over the definition
-				if(context->instructionFlag) {
-					writeObj(dst, PUSH, DC[0] + 1, dictionary, LC);
-					writeObj(dst, HOP, 0, dictionary, LC);
-				}
-
-				//compile the body
-				subContext.instructionFlag = 0;
-				subContext.staticFlag = 0;
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
-				subContext.instructionFlag = context->instructionFlag;
-
-				//clean up
-				symbols = tableRemoveLayer(symbols);
-				break;
-
-
-
 			case(k_alloc):
 				stackPush(operationStack, ALOC);
 				break;
@@ -681,10 +602,6 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				stackPush(operationStack, LOAD);
 				break;
 
-			case(k_r14):
-				writeObj(dst, R14, 0, dictionary, LC);
-				break;
-
 			case(k_imply):
 				stackPush(operationStack, IMPL);
 				break;
@@ -698,9 +615,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 					...
 					function name;
 				*/
-				//tokLen = getToken(tok, src, SC, lineCount);
 				nameAddr = dictionary[RPUSH].length + dictionary[JMP].length + 1;
-				//tempTable = tableAddSymbol(symbols, tok, *LC + nameAddr + 7, context->staticFlag, context->parameterFlag);
 				getQuote(tok, src, SC);		//once first, to accommodate for opening "
 				getQuote(tok, src, SC);
 				strcpy(string, tok);
@@ -762,7 +677,11 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 	return *LC - oldLC;
 }
 
-
+/*
+	writeAddressCalculation is a function that is used to write the address calculation of a user-defined symbol
+	encountered by compileStatement. If this symbol has never been encountered before, it creates it as a new
+	symbol in the current scope.
+*/
 int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation *dictionary, int *LC, Context *context, int *lineCount) {
 	//this function figures out what address a non-keyword token should correlate to
 	//and writes that address to the output file
@@ -804,10 +723,6 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 				}
 			} else {
 				//if(dst) printf("%d:\tto parent symbol %s. Val = %x, Offset = %x, Backset = %x\n", *lineCount, sym->token, sym->val, sym->offset, fakeLC);
-				/*
-				writeObj(dst, PUSH, sym->val, dictionary, LC);
-				writeObj(dst, LOC, 0, dictionary, LC);
-				*/
 				writeObj(dst, RPUSH, - (*LC + fakeLC + dictionary[RPUSH].length) + 1, dictionary, LC);
 				writeObj(dst, PUSH, sym->val + sym->offset, dictionary, LC);
 				writeObj(dst, ADD, 0, dictionary, LC);
@@ -826,6 +741,11 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 	return *LC - oldLC;
 }
 
+/*
+	fillOperations is used to represent the application of all accumulated operators (as when
+	a ; is used). It uses the writer to produce each operator's (from the operatorStack)
+	machine code in the output file.
+*/
 void fillOperations(FILE *dst, int *LC, Stack *operationStack, translation *dictionary) {
 	//unstacks operators
 	long op;
@@ -836,6 +756,10 @@ void fillOperations(FILE *dst, int *LC, Stack *operationStack, translation *dict
 	}
 }
 
+/*
+	prepareKeywords returns a new symbolTable the associates language keywords to different states
+	of compileStatement.
+*/
 Table *prepareKeywords() {
 	Table *ret = tableCreate();
 
@@ -897,17 +821,20 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "include", k_include, 0, 0);
 	tableAddSymbol(ret, "@", k_native, 0, 0);
 	tableAddSymbol(ret, "define", k_label, 0, 0);
-	tableAddSymbol(ret, "global", k_static, 0, 0);
 	tableAddSymbol(ret, "->", k_redir, 0, 0);
 	tableAddSymbol(ret, "load", k_load, 0, 0);
 	tableAddSymbol(ret, "Native", k_nativeFunction, 0, 0);
-	tableAddSymbol(ret, "r14", k_r14, 0, 0);
 	tableAddSymbol(ret, "Set", k_Function, 0, 0);
 	tableAddSymbol(ret, "<-", k_imply, 0, 0);
 
 	return ret;
 }
 
+/*
+	prepareTranslation is a function that returns a translation dictionary between the Eesk Intermediate Representation
+	and the machine code of the target platform. This dictionary is later used by a writer to do cross-assembly before
+	writing to the output file.
+*/
 translation *prepareTranslation() {
 	translation *ret = translationCreate(); 
 	translationAdd(ret, HALT, c_halt, -1, 0); 
@@ -949,7 +876,6 @@ translation *prepareTranslation() {
 	translationAdd(ret, FREE, c_free, -1, 0);
 	translationAdd(ret, LOAD, c_load, -1, 0);
 	translationAdd(ret, DATA, c_data, 0, 0);
-	translationAdd(ret, R14, c_r14, -1, 0);
 	translationAdd(ret, IMPL, c_impl, -1, 0);
 	
 	return ret;
