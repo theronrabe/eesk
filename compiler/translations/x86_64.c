@@ -463,6 +463,7 @@ void create() {
 			"callq *%%r12\n\t"		//place system call for CREATE
 			"movq %%rsp, %%r15\n\t"
 			"movq %%r13, %%rsp\n\t"
+			"movq (%%r15), %%r14\n\t"	//remove new Set from activationStack
 			:::);
 }
 
