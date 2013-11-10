@@ -27,6 +27,7 @@ This file is part of Eesk.
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <vm.h>
+#include <eeskIR.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ffi.h>
@@ -34,6 +35,8 @@ This file is part of Eesk.
 #include <dlfcn.h>
 #include <kernel.h>
 #include <sys/mman.h>
+#include <compiler.h>
+#include <jit.h>
 
 char *PC = 0;
 long SP = 0;
@@ -42,6 +45,7 @@ char verboseFlag = 0;
 Stack *libStack;
 long *dataStack, *activationStack, *counterStack, *MEM;
 long *oldDStack, *oldAStack, *oldCStack, MEMlength;
+translation *dictionary;
 
 /*
 	load reads an e.out file into executable memory and sets PC to its entry point.
@@ -85,22 +89,26 @@ long *load(char *fn) {
 	Eesk is given control.
 */
 void main(int argc, char **argv) {
+	//prepare JIT compiler
+	dictionary = prepareTranslation();
+	jitInit(dictionary);
+
+	//prepare stacks
 	if(argc>2) verboseFlag = 1;
 	libStack = stackCreate(100);
 	MEM = load(argv[1]);
 	oldDStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-	dataStack = oldDStack+999;
-
+		dataStack = oldDStack+999;
 	oldAStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-	activationStack = oldAStack+999;
-
+		activationStack = oldAStack+999;
 	oldCStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-	counterStack = oldCStack+999;
+		counterStack = oldCStack+999;
 
 	*counterStack = activationStack;
 	counterStack -= 1;
 	*counterStack = activationStack;
 
+	//Prepare registers and go
 	asm volatile (
 			"movq %5, %%rsp\n\t"	//start using the data stack
 			"movq %%rsp, %%rbp\n\t"	//save root stack position in rbp
@@ -150,7 +158,7 @@ void quit(long *rsp, long *rbp) {
 void newCollection(long **rsp) {
 	long *old = (*rsp)-2;	//two words behind the calling address is the length of the symbol
 	long i, len = (*old) + WRDSZ;
-	*rsp = mmap(0, len, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, 0, 0);
+	*rsp = mmap(0, len, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
 	mprotect(rsp, len, PROT_READ|PROT_WRITE|PROT_EXEC);
 	memcpy(*rsp, old, len);
 	*rsp += 2;	//accommodate for length and stack request words
@@ -169,6 +177,15 @@ void loadLib(char **rsp) {
 	if(error) {
 		printf("Error opening shared library %s\n", error);
 	}
+}
+
+/*
+	create turns everything on top of the activationStack into a new set. This involves invoking
+	a just in time compiler.
+*/
+void create(long **rsp, long **aStack) {
+	*rsp = compileSet( ((int)*rsp)/WRDSZ, aStack);
+	*rsp += 2;
 }
 
 /*

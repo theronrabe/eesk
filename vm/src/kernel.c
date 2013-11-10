@@ -24,6 +24,7 @@ This file is part of Eesk.
 */
 
 #include <vm.h>
+#include <eeskIR.h>
 #include <kernel.h>
 #include <stdio.h>
 
@@ -31,7 +32,6 @@ void kernel(long eeskir) {
 	long **rsp, *rbp;
 	long *aStack, *cStack;
 
-	//Handle Eesk -> System V environment interactions
 	asm volatile (
 			"movq %%r13, %0\n\t"
 			"movq %%rbp, %1\n\t"
@@ -72,6 +72,9 @@ void kernel(long eeskir) {
 			break;
 		case(LOAD):
 			loadLib(rsp);
+			break;
+		case(CREATE):
+			create(rsp, aStack);
 			break;
 	}
 	//printf("kernel returning to address %lx\n", *aStack);
