@@ -422,7 +422,7 @@ void r14() {
 			:::);
 }
 
-void printf() {
+void _printf() {
 	asm volatile (
 			"movq $0x20, %%rdi\n\t"
 			"movq %%rsp, %%r13\n\t"
@@ -443,3 +443,27 @@ void fadd() {
 			"popq %%rax\n\t"
 			:::);
 }
+
+void impl() {
+	asm volatile (
+			"popq %%rax\n\t"
+			"movq %%rax, (%%rsp)\n\t"
+			:::);
+}
+
+void create() {
+	asm volatile (
+			"movq (%%r15), %%rax\n\t"		//Find old activationStack - current activationStack (size of created Set)
+			"subq %%r14, %%rax\n\t"	
+			"pushq %%rax\n\t"		//push length 
+
+			"movq $0x30, %%rdi\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r15, %%rsp\n\t"
+			"callq *%%r12\n\t"		//place system call for CREATE
+			"movq %%rsp, %%r15\n\t"
+			"movq %%r13, %%rsp\n\t"
+			:::);
+}
+
+
