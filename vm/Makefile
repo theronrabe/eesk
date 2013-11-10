@@ -1,7 +1,7 @@
 SHELL = /bin/sh
 CC    = gcc
  
-FLAGS        = -std=gnu99 -Iinclude
+FLAGS        = -std=gnu99 -Iinclude -w -I ../compiler/include
 CFLAGS       = -pedantic -Wall -Wextra -march=native -ggdb3 -O3
 DEBUGFLAGS   = #-O0 -D _DEBUG
 RELEASEFLAGS = -O2 -D NDEBUG -combine -fwhole-program
@@ -9,8 +9,10 @@ POSTFLAGS    = -ldl -lffi
  
 TARGET  = ../eesk
 SOURCES = $(shell echo src/*.c)
+SOURCES += $(shell find ../compiler/src/*.c -type f | grep -v ../compiler/src/main.c)
 COMMON  = 
 HEADERS = $(shell echo include/*.h)
+COMPILERHEADERS = $(shell echo ../compiler/include/*.h)
 OBJECTS = $(SOURCES:.c=.o)
  
 PREFIX = $(DESTDIR)/usr/local

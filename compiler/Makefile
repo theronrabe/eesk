@@ -1,7 +1,7 @@
 SHELL = /bin/sh
 CC    = gcc
  
-FLAGS        = -std=gnu99 -Iinclude
+FLAGS        = -std=gnu99 -Iinclude -w
 CFLAGS       = -pedantic -Wall -Wextra -march=native -ggdb3
 DEBUGFLAGS   = -O0 -D _DEBUG
 RELEASEFLAGS = -O2 -D NDEBUG -combine -fwhole-program
