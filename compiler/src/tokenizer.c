@@ -66,54 +66,56 @@ int numeric(char c) {
 	return (c >= '0' && c <= '9') || (c == '.');
 }
 
-int getToken(char *token, char *src, int *loc, int *lineCount) {
+int getToken(Compiler *C, char *token) {
 	//places src's next token (starting at location loc) into token, then returns it's final location.
+	char *src = C->src;
+	long loc = C->SC;
 
 	int i=0;
 	int ws = 0;
 	
-	if(*loc < (signed) strlen(src)) {
+	if(loc < (signed) strlen(src)) {
 		//trim whitespace
-		while(src[*loc+ws]==' '||src[*loc+ws]=='\t'||src[*loc+ws]=='\n') {
-			if(src[*loc+ws] == '\n') ++*lineCount;
+		while(src[loc+ws]==' '||src[loc+ws]=='\t'||src[loc+ws]=='\n') {
+			if(src[loc+ws] == '\n') ++(C->lineCounter);
 			++ws;
 		}
 		
 		//Get token
-		token[i++] = src[*loc+ws];
+		token[i++] = src[loc+ws];
 	
-		if(alphabetic(src[*loc+ws])) {
-			while(alphabetic(src[*loc+ws+i]) || numeric(src[*loc+ws+i])) {
-				token[i] = src[*loc+ws+i];
+		if(alphabetic(src[loc+ws])) {
+			while(alphabetic(src[loc+ws+i]) || numeric(src[loc+ws+i])) {
+				token[i] = src[loc+ws+i];
 				++i;
 			}
-		} else if(numeric(src[*loc+ws]) || (src[*loc+ws] == '-' && numeric(src[*loc+ws+1]))) {
-			while(numeric(src[*loc+ws+i])) {
-				token[i] = src[*loc+ws+i];
+		} else if(numeric(src[loc+ws]) || (src[loc+ws] == '-' && numeric(src[loc+ws+1]))) {
+			while(numeric(src[loc+ws+i])) {
+				token[i] = src[loc+ws+i];
 				++i;
 			}
-		} else if(symbolic(src[*loc+ws])) {
-			while(symbolic(src[*loc+ws+i])) {
-				token[i] = src[*loc+ws+i];
+		} else if(symbolic(src[loc+ws])) {
+			while(symbolic(src[loc+ws+i])) {
+				token[i] = src[loc+ws+i];
 				++i;
 			}
 		}
 	
 		token[i] = '\0';
-		//printf("%s\n", token);
-		*loc += i+ws;
+		C->SC += i+ws;
 		return i+ws;
 	} else {
+		C->end = 1;
 		return -1;
 	}
 }
 
-int getQuote(char *tok, char *src, int *SC) {
+int getQuote(Compiler *C, char *tok) {
 	//returns how many 64-bit words the quote consumes
 	int i = 0, j = 0, words = 0;
-	while(src[*SC+i] != '\"') {
-		if(src[*SC+i] == '\\') {
-			switch(src[*SC+i+1]) {
+	while(C->src[C->SC+i] != '\"') {
+		if(C->src[C->SC+i] == '\\') {
+			switch(C->src[C->SC+i+1]) {
 				case('n'): tok[j++] = '\n'; break;
 				case('t'): tok[j++] = '\t'; break;
 				case('\\'): tok[j++] = '\\'; break;
@@ -121,7 +123,7 @@ int getQuote(char *tok, char *src, int *SC) {
 			}
 			i += 2;
 		} else {
-			tok[j] = src[*SC+i];
+			tok[j] = C->src[C->SC+i];
 			++j;
 			++i;
 		}
@@ -129,7 +131,7 @@ int getQuote(char *tok, char *src, int *SC) {
 	tok[j++] = '\0';
 	++i;
 
-	*SC += i;
+	C->SC += i;
 	words = (j%8)?j/8+1: j/8;
 	return j; //words;
 }

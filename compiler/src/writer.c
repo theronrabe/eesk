@@ -24,30 +24,30 @@ This file is part of Eesk.
 #include <assembler.h>
 #include <eeskIR.h>
 
-void writeObj(FILE *fn, long instr, long param, translation *m, int *LC) {
+void writeObj(Compiler *C, long instr, long param) {
 	//This function turns an eeskIR instruction and argument, translates it, and writes its code.
 	int len = 0;
-	unsigned char *out = translationFormCode(m, instr, param, &len);
+	unsigned char *out = translationFormCode(C->dictionary, instr, param, &len);
 
 	//if we have a file, write to it
-	if (fn) {
+	if (C->dst) {
 		if(instr == RPUSH) {
-			int rip = *LC + m[RPUSH].param + (m[RPUSH].dWord?WRDSZ/2:WRDSZ);	//because RIP contains the next instruction, but LC contains the current instruction
-			//param -= rip;							//subtract reality from what the compiler presumes
-			printf("\nWriting eeskir: %lx, %lx [%lx]\n", instr, param, param+rip);
+			int rip = C->LC + C->dictionary[RPUSH].param + (C->dictionary[RPUSH].dWord?WRDSZ/2:WRDSZ);	//because RIP contains the next instruction, but LC contains the current instruction
 		} else {
-			printf("\nWriting eeskir: %lx, %lx\n", instr, param);
+			//printf("\nWriting eeskir: %lx, %lx\n", instr, param);
 		}
-		fwrite(out, 1, len, fn);
+		fwrite(out, 1, len, C->dst);
 
+		/*
 		printf("%x:", *LC);
 		for(int i=0; i<len; i++) {
 			printf("%02x ", out[i]);
 		}
 		printf("\n");
+		*/
 	}
 
-	(*LC) += len;
+	C->LC += len;
 }
 
 void writeStr(FILE *fn, char *str, int *LC) {

@@ -18,7 +18,6 @@ This file is part of Eesk.
 #ifndef _compiler.h_
 #define _compiler.h_ 
 
-#include <tokenizer.h>
 #include <stack.h>
 #include <symbolTable.h>
 #include <fileIO.h>
@@ -36,19 +35,34 @@ typedef struct Context {
 	char staticFlag;
 	char parameterFlag;
 	char instructionFlag;
+	Table *symbols;
 } Context;
 
-int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, char *src, int *SC, FILE *dst, int *LC, Context *con, int *lineCounter);
-int writeAddressCalculation(FILE *fn, char *token, Table *symbols, translation *dictionary, int *LC, Context *context, int *lineCounter);
+typedef struct Compiler {
+	int lineCounter;
+	FILE *dst;
+	char *src;
+	long SC;
+	long LC;
+	char end;
+	Table *keyWords;
+	translation *dictionary;
+} Compiler;
+
+long compileStatement(Compiler *C, Context *CO, char *tok);
+long writeAddressCalculation(Compiler *C, Context *CO, char *tok);
 Table *prepareKeywords();
 translation *prepareTranslation();
-void fillOperations(FILE *dst, int *LC, Stack *operationStack, translation *dictionary);
+void fillOperations(Compiler *C, Stack *operationStack);
+void subCompiler(Compiler *C1, Compiler *C2);
+void subContext(Context *CO1, Context *CO2);
 
 typedef enum {
 	//language keywords
 	k_if, k_while,
 	k_Function,
 	k_oBracket, k_cBracket,
+	k_anonSet,
 	k_oBrace, k_cBrace,
 	k_oParen, k_cParen,
 	k_prnt, k_prtf, k_prtc, k_prts, k_goto,
@@ -56,7 +70,7 @@ typedef enum {
 	k_int, k_char, k_pnt, k_float,
 	k_begin, k_halt,
 	k_clr, k_endStatement, k_cont, k_not,
-	k_is, k_set,
+	k_is, k_isr, k_set,
 	k_eq, k_gt, k_lt,
 	k_add, k_sub, k_mul, k_div, k_mod, k_and, k_or, k_shift,
 	k_fadd, k_fsub, k_fmul, k_fdiv,
@@ -69,7 +83,10 @@ typedef enum {
 	k_label,
 	k_argument,
 	k_redir,
-	k_load, k_nativeFunction
+	k_load, k_nativeFunction,
+	k_r14,
+	k_imply,
+	k_create
 } KEYWORD;
 
 #endif

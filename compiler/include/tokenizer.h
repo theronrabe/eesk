@@ -23,12 +23,14 @@ This file is part of Eesk.
 #ifndef _tokenizer.h_
 #define _tokenizer.h_
 
+#include <compiler.h>
+
 void trimComments(char *src);
 int isFloat(char *tok);
 int symbolic(char c);
 int alphabetic(char c);
-int getQuote(char *tok, char *src, int *SC);
+int getQuote(Compiler *C, char *tok);
 int numeric(char c);
-int getToken(char *token, char *src, int *loc, int *lineCount);
+int getToken(Compiler *C, char *token);
 
 #endif

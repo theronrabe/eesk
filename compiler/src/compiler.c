@@ -25,6 +25,7 @@ This file is part of Eesk.
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <compiler.h>
+#include <compilerStates.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fileIO.h>
@@ -45,12 +46,12 @@ This file is part of Eesk.
 		ridiculous
 
 */
-int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, char *src, int *SC, FILE *dst, int *LC, Context *context, int *lineCount) {
+long compileStatement(Compiler *C, Context *CO, char *tok) {
+	long begin = C->LC;
+	Compiler _C; subCompiler(C, &_C);
+	Context _CO; subContext(CO, &_CO);
+
 	int endOfStatement = 0;		//tells us whether or not to unstack operators
-	int oldLC = *LC;		//for measuring output progress
-	int fakeLC = 0;			//for measuring relative addresses sub-statement
-	int fakeSC;			//for measuring relative addresses on sub-statement
-	char tok[256];			//needs to be big in case of string
 	char string[256];		//additional string space
 	char *charPtr, *charPtr2, *charPtr3;
 	long nameAddr;			//for marking important working addresses
@@ -62,22 +63,14 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 	Table *tempTable;		//for working symbol tables
 	Stack *operationStack = stackCreate(32);	//for stacking operators
 
-	Context subContext;
-	subContext.publicFlag = context->publicFlag;
-	subContext.literalFlag = context->literalFlag;
-	subContext.nativeFlag = context->nativeFlag;
-	subContext.staticFlag = context->staticFlag;
-	subContext.parameterFlag = context->parameterFlag;
-	subContext.instructionFlag = context->instructionFlag;
-
-	while(!endOfStatement && tokLen != -1) {
-		tokLen = getToken(tok, src, SC, lineCount);
+	while(!endOfStatement && !C->end) {
+		getToken(C, tok);
 //printf("token:\t%s\n", tok);
-		if(!tok[0] && dst) {
-			if(dst) printf("%d: Expected } symbol.\n", *lineCount);
+		if(!tok[0] && C->dst) {
+			if(C->dst) printf("%d: Expected } symbol.\n", C->lineCounter);
 			//exit(0);
 		}
-		tempTable = tableLookup(keyWords, tok, &fakeLC);
+		tempTable = tableLookup(C->keyWords, tok, &(_C.LC));
 		if(tempTable) {
 			tokVal = tempTable->val;
 		} else {
@@ -86,126 +79,16 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 		switch(tokVal) {
 			case(k_if):
-				//get beginning address
-				nameAddr = *LC;
-
-				//get length of statement
-				fakeSC = *SC;
-				subContext.instructionFlag = 1;
-				symbols = tableAddLayer(symbols, tok, 0);
-				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition
-				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//clause
-				DC[2] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//else
-				symbols = tableRemoveLayer(symbols);
-
-				fakeLC = dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length + 1;
-				writeObj(dst, RPUSH, DC[0]+DC[1]+fakeLC, dictionary, LC);						//else address
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condition
-				writeObj(dst, BNE, 0, dictionary, LC);								//decide
-
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, lineCount);		//compiled statement
-				fakeLC = dictionary[JMP].length + 1;
-				writeObj(dst, RPUSH, DC[2]+fakeLC, dictionary, LC);						//push end address
-				writeObj(dst, JMP, 0, dictionary, LC);							//jump to end
-
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled else
+				compileIf(C, CO, tok);
 				break;
-
 
 			case(k_while):
-				//get beginning address
-				nameAddr = *LC;
-
-				//get section lengths
-				fakeSC = *SC;
-				fakeLC = 0;
-				subContext.instructionFlag = 1;
-				symbols = tableAddLayer(symbols, tok, 0);
-				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//condition length
-				DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//loop length
-				symbols = tableRemoveLayer(symbols);
-
-				fakeLC = dictionary[BNE].length + dictionary[RPUSH].length + dictionary[JMP].length + 1;
-				writeObj(dst, RPUSH, DC[0]+DC[1]+fakeLC, dictionary, LC);	//end address
-
-				DC[0] = compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
-				writeObj(dst, BNE, 0, dictionary, LC);								//decide
-				DC[1] = compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);			//compiled loop
-
-				fakeLC = dictionary[RPUSH].length;
-				writeObj(dst, RPUSH, /*-(DC[0]+DC[1]+fakeLC)+1*/nameAddr - *LC - fakeLC + 1, dictionary, LC);			//begin address
-				writeObj(dst, JMP, 0, dictionary, LC);								//iterate
+				compileWhile(C, CO, tok);
 				break;
-
 
 			case(k_Function):
-				//in a new namespace
-				//nameAddr = *LC + ((context->instructionFlag)?3:0);	//if these are instructions, jump over this
-				stackPush(nameStack, nameAddr);
-				tokLen = getToken(tok, src, SC, lineCount);
-				symbols = tableAddSymbol(symbols, tok, nameAddr, context->staticFlag, context->parameterFlag);	//change to this scope
-				if(context->publicFlag) { publicize(symbols); }
-				symbols = tableAddLayer(symbols, tok, 1);
-	
-				//count length of parameters, data, and statement sections
-				fakeSC = *SC;
-				fakeLC = 0;
-				subContext.parameterFlag = 1;
-				subContext.instructionFlag = 0;
-				symbols = tableAddLayer(symbols, tok, 1);
-				DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//param length
-				subContext.parameterFlag = 0;
-				fakeLC = 0;	//because parameters don't increment location counter
-				//DC[1] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//data length
-				DC[1] = 0;
-				subContext.instructionFlag = 1;
-				DC[2] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);	//statement length
-				symbols = tableRemoveLayer(symbols);
-				subContext.instructionFlag = 0;
-				
-				if(context->instructionFlag) {
-					fakeLC = dictionary[JMP].length + dictionary[DATA].length*2 + /*dictionary[RPUSH].length +*/ dictionary[RSR].length + 1;
-					writeObj(dst, RPUSH, DC[1]+DC[2]+fakeLC, dictionary, LC);	//this used to be a PUSH
-					writeObj(dst, JMP, 0, dictionary, LC);		//Hop over the definition	//this used to be a HOP
-				}
-
-				//writeObj(dst, (DC[1]+2), LC);		//name pointer to statement. Add value to nameAddr when calling; it's relative
-
-				//reset calling address
-				nameAddr = *LC + DC[1] + WRDSZ*2;	//an extra word for total length (for newing), and an extra word for stack request
-				tableAddSymbol(symbols->parent->layerRoot, tok, nameAddr, context->staticFlag, context->parameterFlag);		//overwrite previous definition
-				if(context->publicFlag) { publicize(symbols->parent); }
-
-				fakeLC = 0;
-				subContext.parameterFlag = 1;
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);	//compiled parameters section
-				subContext.parameterFlag = 0;
-				//compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);	//compiled data section
-				subContext.instructionFlag = 1;
-
-				writeObj(dst, DATA, WRDSZ*2 + DC[2] + dictionary[RPUSH].length + dictionary[RSR].length, dictionary, LC);	//a word containing total function length
-				writeObj(dst, DATA, DC[0]+WRDSZ, dictionary, LC);	//write argument number at callAddress-1, extra word for return address
-				//reset calling address to right here
-
-				fakeLC = 0;
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, &fakeLC, &subContext, (dst)?lineCount:&i);	//compiled statement section, addressed relatively
-				(*LC) += fakeLC;
-				subContext.instructionFlag = context->instructionFlag;
-				//writeObj(dst, RPUSH, nameAddr - *LC + 1 - WRDSZ, dictionary, LC);
-				writeObj(dst, RSR, 0, dictionary, LC);
-
-				//instructionFlagged functions should jump to right here
-	
-				if(context->instructionFlag) {
-					//basically, act like a lambda function
-					writeObj(dst, RPUSH, nameAddr - *LC+1 - WRDSZ, dictionary, LC);
-				}
-
-				//no longer in this namespace
-				stackPop(nameStack);
-				symbols = tableRemoveLayer(symbols);
+				compileSet(C, CO, tok, 0);
 				break;
-
 
 			case(k_oBrace):
 				//This seemingly important symbol literally does nothing.
@@ -213,93 +96,68 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 
 			case(k_cBrace):
-				fillOperations(dst, LC, operationStack, dictionary);
-				subContext.publicFlag = 0;
-				context->publicFlag = 0;
-				subContext.nativeFlag = 0;
-				context->nativeFlag = 0;
-				subContext.staticFlag = 0;
-				context->staticFlag = 0;
+				fillOperations(C, operationStack);
+				_CO.publicFlag = 0;
+				CO->publicFlag = 0;
+				_CO.nativeFlag = 0;
+				CO->nativeFlag = 0;
+				_CO.staticFlag = 0;
+				CO->staticFlag = 0;
 				endOfStatement = 1;
 				break;
 
 
 			case(k_oParen):
-				subContext.instructionFlag = 1;
-				compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, lineCount);
-				subContext.instructionFlag = context->instructionFlag;
+				_CO.instructionFlag = 1;
+				//compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, lineCount);
+				compileStatement(C, &_CO, tok);
+				_CO.instructionFlag = CO->instructionFlag;
 				break;
 
 
 			case(k_cParen):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C, operationStack);
 				endOfStatement = 1;
 				break;
 
 
 			case(k_oBracket):
-				if(!context->nativeFlag) {
-					//find length of arguments
-					fakeSC = *SC;
-					subContext.instructionFlag = 1;
-					symbols = tableAddLayer(symbols, tok, 0);
-					DC[0] = compileStatement(keyWords, symbols, dictionary, src, &fakeSC, NULL, &fakeLC, &subContext, &i);
-					symbols = tableRemoveLayer(symbols);
-
-					//push return address of call
-					writeObj(dst, RPUSH, DC[0]+dictionary[JSR].length+1, dictionary, LC);			//push return address
-
-					//compile arguments
-					compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
-					subContext.instructionFlag = context->instructionFlag;
-
-					//make call
-					//writeObj(dst, RPUSH, LC);	writeObj(dst, nameAddr - *LC+1, LC);	//push function pointer
-					writeObj(dst, JSR, 0, dictionary, LC);
-
-					//return to right here
-
+				if(CO->nativeFlag) {
+					compileCall(C, CO, tok);
 				} else {
-					//compiled argument section
-					subContext.instructionFlag = 1;
-					compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);
-					subContext.instructionFlag = context->instructionFlag;
-
-					//make call
-					writeObj(dst, NTV, 0, dictionary, LC);
+					compileNative(C, CO, tok);
 				}
 				break;
 
-
 			case(k_cBracket):
-				fillOperations(dst, LC, operationStack, dictionary);
-				if(*LC - oldLC) {
-					writeObj(dst, APUSH, 0, dictionary, LC);
+				fillOperations(C, operationStack);
+				if(C->LC - begin) {
+					writeObj(C, APUSH, 0);
 				}
 				endOfStatement = 1;
 				break;
 
 
 			case(k_prnt):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C,operationStack);
 				stackPush(operationStack, PRNT);
 				break;
 
 
 			case(k_prtf):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C,operationStack);
 				stackPush(operationStack, PRTF);
 				break;
 
 
 			case(k_prtc):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C, operationStack);
 				stackPush(operationStack, PRTC);
 				break;
 
 
 			case(k_prts):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C, operationStack);
 				stackPush(operationStack, PRTS);
 				break;
 
@@ -310,19 +168,13 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 
 			case(k_singleQuote):
-				tokLen = getToken(tok, src, SC, lineCount);
-				writeObj(dst, PUSH, tok[0], dictionary, LC);
+				tokLen = getToken(C, tok);	//need to do something to continue counting tokLen in new modular code
+				writeObj(C->dst, PUSH, tok[0]);
 				break;
 
 
 			case(k_doubleQuote):
-				DC[0] = getQuote(tok, src, SC);
-				if(!context->literalFlag) {
-					writeObj(dst, RPUSH, dictionary[RPUSH].length+dictionary[JMP].length+1, dictionary, LC);	//push start of string
-					writeObj(dst, RPUSH, DC[0] + dictionary[JMP].length+1, dictionary, LC);	//push end of string
-					writeObj(dst, JMP, 0, dictionary, LC);						//skip over string leaving it on stack
-				}
-				writeStr(dst, tok, LC);
+				compileQuote(C, CO, tok);
 				break;
 
 
@@ -337,29 +189,7 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 
 			case(k_pnt):
-				tokLen = getToken(tok, src, SC, lineCount);
-				if(numeric(tok[0])) {		//is this an array?
-					//create a symbol and some memory
-					DC[0] = atoi(tok);
-					writeObj(dst, DATA, *LC, dictionary, LC);
-					for(i=0;i<DC[0];i++)
-						writeObj(dst, DATA, DC[0], dictionary, LC);
-					tokLen = getToken(tok, src, SC, lineCount);
-					if(dst) {
-						tempTable = tableAddSymbol(symbols, tok, *LC-DC[0]-1, context->staticFlag, context->parameterFlag);
-					}
-				} else {
-					//create a symbol and a word
-					tempTable = tableAddSymbol(symbols, tok, *LC + ((context->instructionFlag)?5:0), context->staticFlag, context->parameterFlag);
-					if(!context->parameterFlag) {
-						if(context->publicFlag) publicize(tempTable);
-						if(context->instructionFlag) writeObj(dst, GRAB, 0, dictionary, LC);
-						writeObj(dst, DATA, 0, dictionary, LC);
-					} else {
-						//++(*LC);
-						(*LC) += WRDSZ;
-					}
-				}
+				compileDeclaration(C, CO, tok);
 				break;
 
 
@@ -369,46 +199,46 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 
 			case(k_begin):
-				transferAddress = *LC;
-				context->instructionFlag = 1;
+				transferAddress = C->LC;
+				CO->instructionFlag = 1;
 				break;
 
 
 			case(k_halt):
-				fillOperations(dst, LC, operationStack, dictionary);
-				writeObj(dst, HALT, 0, dictionary, LC);
+				fillOperations(C, operationStack);
+				writeObj(C, HALT, 0);
 				break;
 
 
 			case(k_clr):
-				writeObj(dst, CLR, 0, dictionary, LC);
+				writeObj(C, CLR, 0);
 				break;
 
 
 			case(k_endStatement):
 				//unstack operators and reset flags
-				fillOperations(dst, LC, operationStack, dictionary);
-				subContext.publicFlag = 0;
-				context->publicFlag = 0;
-				subContext.nativeFlag = 0;
-				context->nativeFlag = 0;
-				subContext.staticFlag = 0;
-				context->staticFlag = 0;
+				fillOperations(C, operationStack);
+				_CO.publicFlag = 0;
+				CO->publicFlag = 0;
+				_CO.nativeFlag = 0;
+				CO->nativeFlag = 0;
+				_CO.staticFlag = 0;
+				CO->staticFlag = 0;
 				break;
 
 			case(k_argument):
-				fillOperations(dst, LC, operationStack, dictionary);
-				if(!context->parameterFlag) writeObj(dst, APUSH, 0, dictionary, LC);
+				fillOperations(C, operationStack);
+				if(!CO->parameterFlag) writeObj(C, APUSH, 0);
 				break;
 
 
 			case(k_cont):
-				writeObj(dst, CONT, 0, dictionary, LC);
+				writeObj(C, CONT, 0);
 				break;
 
 
 			case(k_not):
-				writeObj(dst, NOT, 0, dictionary, LC);
+				writeObj(C, NOT, 0);
 				break;
 
 
@@ -418,35 +248,35 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 
 			case(k_is):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C, operationStack);
 				stackPush(operationStack, POP);
 				break;
 
 			case(k_isr):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C, operationStack);
 				stackPush(operationStack, RPOP);
 				break;
 
 			case(k_set):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C, operationStack);
 				stackPush(operationStack, BPOP);
 				break;
 
 
 			case(k_eq):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C, operationStack);
 				stackPush(operationStack, EQ);
 				break;
 
 
 			case(k_gt):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C, operationStack);
 				stackPush(operationStack, GT);
 				break;
 
 
 			case(k_lt):
-				fillOperations(dst, LC, operationStack, dictionary);
+				fillOperations(C, operationStack);
 				stackPush(operationStack, LT);
 				break;
 
@@ -512,20 +342,20 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 
 			case(k_public):
-				subContext.publicFlag = 1;
-				context->publicFlag = 1;
+				_CO.publicFlag = 1;
+				CO->publicFlag = 1;
 				break;
 
 
 			case(k_private):
-				subContext.publicFlag = 0;
-				context->publicFlag = 0;
+				_CO.publicFlag = 0;
+				CO->publicFlag = 0;
 				break;
 
 
 			case(k_literal):
-				subContext.literalFlag = !context->literalFlag;
-				context->literalFlag = !context->literalFlag;
+				_CO.literalFlag = !CO->literalFlag;
+				CO->literalFlag = !CO->literalFlag;
 				break;
 
 			case(k_alloc):
@@ -544,59 +374,44 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 
 
 			case(k_include):
-				getQuote(tok, src, SC);
+				getQuote(C, tok);
 				strcpy(tok, "");
 				strcat(tok, "include/");
-				getQuote(&tok[8], src, SC);			//to accommodate for the beginning "include/"
+				getQuote(C, &tok[8]);			//to accommodate for the beginning "include/"
 				strcat(tok, ".ee");
-				if(dst) printf("%d:\tIncluding file: %s\n", *lineCount, tok);
+				if(C->dst) printf("%d:\tIncluding file: %s\n", C->lineCounter, tok);
 				char *inc = loadFile(tok);
 				trimComments(inc);
-				fakeSC = 0;
-				compileStatement(keyWords, symbols, dictionary, inc, &fakeSC, dst, LC, &subContext, (dst)?lineCount:&i);
+				_C.SC = 0;
+				compileStatement(&_C, CO, tok);
 				free(inc);
 				break; 
 
 
 			case(k_native):
-				subContext.nativeFlag = 1;
-				context->nativeFlag = 1;
+				_CO.nativeFlag = 1;
+				CO->nativeFlag = 1;
 				break;
 
 
 
 			case(k_label):
 				//create a symbol referring to this location
-				tokLen = getToken(tok, src, SC, lineCount);
-				tempTable = tableAddSymbol(symbols, tok, *LC, context->staticFlag, context->parameterFlag);
-				if(context->publicFlag) publicize(tempTable);
+				getToken(C, tok);
+				tempTable = tableAddSymbol(CO->symbols, tok, C->LC, CO->staticFlag, CO->parameterFlag);
+				if(CO->publicFlag) publicize(tempTable);
 				break;
 
 
 			case(k_static):
 				//subContext.staticFlag = 1;
-				context->staticFlag = 1;
+				CO->staticFlag = 1;
 				break;
 
 
 			case(k_redir):
-				writeObj(dst, CONT, 0, dictionary, LC);
-				tokLen = getToken(tok, src, SC, lineCount);
-				tempTable = tableLookup(symbols, tok, &fakeLC);
-				if(!tempTable) {
-					if(numeric(tok[0])) {
-						DC[0] = atoi(tok);
-					} else {
-						printf("%d:\tImplicitly declared offset: %s.\n", *lineCount, tok);
-						DC[0] = 0;
-					}
-				} else {
-					DC[0] = tempTable->val;
-				}
-				writeObj(dst, PUSH, DC[0], dictionary, LC);
-				writeObj(dst, ADD, 0, dictionary, LC);
+				compileRedirection(C, CO, tok);
 				break;
-
 
 			case(k_load):
 				stackPush(operationStack, LOAD);
@@ -606,75 +421,24 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 				stackPush(operationStack, IMPL);
 				break;
 
-			case(k_nativeFunction):
-				/*builds a struct like this:
-					function pointer;
-					return type;
-					argument count;
-					argument types
-					...
-					function name;
-				*/
-				nameAddr = dictionary[RPUSH].length + dictionary[JMP].length + 1;
-				getQuote(tok, src, SC);		//once first, to accommodate for opening "
-				getQuote(tok, src, SC);
-				strcpy(string, tok);
-
-				charPtr = strtok(string, "():");	//grab function name
-				charPtr2 = strtok(NULL, "():");		//grab return type
-				charPtr3 = strtok(NULL, "():");		//grab argument types
-
-				writeObj(dst, RPUSH, nameAddr, dictionary, LC);		//push Native structure
-				writeObj(dst, RPUSH, 3*WRDSZ + strlen(charPtr3)*WRDSZ + dictionary[JMP].length + strlen(charPtr) + 2, dictionary, LC);	//hop over definition
-				writeObj(dst, JMP, 0, dictionary, LC);
-
-				writeObj(dst, DATA, 0, dictionary, LC);		//space for function pointer
-
-				//return type
-				writeObj(dst, DATA, charPtr2[0], dictionary, LC);
-
-				//argument information
-				writeObj(dst, DATA, strlen(charPtr3), dictionary, LC);	//write argument count
-				
-				for(i=0;i<strlen(charPtr2);i++) {
-					writeObj(dst, DATA, (long) charPtr3[i], dictionary, LC);
-				}
-
-				//write function name
-				writeStr(dst, charPtr, LC);
+			case(k_create):
+				stackPush(operationStack, CREATE);
 				break;
 
-
+			case(k_nativeFunction):
+				compileNativeStructure(C, CO, tok);
+				break;
 
 			default:
-				//this is either an intended symbol or a number
-
-				if(numeric(tok[0]) || (tok[0] == '-' && numeric(tok[1]))) {
-					//this is a numeric literal
-					if(isFloat(tok)) {
-						tempFloat = atof(tok);
-						if(!context->literalFlag) {
-							writeObj(dst, PUSH, *(long *) &tempFloat, dictionary, LC);
-						} else {
-							if(dst) {
-								writeObj(dst, DATA, *(long *) &tempFloat, dictionary, LC);
-							}
-						}
-					} else {
-						if(!context->literalFlag) writeObj(dst, PUSH, atol(tok), dictionary, LC);
-						else writeObj(dst, DATA, atol(tok), dictionary, LC);	//push its value
-					}
-				} else {
-					writeAddressCalculation(dst, tok, symbols, dictionary, LC, context, lineCount);
-				}
+				compileAtom(C, CO, tok);
 				break;
 		}
 	}
 	
 	stackFree(operationStack);
-	if(tokVal == -1) writeObj(dst, HALT, 0, dictionary, LC);
+	if(tokVal == -1) writeObj(C, HALT, 0);
 
-	return *LC - oldLC;
+	return C->LC - begin;
 }
 
 /*
@@ -682,63 +446,91 @@ int compileStatement(Table *keyWords, Table *symbols, translation *dictionary, c
 	encountered by compileStatement. If this symbol has never been encountered before, it creates it as a new
 	symbol in the current scope.
 */
-int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation *dictionary, int *LC, Context *context, int *lineCount) {
+long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 	//this function figures out what address a non-keyword token should correlate to
 	//and writes that address to the output file
-	int oldLC = *LC;
+	long begin = C->LC;
+	Compiler _C; subCompiler(C, &_C);
 
-	int fakeLC = 0;
-	Table *sym = tableLookup(symbols, token, &fakeLC);
+	int acc = 0;
+	Table *sym = tableLookup(CO->symbols, tok, &acc);
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
-		int offset = (context->instructionFlag && !context->literalFlag)? 5: 0;	//TODO: replace that 6 with a means of figuring out the grab offset per translation
-		/*if(dst)*/ tableAddSymbol(symbols, token, *LC+offset, context->staticFlag, context->parameterFlag); //you have to do this with no dst, otherwise fake-compiled sections will grab instead of rpush later
-		sym = tableLookup(symbols, token, &fakeLC);
-		if(!context->parameterFlag) {
+		int offset = (CO->instructionFlag && !CO->literalFlag)? 5: 0;	//TODO: replace that 6 with a means of figuring out the grab offset per translation
+		/*if(dst)*/ tableAddSymbol(CO->symbols, tok, C->LC + offset, CO->staticFlag, CO->parameterFlag); //you have to do this with no dst, otherwise fake-compiled sections will grab instead of rpush later
+		sym = tableLookup(CO->symbols, tok, &acc);
+		if(!CO->parameterFlag) {
 			//This is an implicitly declared variable
-			if(dst) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", *lineCount, sym->token, sym->val, sym->staticFlag);
-			if(context->publicFlag && dst) publicize(sym);
-			if(!context->literalFlag && context->instructionFlag) writeObj(dst, GRAB, 0, dictionary, LC);
-			else writeObj(dst, DATA, 0, dictionary, LC);
+			if(C->dst) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
+			if(CO->publicFlag && C->dst) publicize(sym);
+			if(!CO->literalFlag && CO->instructionFlag) writeObj(C, GRAB, 0);
+			else writeObj(C, DATA, 0);
 		} else {
 			//this is a parameter declaration, count it and carry on
-			(*LC) += WRDSZ;
+			C->LC += WRDSZ;
 		}
-		return *LC - oldLC;
+		return C->LC - begin;
 	}
 
-	int value = sym->val + fakeLC;
+	int value = sym->val + acc;
 	
 	if(sym->parameterFlag) {
-		writeObj(dst, AGET, value + WRDSZ, dictionary, LC);
+		writeObj(C, AGET, value + WRDSZ);
 	} else {
 		if(!sym->staticFlag) {
-			if(!fakeLC) {
+			if(!acc) {
 				//symbol is not being called for within a collection
 				//if(dst) printf("%d:\tto child symbol %s. Val = %x, Offset = %x\n", *lineCount, sym->token, sym->val, sym->offset);
-				if(!context->literalFlag) {
-					writeObj(dst, RPUSH, value - *LC - dictionary[RPUSH].length + 1 + sym->offset, dictionary, LC);
+				if(!CO->literalFlag) {
+					writeObj(C, RPUSH, value - C->LC - C->dictionary[RPUSH].length + 1 + sym->offset);
 				} else {
-					writeObj(dst, DATA, value - *LC + 1, dictionary, LC);
+					writeObj(C, DATA, value - C->LC + 1);
 				}
 			} else {
 				//if(dst) printf("%d:\tto parent symbol %s. Val = %x, Offset = %x, Backset = %x\n", *lineCount, sym->token, sym->val, sym->offset, fakeLC);
-				writeObj(dst, RPUSH, - (*LC + fakeLC + dictionary[RPUSH].length) + 1, dictionary, LC);
-				writeObj(dst, PUSH, sym->val + sym->offset, dictionary, LC);
-				writeObj(dst, ADD, 0, dictionary, LC);
+				writeObj(C, RPUSH, - (C->LC + acc + C->dictionary[RPUSH].length) + 1);
+				writeObj(C, PUSH, sym->val + sym->offset);
+				writeObj(C, ADD, 0);
 			}
 		} else {
 			//if(dst) printf("%d:\t%s to static from somewhere\n", *lineCount, sym->token);
-			if(!context->literalFlag) {
-				writeObj(dst, RPUSH, - (*LC +dictionary[RPUSH].length) + 1, dictionary, LC);
-				writeObj(dst, PUSH, value, dictionary, LC);
-				writeObj(dst, ADD, 0, dictionary, LC);
+			if(!CO->literalFlag) {
+				writeObj(C, RPUSH, - (C->LC + C->dictionary[RPUSH].length) + 1);
+				writeObj(C, PUSH, value);
+				writeObj(C, ADD, 0);
 			} else {
-				writeObj(dst, DATA, value, dictionary, LC);
+				writeObj(C, DATA, value);
 			}
 		}
 	}
-	return *LC - oldLC;
+	return C->LC - begin;
+}
+
+/*
+	subCompiler makes a second Compiler have all the same values as a first Compiler.
+*/
+void subCompiler(Compiler *C1, Compiler *C2) {
+	C2->lineCounter = C1->lineCounter;
+	C2->dst = C1->dst;
+	C2->src = C1->src;
+	C2->SC = C1->SC;
+	C2->LC = C1->LC;
+	C2->end = C1->end;
+	C2->keyWords = C1->keyWords;
+	C2->dictionary = C1->dictionary;
+}
+
+/*
+	subContext copies all the values from one Context to another.
+*/
+void subContext(Context *C1, Context *C2) {
+	C2->publicFlag = C1->publicFlag;
+	C2->literalFlag = C1->literalFlag;
+	C2->nativeFlag = C1->nativeFlag;
+	C2->staticFlag = C1->staticFlag;
+	C2->parameterFlag = C1->parameterFlag;
+	C2->instructionFlag = C1->instructionFlag;
+	C2->symbols = C1->symbols;
 }
 
 /*
@@ -746,13 +538,13 @@ int writeAddressCalculation(FILE *dst, char *token, Table *symbols, translation 
 	a ; is used). It uses the writer to produce each operator's (from the operatorStack)
 	machine code in the output file.
 */
-void fillOperations(FILE *dst, int *LC, Stack *operationStack, translation *dictionary) {
+void fillOperations(Compiler *C, Stack *operationStack) {
 	//unstacks operators
 	long op;
 
 	while((op = stackPop(operationStack))) {
 		if(op == -1) break;
-		writeObj(dst, op, 0, dictionary, LC);
+		writeObj(C, op, 0);
 	}
 }
 
@@ -770,6 +562,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "[", k_oBracket, 0, 0);
 	tableAddSymbol(ret, "]", k_cBracket, 0, 0);
 	tableAddSymbol(ret, "{", k_oBrace, 0, 0);
+	tableAddSymbol(ret, "{{", k_anonSet, 0, 0);
 	tableAddSymbol(ret, "}", k_cBrace, 0, 0);
 	tableAddSymbol(ret, "(", k_oParen, 0, 0);
 	tableAddSymbol(ret, ")", k_cParen, 0, 0);
@@ -826,6 +619,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "Native", k_nativeFunction, 0, 0);
 	tableAddSymbol(ret, "Set", k_Function, 0, 0);
 	tableAddSymbol(ret, "<-", k_imply, 0, 0);
+	tableAddSymbol(ret, "create", k_create, 0, 0);
 
 	return ret;
 }
@@ -847,7 +641,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, PRNT, c_prnt, -1, 0);
 	translationAdd(ret, PUSH, c_push, 2, 0); 
 	translationAdd(ret, RPUSH, c_rpush, 3, 1); 
-	translationAdd(ret, GRAB, c_grab, -1, 0); 
+	translationAdd(ret, GRAB, c_grab, 5, 0); 
 	translationAdd(ret, POP, c_pop, -1, 0); 
 	translationAdd(ret, RPOP, c_rpop, -1, 0);
 	translationAdd(ret, BPOP, c_bpop, -1, 0); 
@@ -877,6 +671,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, LOAD, c_load, -1, 0);
 	translationAdd(ret, DATA, c_data, 0, 0);
 	translationAdd(ret, IMPL, c_impl, -1, 0);
+	translationAdd(ret, CREATE, c_create, -1, 0);
 	
 	return ret;
 }

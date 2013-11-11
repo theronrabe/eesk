@@ -66,8 +66,6 @@ unsigned char *translationFormCode(translation *m, long eeskVal, long arg, int *
 			*param = (int) arg;
 		} else {
 			long *param = (long *) (a->code+a->param);
-			
-			printf("m = %p,%p\na->code = %p\na->param = %d\nloc = %p\n", m, a, a->code, a->param, param);
 			*param = arg;
 		}
 	}
