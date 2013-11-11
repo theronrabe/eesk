@@ -122,9 +122,10 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 
 
 			case(k_oBracket):
-				if(CO->nativeFlag) {
+				if(!CO->nativeFlag) {
 					compileCall(C, CO, tok);
 				} else {
+	//printf("here...? nativeFlag = %x\n", CO->nativeFlag);
 					compileNative(C, CO, tok);
 				}
 				break;
