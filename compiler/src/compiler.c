@@ -383,8 +383,12 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				if(C->dst) printf("%d:\tIncluding file: %s\n", C->lineCounter, tok);
 				char *inc = loadFile(tok);
 				trimComments(inc);
+
+				subCompiler(C, &_C);
+				_C.src = inc;
 				_C.SC = 0;
-				compileStatement(&_C, CO, tok);
+				C->LC += compileStatement(&_C, CO, tok);
+				printf("LC: %lx\t_LC: %lx\n", C->LC, _C.LC);
 				free(inc);
 				break; 
 

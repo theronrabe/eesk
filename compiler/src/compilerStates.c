@@ -105,6 +105,7 @@ long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
 	CO->symbols = tableAddLayer(CO->symbols, name, 1);
 
 	//count length of parameters, data, and statement sections
+		subContext(CO, &_CO);
 		_C.LC = 0;
 		_C.SC = C->SC;
 		_CO.parameterFlag = 1;

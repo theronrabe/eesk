@@ -33,13 +33,14 @@ void writeObj(Compiler *C, long instr, long param) {
 	if (C->dst) {
 		if(instr == RPUSH) {
 			int rip = C->LC + C->dictionary[RPUSH].param + (C->dictionary[RPUSH].dWord?WRDSZ/2:WRDSZ);	//because RIP contains the next instruction, but LC contains the current instruction
+			printf("\n%lx:\t%lx, %lx\t[%lx]\n", C->LC, instr, param, param+rip);
 		} else {
-			//printf("\nWriting eeskir: %lx, %lx\n", instr, param);
+			printf("\n%lx:\t%lx, %lx\n", C->LC, instr, param);
 		}
 		fwrite(out, 1, len, C->dst);
 
 		/*
-		printf("%x:", *LC);
+		printf("%x:", C->LC);
 		for(int i=0; i<len; i++) {
 			printf("%02x ", out[i]);
 		}
