@@ -103,17 +103,18 @@ long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
 	CO->symbols = tableAddLayer(CO->symbols, tok, 1);
 
 	//count length of parameters, data, and statement sections
-	_C.LC = 0;
-	_CO.parameterFlag = 1;
-	_CO.instructionFlag = 0;
-	_C.dst = NULL;
-	_CO.symbols = tableAddLayer(CO->symbols, tok, 1);
+		_C.LC = 0;
+		_C.SC = C->SC;
+		_CO.parameterFlag = 1;
+		_CO.instructionFlag = 0;
+		_C.dst = NULL;
+		_CO.symbols = tableAddLayer(_CO.symbols, tok, 1);
 	long paramL = compileStatement(&_C, &_CO, tok);	//param length
-	_CO.parameterFlag = 0;
-	_C.LC = 0;	//because parameters don't increment location counter
-	_CO.instructionFlag = 1;
+		_CO.parameterFlag = 0;
+		_C.LC = 0;	//because parameters don't increment location counter
+		_CO.instructionFlag = 1;
 	long bodyL = compileStatement(&_C, &_CO, tok);	//body length
-	_CO.symbols = tableRemoveLayer(CO->symbols);
+		_CO.symbols = tableRemoveLayer(_CO.symbols);
 	long offset;
 	
 	if(CO->instructionFlag) {
@@ -127,21 +128,25 @@ long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
 	tableAddSymbol(CO->symbols->parent->layerRoot, tok, nameAddr, CO->staticFlag, CO->parameterFlag);		//overwrite previous definition
 	if(CO->publicFlag) { publicize(CO->symbols->parent); }
 
-	_C.LC = 0;
-	_CO.parameterFlag = 1;
-	compileStatement(C, &_CO, tok);
-	_CO.parameterFlag = 0;
-	_CO.instructionFlag = 1;
+		_C.LC = 0;
+		_C.SC = C->SC;
+		_CO.parameterFlag = 1;
+		_CO.instructionFlag = 0;
+		_C.dst = C->dst;
+	paramL = compileStatement(&_C, &_CO, tok);	//compile parameters
+		_CO.parameterFlag = 0;
+		_CO.instructionFlag = 1;
 
 	writeObj(C, DATA, WRDSZ*2 + bodyL + C->dictionary[RPUSH].length + C->dictionary[RSR].length);	//a word containing total function length
 	writeObj(C, DATA, paramL+WRDSZ);	//write argument number at callAddress-1, extra word for return address
 	//reset calling address to right here
 
-	_C.LC = 0;
-	_C.dst = C->dst;
-	compileStatement(&_C, CO, tok);	//compiled body, relatively addressed
-	C->LC += _C.LC;
-	_CO.instructionFlag = CO->instructionFlag;
+		_C.LC = 0;
+		_C.dst = C->dst;
+	bodyL = compileStatement(&_C, CO, tok);	//compiled body, relatively addressed
+		C->SC = _C.SC;
+		C->LC += _C.LC;
+		_CO.instructionFlag = CO->instructionFlag;
 	writeObj(C, RSR, 0);
 
 	//instructionFlagged functions should jump to right here

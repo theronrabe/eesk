@@ -462,7 +462,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 		sym = tableLookup(CO->symbols, tok, &acc);
 		if(!CO->parameterFlag) {
 			//This is an implicitly declared variable
-			if(C->dst) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
+			if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
 			if(CO->publicFlag && C->dst) publicize(sym);
 			if(!CO->literalFlag && CO->instructionFlag) writeObj(C, GRAB, 0);
 			else writeObj(C, DATA, 0);
