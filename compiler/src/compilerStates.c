@@ -312,7 +312,7 @@ long compileNativeStructure(Compiler *C, Context *CO, char *tok) {
 	}
 
 	//write function name
-	writeStr(C->dst, functionName, C->LC);
+	writeStr(C->dst, functionName, &C->LC);
 				
 	return C->LC - begin;
 }
