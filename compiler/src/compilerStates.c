@@ -91,6 +91,7 @@ long compileWhile(Compiler *C, Context *CO, char *tok) {
 }
 
 long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
+	char name[256];
 	long begin = C->LC;
 	Compiler _C; subCompiler(C, &_C);
 	Context _CO; subContext(CO, &_CO);
@@ -98,9 +99,10 @@ long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
 
 	//in a new namespace
 	getToken(C, tok);
-	CO->symbols = tableAddSymbol(CO->symbols, tok, nameAddr, CO->staticFlag, CO->parameterFlag);	//change to this scope
+	strcpy(name, tok);
+	CO->symbols = tableAddSymbol(CO->symbols, name, nameAddr, CO->staticFlag, CO->parameterFlag);	//change to this scope
 	if(CO->publicFlag) { publicize(CO->symbols); }
-	CO->symbols = tableAddLayer(CO->symbols, tok, 1);
+	CO->symbols = tableAddLayer(CO->symbols, name, 1);
 
 	//count length of parameters, data, and statement sections
 		_C.LC = 0;
@@ -108,7 +110,7 @@ long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
 		_CO.parameterFlag = 1;
 		_CO.instructionFlag = 0;
 		_C.dst = NULL;
-		_CO.symbols = tableAddLayer(_CO.symbols, tok, 1);
+		_CO.symbols = tableAddLayer(_CO.symbols, name, 1);
 	long paramL = compileStatement(&_C, &_CO, tok);	//param length
 		_CO.parameterFlag = 0;
 		_C.LC = 0;	//because parameters don't increment location counter
@@ -125,7 +127,7 @@ long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
 
 	//reset calling address
 	nameAddr = C->LC + WRDSZ*2;	//an extra word for total length (for newing), and an extra word for stack request
-	tableAddSymbol(CO->symbols->parent->layerRoot, tok, nameAddr, CO->staticFlag, CO->parameterFlag);		//overwrite previous definition
+	tableAddSymbol(CO->symbols->parent->layerRoot, name, nameAddr, CO->staticFlag, CO->parameterFlag);		//overwrite previous definition
 	if(CO->publicFlag) { publicize(CO->symbols->parent); }
 
 		_C.LC = 0;

@@ -476,7 +476,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 	int value = sym->val + acc;
 	
 	if(sym->parameterFlag) {
-		writeObj(C, AGET, value + WRDSZ);
+		writeObj(C, AGET, sym->val + WRDSZ);
 	} else {
 		if(!sym->staticFlag) {
 			if(!acc) {
