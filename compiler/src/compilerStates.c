@@ -90,9 +90,9 @@ long compileWhile(Compiler *C, Context *CO, char *tok) {
 	return C->LC - begin;
 }
 
-long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
-	char name[256];
+long compileSet(Compiler *C, Context *CO, char *tok) {
 	long begin = C->LC;
+	char name[256];
 	Compiler _C; subCompiler(C, &_C);
 	Context _CO; subContext(CO, &_CO);
 	long nameAddr = begin;
@@ -119,7 +119,7 @@ long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
 	long bodyL = compileStatement(&_C, &_CO, tok);	//body length
 		_CO.symbols = tableRemoveLayer(_CO.symbols);
 	long offset;
-	
+
 	if(CO->instructionFlag) {
 		offset = C->dictionary[JMP].length + C->dictionary[DATA].length*2 + C->dictionary[RSR].length + 1;
 		writeObj(C, RPUSH, bodyL+offset);	//this used to be a PUSH
@@ -153,7 +153,7 @@ long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
 	writeObj(C, RSR, 0);
 
 	//instructionFlagged functions should jump to right here
-	
+
 	if(CO->instructionFlag) {
 		//put our calling address atop the stack
 		writeObj(C, RPUSH, nameAddr - C->LC+1 - WRDSZ);
@@ -161,7 +161,56 @@ long compileSet(Compiler *C, Context *CO, char *tok, char anonymous) {
 
 	//no longer in this namespace
 	CO->symbols = tableRemoveLayer(CO->symbols);
+	return C->LC - begin;
+}
 
+long compileAnonSet(Compiler *C, Context *CO, char *tok) {
+	long begin = C->LC;
+	Compiler _C;
+	Context _CO;
+
+	//new namespace
+	CO->symbols = tableAddLayer(CO->symbols, tok, 1);
+
+	//count length
+		subCompiler(C, &_C);
+		_C.dst = NULL;
+		_C.LC = 0;
+		subContext(CO, &_CO);
+		_CO.symbols = tableAddLayer(_CO.symbols, tok, 1);
+		_CO.anonFlag = 1;
+	long bodyL = compileStatement(&_C, &_CO, tok);
+		_CO.symbols = tableRemoveLayer(_CO.symbols);
+
+	//jump to end
+	long end = C->dictionary[JMP].length + (2*C->dictionary[DATA].length + bodyL + C->dictionary[RSR].length) + 1;
+	writeObj(C, RPUSH, end);
+	writeObj(C, JMP, 0);
+
+	//set calling address
+	long nameAddr = C->LC;
+
+	//write Set data
+	writeObj(C, DATA, bodyL);
+	writeObj(C, DATA, WRDSZ);
+	//write Set body
+	compileStatement(C, CO, tok);
+	writeObj(C, RSR, 0);
+
+	//jump here, POPTO anonStack locations
+	long addr;
+	while(addr = stackPop(C->anonStack)) {
+		if(addr == -1) {break;} else {
+			writeObj(C, RPUSH, addr - C->LC + 1 - WRDSZ);
+			writeObj(C, RPOP, 0);
+		}
+	}
+
+	//push beginning
+	writeObj(C, RPUSH, nameAddr - C->LC + 1);
+
+	//return namespace
+	CO->symbols = tableRemoveLayer(CO->symbols);
 	return C->LC - begin;
 }
 

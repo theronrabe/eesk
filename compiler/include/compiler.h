@@ -35,6 +35,7 @@ typedef struct Context {
 	char staticFlag;
 	char parameterFlag;
 	char instructionFlag;
+	char anonFlag;
 	Table *symbols;
 } Context;
 
@@ -47,6 +48,7 @@ typedef struct Compiler {
 	char end;
 	Table *keyWords;
 	translation *dictionary;
+	Stack *anonStack;
 } Compiler;
 
 long compileStatement(Compiler *C, Context *CO, char *tok);
@@ -86,7 +88,8 @@ typedef enum {
 	k_load, k_nativeFunction,
 	k_r14,
 	k_imply,
-	k_create
+	k_create,
+	k_anon
 } KEYWORD;
 
 #endif

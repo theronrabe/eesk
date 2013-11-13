@@ -87,7 +87,7 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				break;
 
 			case(k_Function):
-				compileSet(C, CO, tok, 0);
+				compileSet(C, CO, tok);
 				break;
 
 			case(k_oBrace):
@@ -434,6 +434,13 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				compileNativeStructure(C, CO, tok);
 				break;
 
+			case(k_anon):
+				printf("compiling anon...\n");
+				CO->anonFlag = 1;
+				compileAnonSet(C, CO, tok);
+				CO->anonFlag = 0;
+				break;
+
 			default:
 				compileAtom(C, CO, tok);
 				break;
@@ -467,9 +474,11 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 		if(!CO->parameterFlag) {
 			//This is an implicitly declared variable
 			if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
-			if(CO->publicFlag && C->dst) publicize(sym);
+			if(CO->publicFlag && C->dst && !CO->anonFlag) publicize(sym);
 			if(!CO->literalFlag && CO->instructionFlag) writeObj(C, GRAB, 0);
 			else writeObj(C, DATA, 0);
+
+			if(CO->anonFlag && C->dst) { stackPush(C->anonStack, sym->val); }
 		} else {
 			//this is a parameter declaration, count it and carry on
 			C->LC += WRDSZ;
@@ -523,6 +532,7 @@ void subCompiler(Compiler *C1, Compiler *C2) {
 	C2->end = C1->end;
 	C2->keyWords = C1->keyWords;
 	C2->dictionary = C1->dictionary;
+	C2->anonStack = C1->anonStack;
 }
 
 /*
@@ -535,6 +545,7 @@ void subContext(Context *C1, Context *C2) {
 	C2->staticFlag = C1->staticFlag;
 	C2->parameterFlag = C1->parameterFlag;
 	C2->instructionFlag = C1->instructionFlag;
+	C2->anonFlag = C1->anonFlag;
 	C2->symbols = C1->symbols;
 }
 
@@ -625,6 +636,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "Set", k_Function, 0, 0);
 	tableAddSymbol(ret, "<-", k_imply, 0, 0);
 	tableAddSymbol(ret, "create", k_create, 0, 0);
+	tableAddSymbol(ret, "{{", k_anon, 0, 0);
 
 	return ret;
 }
@@ -645,6 +657,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, LOC, c_loc, -1, 0); 
 	translationAdd(ret, PRNT, c_prnt, -1, 0);
 	translationAdd(ret, PUSH, c_push, 2, 0); 
+	translationAdd(ret, POPTO, c_popto, 3, 0);
 	translationAdd(ret, RPUSH, c_rpush, 3, 1); 
 	translationAdd(ret, GRAB, c_grab, 5, 0); 
 	translationAdd(ret, POP, c_pop, -1, 0); 

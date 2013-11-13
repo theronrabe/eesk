@@ -25,31 +25,38 @@ This file is part of Eesk.
 #include <writer.h>
 
 int main(int argc, char **argv) {
-	char *src = loadFile(argv[1]);
-	FILE *dst = fopen("e.out", "w");
-	Table *keyWords = prepareKeywords();
-	Table *symbols = tableCreate();
-	Context context;
-	translation *dictionary = prepareTranslation();
-	int SC = 0, LC = 0, lineCount = 1;
+	Context CO;
+	Compiler C;
+	char tok[256];
+
+	C.dictionary = prepareTranslation();
+	C.src = loadFile(argv[1]);
+	C.dst = fopen("e.out", "w");
+	C.SC = 0;
+	C.LC = 0;
+	C.lineCounter = 0;
+	C.keyWords = prepareKeywords();
+	C.end = 0;
+	C.anonStack = stackCreate(32);
 	
 	callStack = stackCreate(32);
 	nameStack = stackCreate(32);
 
-	trimComments(src);
+	trimComments(C.src);
 
-	context.publicFlag = 0;
-	context.literalFlag = 0;
-	context.nativeFlag = 0;
-	context.staticFlag = 0;
-	context.parameterFlag = 0;
-	context.instructionFlag = 1;
+	CO.publicFlag = 0;
+	CO.literalFlag = 0;
+	CO.nativeFlag = 0;
+	CO.staticFlag = 0;
+	CO.parameterFlag = 0;
+	CO.instructionFlag = 1;
+	CO.symbols = tableCreate();
 	
-	compileStatement(keyWords, symbols, dictionary, src, &SC, dst, &LC, &context, &lineCount);
-	writeObj(dst, HALT, 0, dictionary, &LC);
-	writeObj(dst, DATA, transferAddress, dictionary, &LC);
+	compileStatement(&C, &CO, tok);
+	writeObj(&C, HALT, 0);
+	writeObj(&C, DATA, transferAddress);
 
-	free(src);
-	fclose(dst);
+	free(C.src);
+	fclose(C.dst);
 	return 0;
 }

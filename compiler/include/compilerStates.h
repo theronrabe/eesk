@@ -25,7 +25,8 @@ This file is part of Eesk.
 #include <compiler.h>
 long compileIf(Compiler *C, Context *context, char *tok);
 long compileWhile(Compiler *C, Context *context, char *tok);
-long compileSet(Compiler *C, Context *context, char *tok, char anonymous);
+long compileSet(Compiler *C, Context *context, char *tok);
+long compileAnonSet(Compiler *C, Context *CO, char *tok);
 long compileCall(Compiler *C, Context *context, char *tok);
 long compileQuote(Compiler *C, Context *context, char *tok);
 long compileDeclaration(Compiler *C, Context *context, char *tok);
