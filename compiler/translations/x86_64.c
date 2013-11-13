@@ -115,7 +115,12 @@ void grab() {
 }
 
 void popto() {
-	//this instruction is never used by the ee compiler
+	asm volatile (
+			"popq %%rax\n\t"
+			"movq $0x0123456789abcdef, %%rbx\n\t"
+			"movq %%rax, (%%rbx)\n\t"
+			:::
+			);
 }
 
 void pop() {
