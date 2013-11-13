@@ -188,11 +188,11 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	writeObj(C, JMP, 0);
 
 	//set calling address
-	long nameAddr = C->LC;
 
 	//write Set data
-	writeObj(C, DATA, bodyL);
+	writeObj(C, DATA, 2*WRDSZ + bodyL + C->dictionary[RSR].length);
 	writeObj(C, DATA, WRDSZ);
+	long nameAddr = C->LC;
 	//write Set body
 	compileStatement(C, CO, tok);
 	writeObj(C, RSR, 0);
@@ -207,7 +207,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	}
 
 	//push beginning
-	writeObj(C, RPUSH, nameAddr - C->LC + 1);
+	writeObj(C, RPUSH, nameAddr - C->LC + 1 - WRDSZ);
 
 	//return namespace
 	CO->symbols = tableRemoveLayer(CO->symbols);
