@@ -435,7 +435,6 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				break;
 
 			case(k_anon):
-				printf("compiling anon...\n");
 				CO->anonFlag = 1;
 				compileAnonSet(C, CO, tok);
 				CO->anonFlag = 0;
@@ -473,12 +472,16 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 		sym = tableLookup(CO->symbols, tok, &acc);
 		if(!CO->parameterFlag) {
 			//This is an implicitly declared variable
-			if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
-			if(CO->publicFlag && C->dst && !CO->anonFlag) publicize(sym);
-			if(!CO->literalFlag && CO->instructionFlag) writeObj(C, GRAB, 0);
-			else writeObj(C, DATA, 0);
+			if(CO->anonFlag) {
+				writeObj(C, AGET, 0);	//this will be changed to the correct parameter value the second time through (once the symbol table knows)
+				stackPush(C->anonStack, sym);
+			} else {
+				if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
+				if(CO->publicFlag && C->dst && !CO->anonFlag) publicize(sym);
+				if(!CO->literalFlag && CO->instructionFlag) writeObj(C, GRAB, 0);
+				else writeObj(C, DATA, 0);
+			}
 
-			if(CO->anonFlag && C->dst) { stackPush(C->anonStack, sym->val); }
 		} else {
 			//this is a parameter declaration, count it and carry on
 			C->LC += WRDSZ;
@@ -636,7 +639,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "Set", k_Function, 0, 0);
 	tableAddSymbol(ret, "<-", k_imply, 0, 0);
 	tableAddSymbol(ret, "create", k_create, 0, 0);
-	tableAddSymbol(ret, "{{", k_anon, 0, 0);
+	tableAddSymbol(ret, ":", k_anon, 0, 0);
 
 	return ret;
 }

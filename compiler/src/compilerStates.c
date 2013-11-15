@@ -141,7 +141,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		_CO.instructionFlag = 1;
 
 	writeObj(C, DATA, WRDSZ*2 + bodyL + C->dictionary[RPUSH].length + C->dictionary[RSR].length);	//a word containing total function length
-	writeObj(C, DATA, paramL+WRDSZ);	//write argument number at callAddress-1, extra word for return address
+	writeObj(C, DATA, paramL);	//write argument number at callAddress-1, extra word for return address no longer needed (kept on r15)
 	//reset calling address to right here
 
 		_C.LC = 0;
@@ -171,33 +171,58 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 
 	//new namespace
 	CO->symbols = tableAddLayer(CO->symbols, tok, 1);
+	long nameAddr = C->LC + C->dictionary[RPUSH].length + C->dictionary[JMP].length + 2*WRDSZ;
+	CO->symbols = tableAddSymbol(CO->symbols, "this", nameAddr, 0, 0);
+
+	//remember sp of anonStack
+	int oldAnon = C->anonStack->sp;
+	printf("compiling anon... start of anonStack = %d\n", oldAnon);
 
 	//count length
 		subCompiler(C, &_C);
 		_C.dst = NULL;
 		_C.LC = 0;
 		subContext(CO, &_CO);
-		_CO.symbols = tableAddLayer(_CO.symbols, tok, 1);
+		//_CO.symbols = tableAddLayer(_CO.symbols, tok, 1);
 		_CO.anonFlag = 1;
 	long bodyL = compileStatement(&_C, &_CO, tok);
-		_CO.symbols = tableRemoveLayer(_CO.symbols);
+		//_CO.symbols = tableRemoveLayer(_CO.symbols);
 
 	//jump to end
 	long end = C->dictionary[JMP].length + (2*C->dictionary[DATA].length + bodyL + C->dictionary[RSR].length) + 1;
+	long apushes = C->dictionary[APUSH].length * (C->anonStack->sp - oldAnon);
+		end += apushes;
 	writeObj(C, RPUSH, end);
 	writeObj(C, JMP, 0);
 
 	//set calling address
 
 	//write Set data
-	writeObj(C, DATA, 2*WRDSZ + bodyL + C->dictionary[RSR].length);
+	writeObj(C, DATA, 2*WRDSZ + apushes + bodyL + C->dictionary[RSR].length);
 	writeObj(C, DATA, WRDSZ);
-	long nameAddr = C->LC;
+
+	//set calling address
+	nameAddr = C->LC;
+
+	//write , operators for declared symbols
+	printf("Done counting anon... stack sp = %d\n", C->anonStack->sp);
+	Table *sym;
+	int i;
+	for(i=oldAnon; i < C->anonStack->sp; i++) {
+		sym = C->anonStack->array[C->anonStack->sp - i - 1];
+		sym->parameterFlag = 1;
+		sym->val = (i-oldAnon+1) * WRDSZ;
+		writeObj(C, APUSH, 0);
+		printf("\t%s: %lx\n", sym->token, sym->val);
+	}
+	C->anonStack->sp = oldAnon;
+
 	//write Set body
 	compileStatement(C, CO, tok);
 	writeObj(C, RSR, 0);
 
 	//jump here, POPTO anonStack locations
+	/*
 	long addr;
 	while(addr = stackPop(C->anonStack)) {
 		if(addr == -1) {break;} else {
@@ -205,6 +230,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 			writeObj(C, RPOP, 0);
 		}
 	}
+	*/
 
 	//push beginning
 	writeObj(C, RPUSH, nameAddr - C->LC + 1 - WRDSZ);

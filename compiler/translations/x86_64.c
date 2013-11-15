@@ -171,7 +171,9 @@ void jsr() {
 			"movq %%rsp, %%r13\n\t"		//back up stack pointer
 			"movq %%r15, %%rsp\n\t"		//counterStack is the active stack
 			"movq %%r14, %%rdx\n\t"		//activationStack in rdx
-			"movq (%%rsp), %%rcx\n\t"	//past activationStack in rcx
+			//"movq (%%rsp), %%rcx\n\t"	//past activationStack in rcx
+				"movq (%%rsp), %%rcx\n\t"	//this should be the correct past activationStack
+				"pushq (%%r13)\n\t"		//push return address
 			"pushq %%rdx\n\t"		//remember activationStack
 			"subq %%rdx, %%rcx\n\t"		//rcx contains numArgsPassed
 			"movq %%rsp, %%r15\n\t"		//replace counterStack
@@ -183,7 +185,7 @@ void jsr() {
 			"subq %%rcx, %%rbx\n\t"		//how many args weren't passed?
 			"subq %%rbx, %%r14\n\t"		//correct activationStack to reflect stack request
 			"popq %%rax\n\t"		//grab return address
-			"movq %%rax, (%%r14)\n\t"	//put return address on activationStack
+			//"movq %%rax, (%%r14)\n\t"	//put return address on activationStack
 			"subq %%rbx, (%%r15)\n\t"	//correct counterStack to reflect stack request
 
 			//place call
@@ -211,8 +213,9 @@ void rsr() {
 			*/
 			"movq %%rsp, %%r13\n\t"		//back up stack pointer
 			"movq %%r15, %%rsp\n\t"		//counterStack is active stack
-			"movq (%%r14), %%rax\n\t"	//grab return address
 			"popq %%r14\n\t"		//activationStack resets
+				//"movq (%%r14), %%rax\n\t"	//grab return address
+					"popq %%rax\n\t"
 			"movq (%%rsp), %%r14\n\t"	//The actual correct activationStack
 			"movq %%rsp, %%r15\n\t"		//replace counterStack
 			"movq %%r13, %%rsp\n\t"		//back on regular stack
@@ -229,6 +232,7 @@ void apush() {
 			"pushq %%rax\n\t"		//push it
 			"movq %%rsp, %%r14\n\t"	//replace activationStack
 			"movq %%r13, %%rsp\n\t"		//reactivate stack
+				//"subq $0x08, (%%r15)\n\t"	//keep up with r14
 			:::
 			);
 }
@@ -236,7 +240,8 @@ void apush() {
 void aget() {
 	asm volatile (
 			"movq $0x0123456789abcdef, %%rax\n\t"	//grab offset parameter
-			"movq 0x8(%%r15), %%rbx\n\t"		//grab base address (previous activationStack)
+			//"movq 0x8(%%r15), %%rbx\n\t"		//grab base address (previous activationStack)
+				"movq 0x10(%%r15), %%rbx\n\t"
 			"subq %%rax, %%rbx\n\t"			//combine base with offset
 			"pushq %%rbx\n\t"		//push argument to stack
 			:::
