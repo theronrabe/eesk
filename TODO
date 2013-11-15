@@ -10,7 +10,5 @@ Eesk Environment to-do list:
 	-continue work on manual
 
 Currently working on:
-	-Just realized that consecutively fake-compiled statements need to have their own symbol layer that
-		gets removed again before they are compiled for writing. Otherwise, symbols aren't remembered
-		between fake statements, or are remembered (when they shouldn't be) when it comes time to output
-		the compiled statement.
+	-pattern matching in constant time from both ends of a Set
+	-correct length calculations of nested anonymous Sets
