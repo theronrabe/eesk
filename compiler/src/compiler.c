@@ -403,7 +403,7 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 			case(k_label):
 				//create a symbol referring to this location
 				getToken(C, tok);
-				tempTable = tableAddSymbol(CO->symbols, tok, C->LC, CO->staticFlag, CO->parameterFlag);
+				tempTable = tableAddSymbol(CO->symbols, tok, C->LC, CO);
 				if(CO->publicFlag) publicize(tempTable);
 				break;
 
@@ -468,7 +468,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 	
 	if(sym == NULL) {	//does the symbol not exist yet?
 		int offset = (CO->instructionFlag && !CO->literalFlag)? 5: 0;	//TODO: replace that 6 with a means of figuring out the grab offset per translation
-		/*if(dst)*/ tableAddSymbol(CO->symbols, tok, C->LC + offset, CO->staticFlag, CO->parameterFlag); //you have to do this with no dst, otherwise fake-compiled sections will grab instead of rpush later
+		/*if(dst)*/ tableAddSymbol(CO->symbols, tok, C->LC + offset, CO); //you have to do this with no dst, otherwise fake-compiled sections will grab instead of rpush later
 		sym = tableLookup(CO->symbols, tok, &acc);
 		if(!CO->parameterFlag) {
 			//This is an implicitly declared variable
@@ -573,73 +573,76 @@ void fillOperations(Compiler *C, Stack *operationStack) {
 */
 Table *prepareKeywords() {
 	Table *ret = tableCreate();
+	Context CO;
+		CO.staticFlag = 0;
+		CO.parameterFlag = 0;
 
 	//Language keywords
-	tableAddSymbol(ret, "if", k_if, 0, 0);
-	tableAddSymbol(ret, "while", k_while, 0, 0);
-	tableAddSymbol(ret, "Function", k_Function, 0, 0);
-	tableAddSymbol(ret, "[", k_oBracket, 0, 0);
-	tableAddSymbol(ret, "]", k_cBracket, 0, 0);
-	tableAddSymbol(ret, "{", k_oBrace, 0, 0);
-	tableAddSymbol(ret, "{{", k_anonSet, 0, 0);
-	tableAddSymbol(ret, "}", k_cBrace, 0, 0);
-	tableAddSymbol(ret, "(", k_oParen, 0, 0);
-	tableAddSymbol(ret, ")", k_cParen, 0, 0);
-	tableAddSymbol(ret, "printd", k_prnt, 0, 0);
-	tableAddSymbol(ret, "printf", k_prtf, 0, 0);
-	tableAddSymbol(ret, "printc", k_prtc, 0, 0);
-	tableAddSymbol(ret, "prints", k_prts, 0, 0);
-	tableAddSymbol(ret, "goto", k_goto, 0, 0);
-	tableAddSymbol(ret, "\'", k_singleQuote, 0, 0);
-	tableAddSymbol(ret, "\"", k_doubleQuote, 0, 0);
-	tableAddSymbol(ret, "int", k_int, 0, 0);
-	tableAddSymbol(ret, "char", k_char, 0, 0);
-	tableAddSymbol(ret, "given", k_pnt, 0, 0);
-	tableAddSymbol(ret, "float", k_float, 0, 0);
-	tableAddSymbol(ret, "Begin", k_begin, 0, 0);
-	tableAddSymbol(ret, "End", k_halt, 0, 0);
-	tableAddSymbol(ret, ",", k_argument, 0, 0);
-	tableAddSymbol(ret, "^", k_clr, 0, 0);
-	tableAddSymbol(ret, ";", k_endStatement, 0, 0);
-	tableAddSymbol(ret, "$", k_cont, 0, 0);
-	tableAddSymbol(ret, "!", k_not, 0, 0);
-	tableAddSymbol(ret, ">>", k_shift, 0, 0);
-	tableAddSymbol(ret, "=", k_is, 0, 0);
-	tableAddSymbol(ret, "=>", k_isr, 0, 0);
-	tableAddSymbol(ret, "set", k_set, 0, 0);
-	tableAddSymbol(ret, "==", k_eq, 0, 0);
-	tableAddSymbol(ret, ">", k_gt, 0, 0);
-	tableAddSymbol(ret, "<", k_lt, 0, 0);
-	tableAddSymbol(ret, "+", k_add, 0, 0);
-	tableAddSymbol(ret, "-", k_sub, 0, 0);
-	tableAddSymbol(ret, "*", k_mul, 0, 0);
-	tableAddSymbol(ret, "/", k_div, 0, 0);
-	tableAddSymbol(ret, "%", k_mod, 0, 0);
-	tableAddSymbol(ret, "&", k_and, 0, 0);
-	tableAddSymbol(ret, "|", k_or, 0, 0);
-	tableAddSymbol(ret, "++", k_fadd, 0, 0);
-	tableAddSymbol(ret, "--", k_fsub, 0, 0);
-	tableAddSymbol(ret, "**", k_fmul, 0, 0);
-	tableAddSymbol(ret, "//", k_fdiv, 0, 0);
-	tableAddSymbol(ret, "return", k_return, 0, 0);
-	tableAddSymbol(ret, "public", k_public, 0, 0);
-	tableAddSymbol(ret, "private", k_private, 0, 0);
-	tableAddSymbol(ret, "\\", k_literal, 0, 0);
-	tableAddSymbol(ret, "Collection", k_collect, 0, 0);
-	tableAddSymbol(ret, "Field", k_field, 0, 0);
-	tableAddSymbol(ret, "alloc", k_alloc, 0, 0);
-	tableAddSymbol(ret, "new", k_new, 0, 0);
-	tableAddSymbol(ret, "free", k_free, 0, 0);
-	tableAddSymbol(ret, "include", k_include, 0, 0);
-	tableAddSymbol(ret, "@", k_native, 0, 0);
-	tableAddSymbol(ret, "define", k_label, 0, 0);
-	tableAddSymbol(ret, "->", k_redir, 0, 0);
-	tableAddSymbol(ret, "load", k_load, 0, 0);
-	tableAddSymbol(ret, "Native", k_nativeFunction, 0, 0);
-	tableAddSymbol(ret, "Set", k_Function, 0, 0);
-	tableAddSymbol(ret, "<-", k_imply, 0, 0);
-	tableAddSymbol(ret, "create", k_create, 0, 0);
-	tableAddSymbol(ret, ":", k_anon, 0, 0);
+	tableAddSymbol(ret, "if", k_if, &CO);
+	tableAddSymbol(ret, "while", k_while, &CO);
+	tableAddSymbol(ret, "Function", k_Function, &CO);
+	tableAddSymbol(ret, "[", k_oBracket, &CO);
+	tableAddSymbol(ret, "]", k_cBracket, &CO);
+	tableAddSymbol(ret, "{", k_oBrace, &CO);
+	tableAddSymbol(ret, "{{", k_anonSet, &CO);
+	tableAddSymbol(ret, "}", k_cBrace, &CO);
+	tableAddSymbol(ret, "(", k_oParen, &CO);
+	tableAddSymbol(ret, ")", k_cParen, &CO);
+	tableAddSymbol(ret, "printd", k_prnt, &CO);
+	tableAddSymbol(ret, "printf", k_prtf, &CO);
+	tableAddSymbol(ret, "printc", k_prtc, &CO);
+	tableAddSymbol(ret, "prints", k_prts, &CO);
+	tableAddSymbol(ret, "goto", k_goto, &CO);
+	tableAddSymbol(ret, "\'", k_singleQuote, &CO);
+	tableAddSymbol(ret, "\"", k_doubleQuote, &CO);
+	tableAddSymbol(ret, "int", k_int, &CO);
+	tableAddSymbol(ret, "char", k_char, &CO);
+	tableAddSymbol(ret, "given", k_pnt, &CO);
+	tableAddSymbol(ret, "float", k_float, &CO);
+	tableAddSymbol(ret, "Begin", k_begin, &CO);
+	tableAddSymbol(ret, "End", k_halt, &CO);
+	tableAddSymbol(ret, ",", k_argument, &CO);
+	tableAddSymbol(ret, "^", k_clr, &CO);
+	tableAddSymbol(ret, ";", k_endStatement, &CO);
+	tableAddSymbol(ret, "$", k_cont, &CO);
+	tableAddSymbol(ret, "!", k_not, &CO);
+	tableAddSymbol(ret, ">>", k_shift, &CO);
+	tableAddSymbol(ret, "=", k_is, &CO);
+	tableAddSymbol(ret, "=>", k_isr, &CO);
+	tableAddSymbol(ret, "set", k_set, &CO);
+	tableAddSymbol(ret, "==", k_eq, &CO);
+	tableAddSymbol(ret, ">", k_gt, &CO);
+	tableAddSymbol(ret, "<", k_lt, &CO);
+	tableAddSymbol(ret, "+", k_add, &CO);
+	tableAddSymbol(ret, "-", k_sub, &CO);
+	tableAddSymbol(ret, "*", k_mul, &CO);
+	tableAddSymbol(ret, "/", k_div, &CO);
+	tableAddSymbol(ret, "%", k_mod, &CO);
+	tableAddSymbol(ret, "&", k_and, &CO);
+	tableAddSymbol(ret, "|", k_or, &CO);
+	tableAddSymbol(ret, "++", k_fadd, &CO);
+	tableAddSymbol(ret, "--", k_fsub, &CO);
+	tableAddSymbol(ret, "**", k_fmul, &CO);
+	tableAddSymbol(ret, "//", k_fdiv, &CO);
+	tableAddSymbol(ret, "return", k_return, &CO);
+	tableAddSymbol(ret, "public", k_public, &CO);
+	tableAddSymbol(ret, "private", k_private, &CO);
+	tableAddSymbol(ret, "\\", k_literal, &CO);
+	tableAddSymbol(ret, "Collection", k_collect, &CO);
+	tableAddSymbol(ret, "Field", k_field, &CO);
+	tableAddSymbol(ret, "alloc", k_alloc, &CO);
+	tableAddSymbol(ret, "new", k_new, &CO);
+	tableAddSymbol(ret, "free", k_free, &CO);
+	tableAddSymbol(ret, "include", k_include, &CO);
+	tableAddSymbol(ret, "@", k_native, &CO);
+	tableAddSymbol(ret, "define", k_label, &CO);
+	tableAddSymbol(ret, "->", k_redir, &CO);
+	tableAddSymbol(ret, "load", k_load, &CO);
+	tableAddSymbol(ret, "Native", k_nativeFunction, &CO);
+	tableAddSymbol(ret, "Set", k_Function, &CO);
+	tableAddSymbol(ret, "<-", k_imply, &CO);
+	tableAddSymbol(ret, "create", k_create, &CO);
+	tableAddSymbol(ret, ":", k_anon, &CO);
 
 	return ret;
 }

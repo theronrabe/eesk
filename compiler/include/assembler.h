@@ -20,12 +20,7 @@ This file is part of Eesk.
 #ifndef _assembler.h_
 #define _assembler.h_
 
-typedef struct translation {
-	int param;
-	char dWord;
-	int length;
-	unsigned char *code;
-} translation;
+#include <definitions.h>
 
 translation *translationCreate();
 void translationAdd(translation *m, int eeskVal, unsigned char *code, int param, char dWord);

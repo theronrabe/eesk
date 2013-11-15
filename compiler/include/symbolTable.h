@@ -21,23 +21,12 @@ You should have received a copy of the GNU General Public License
 #define _symbolTable.h_ 
 
 #include <string.h>
+#include <definitions.h>
 
-typedef struct Table {
-	char *token;
-	int val;
-	int offset;
-	char staticFlag;
-	char searchUp;
-	char parameterFlag;
-	struct Table *left;
-	struct Table *right;
-	struct Table *parent;
-	struct Table *layerRoot;
-} Table;
 
 Table *tableCreate();
 void publicize(Table *node);
-Table *tableAddSymbol(Table *T, char *token, int val, char staticFlag, char parameterFlag);
+Table *tableAddSymbol(Table *T, char *token, int val, Context *CO);
 Table *tableAddLayer(Table *T, char *token, char isObject);
 Table *tableRemoveLayer(Table *T);
 Table *tableLookup(Table *T, char *token, int *accOff);

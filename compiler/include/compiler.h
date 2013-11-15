@@ -19,7 +19,7 @@ This file is part of Eesk.
 #define _compiler.h_ 
 
 #include <stack.h>
-#include <symbolTable.h>
+#include <definitions.h>
 #include <fileIO.h>
 #include <stdio.h>
 #include <assembler.h>
@@ -27,29 +27,6 @@ This file is part of Eesk.
 int transferAddress;
 Stack *callStack;
 Stack *nameStack;
-
-typedef struct Context {
-	char publicFlag;
-	char literalFlag;
-	char nativeFlag;
-	char staticFlag;
-	char parameterFlag;
-	char instructionFlag;
-	char anonFlag;
-	Table *symbols;
-} Context;
-
-typedef struct Compiler {
-	int lineCounter;
-	FILE *dst;
-	char *src;
-	long SC;
-	long LC;
-	char end;
-	Table *keyWords;
-	translation *dictionary;
-	Stack *anonStack;
-} Compiler;
 
 long compileStatement(Compiler *C, Context *CO, char *tok);
 long writeAddressCalculation(Compiler *C, Context *CO, char *tok);

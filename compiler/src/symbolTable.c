@@ -20,6 +20,7 @@ This file is part of Eesk.
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <symbolTable.h>
+#include <compiler.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -38,11 +39,16 @@ Table *tableCreate() {
 	ret->searchUp = 0;
 	ret->parameterFlag = 0;
 	ret->offset = 0;
+	ret->backset = 0;
 	return ret;
 }
 
 void publicize(Table *node) {
 	int offset;
+	Context CO;
+		CO.staticFlag = 0;
+		CO.parameterFlag = 0;
+		CO.expectedLength = 0;
 	if(node) {
 		//printf("%s staticity: %d\n", node->token, node->staticFlag);
 		//printf("publicizing node %s\n\n", node->token);
@@ -55,14 +61,14 @@ void publicize(Table *node) {
 				//This symbol was relatively addressed, remember an offset
 				offset = node->parent->val;
 			}
-			node = tableAddSymbol(node->parent, publicToken, node->val + node->offset, node->staticFlag, 0);
+			node = tableAddSymbol(node->parent, publicToken, node->val + node->offset, &CO);
 			node->offset = offset;
 			publicize(node);
 		}
 	}
 }
 
-Table *tableAddSymbol(Table *T, char *token, int address, char sF, char pF) {
+Table *tableAddSymbol(Table *T, char *token, int address, Context *CO) {
 	int cmp;
 
 	if(!T->token) {
@@ -77,7 +83,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF, char pF) {
 		return T;
 	} else if(cmp < 0) {
 		if(T->left) {
-			return tableAddSymbol(T->left, token, address, sF, pF);
+			return tableAddSymbol(T->left, token, address, CO);
 		} else {
 			T->left = malloc(sizeof(Table));
 			T->left->token = malloc(sizeof(char)*32);
@@ -87,16 +93,17 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF, char pF) {
 			T->left->left = NULL;
 			T->left->right = NULL;
 			T->left->layerRoot = T->layerRoot;
-			T->left->staticFlag = sF;
+			T->left->staticFlag = CO->staticFlag;
 			T->left->searchUp = T->searchUp;
-			T->left->parameterFlag = pF;
+			T->left->parameterFlag = CO->parameterFlag;
 			T->left->offset = 0;
+			T->left->backset = 0;
 			//printf("Inserting %s as %x left of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->left->staticFlag);
 			return T->left;
 		}
 	} else if(cmp > 0) {
 		if(T->right) {
-			return tableAddSymbol(T->right, token, address, sF, pF);
+			return tableAddSymbol(T->right, token, address, CO);
 		} else {
 			T->right = malloc(sizeof(Table));
 			T->right->token = malloc(sizeof(char)*32);
@@ -106,10 +113,11 @@ Table *tableAddSymbol(Table *T, char *token, int address, char sF, char pF) {
 			T->right->left = NULL;
 			T->right->right = NULL;
 			T->right->layerRoot = T->layerRoot;
-			T->right->staticFlag = sF;
+			T->right->staticFlag = CO->staticFlag;
 			T->right->searchUp = T->searchUp;
-			T->right->parameterFlag = pF;
+			T->right->parameterFlag = CO->parameterFlag;
 			T->right->offset = 0;
+			T->right->backset = 0;
 			//printf("Inserting %s as %x right of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->right->staticFlag);
 			return T->right;
 		}

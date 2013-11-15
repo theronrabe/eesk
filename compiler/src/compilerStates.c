@@ -100,7 +100,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 	//in a new namespace
 	getToken(C, tok);
 	strcpy(name, tok);
-	CO->symbols = tableAddSymbol(CO->symbols, name, nameAddr, CO->staticFlag, CO->parameterFlag);	//change to this scope
+	CO->symbols = tableAddSymbol(CO->symbols, name, nameAddr, CO);	//change to this scope
 	if(CO->publicFlag) { publicize(CO->symbols); }
 	CO->symbols = tableAddLayer(CO->symbols, name, 1);
 
@@ -128,7 +128,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 
 	//reset calling address
 	nameAddr = C->LC + WRDSZ*2;	//an extra word for total length (for newing), and an extra word for stack request
-	tableAddSymbol(CO->symbols->parent->layerRoot, name, nameAddr, CO->staticFlag, CO->parameterFlag);		//overwrite previous definition
+	tableAddSymbol(CO->symbols->parent->layerRoot, name, nameAddr, CO);		//overwrite previous definition
 	if(CO->publicFlag) { publicize(CO->symbols->parent); }
 
 		_C.LC = 0;
@@ -172,7 +172,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	//new namespace
 	CO->symbols = tableAddLayer(CO->symbols, tok, 1);
 	long nameAddr = C->LC + C->dictionary[RPUSH].length + C->dictionary[JMP].length + 2*WRDSZ;
-	CO->symbols = tableAddSymbol(CO->symbols, "this", nameAddr, 0, 0);
+	CO->symbols = tableAddSymbol(CO->symbols, "this", nameAddr, CO);
 
 	//remember sp of anonStack
 	int oldAnon = C->anonStack->sp;
@@ -306,11 +306,11 @@ long compileDeclaration(Compiler *C, Context *CO, char *tok) {
 			writeObj(C, DATA, i*WRDSZ);
 		getToken(C, tok);
 		if(C->dst) {
-			tempTable = tableAddSymbol(CO->symbols, tok, (C->LC)-len-1, CO->staticFlag, CO->parameterFlag);
+			tempTable = tableAddSymbol(CO->symbols, tok, (C->LC)-len-1, CO);
 		}
 	} else {
 		//create a symbol and a word
-		tempTable = tableAddSymbol(CO->symbols, tok, (C->LC) + ((CO->instructionFlag)?5:0), CO->staticFlag, CO->parameterFlag);
+		tempTable = tableAddSymbol(CO->symbols, tok, (C->LC) + ((CO->instructionFlag)?5:0), CO);
 		if(!CO->parameterFlag) {
 			if(CO->publicFlag) publicize(tempTable);
 			if(CO->instructionFlag) writeObj(C, GRAB, 0);
