@@ -477,4 +477,14 @@ void create() {
 			:::);
 }
 
-
+void backset() {
+	asm volatile (
+			"movq (%%rsp), %%rax\n\t"	//grab Set address
+			"subq $0x10, %%rax\n\t"		//Set's stored length location
+			"movq (%%rax), %%rax\n\t"	//rax contains Set length
+			"movq $0x0123456789abcdef, %%rbx\n\t"	//rbx contains backset
+			"subq %%rbx, %%rax\n\t"		//subtract backset from length, producing offset
+			//"subq $0x10, %%rax\n\t"		//accommodate for difference between calling address and actual Set location
+			"addq %%rax, (%%rsp)\n\t"	//add offset to Set
+			:::);
+}

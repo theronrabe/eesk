@@ -118,6 +118,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		_CO.instructionFlag = 1;
 	long bodyL = compileStatement(&_C, &_CO, tok);	//body length
 		_CO.symbols = tableRemoveLayer(_CO.symbols);
+		//CO->expectedLength = _C.LC;
 	long offset;
 
 	if(CO->instructionFlag) {
@@ -140,15 +141,18 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		_CO.parameterFlag = 0;
 		_CO.instructionFlag = 1;
 
-	writeObj(C, DATA, WRDSZ*2 + bodyL + C->dictionary[RPUSH].length + C->dictionary[RSR].length);	//a word containing total function length
+	long totalLength = WRDSZ*2 + bodyL + C->dictionary[RPUSH].length + C->dictionary[RSR].length;
+	writeObj(C, DATA, totalLength);	//a word containing total function length
 	writeObj(C, DATA, paramL);	//write argument number at callAddress-1, extra word for return address no longer needed (kept on r15)
 	//reset calling address to right here
 
+		CO->expectedLength = totalLength;
 		_C.LC = 0;
 		_C.dst = C->dst;
 	bodyL = compileStatement(&_C, CO, tok);	//compiled body, relatively addressed
 		C->SC = _C.SC;
 		C->LC += _C.LC;
+		CO->expectedLength = 0;
 		_CO.instructionFlag = CO->instructionFlag;
 	writeObj(C, RSR, 0);
 
@@ -345,6 +349,28 @@ long compileRedirection(Compiler *C, Context *CO, char *tok) {
 	writeObj(C, PUSH, val);
 	writeObj(C, ADD, 0);
 				
+	return C->LC - begin;
+}
+
+long compileBackset(Compiler *C, Context *CO, char *tok) {
+	long begin = C->LC;
+	long val;
+	Table *tempTable;
+
+	getToken(C, tok);		//get backset symbol
+	tempTable = tableLookup(CO->symbols, tok, &val);
+	if(!tempTable) {
+		if(numeric(tok[0])) {
+			val = atoi(tok);
+		} else {
+			printf("%d:\tImplicitly declared backset: %s.\n", C->lineCounter, tok);
+			val = 0;
+		}
+	} else {
+		val = tempTable->backset;
+	}
+	writeObj(C, BKSET, val);
+
 	return C->LC - begin;
 }
 

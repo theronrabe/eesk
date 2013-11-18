@@ -66,7 +66,8 @@ typedef enum {
 	k_r14,
 	k_imply,
 	k_create,
-	k_anon
+	k_anon,
+	k_backset
 } KEYWORD;
 
 #endif

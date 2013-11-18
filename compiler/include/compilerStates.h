@@ -35,4 +35,5 @@ long compileNative(Compiler *C, Context *context, char *tok);
 long compileNativeStructure(Compiler *C, Context *CO, char *tok);
 long compileAtom(Compiler *C, Context *context, char *tok);
 long compileSymbol(Compiler *C, Context *context, char *tok);
+long compileBackset(Compiler *C, Context *context, char *tok);
 #endif

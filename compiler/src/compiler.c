@@ -440,6 +440,10 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				CO->anonFlag = 0;
 				break;
 
+			case(k_backset):
+				compileBackset(C, CO, tok);
+				break;
+
 			default:
 				compileAtom(C, CO, tok);
 				break;
@@ -640,7 +644,8 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "load", k_load, &CO);
 	tableAddSymbol(ret, "Native", k_nativeFunction, &CO);
 	tableAddSymbol(ret, "Set", k_Function, &CO);
-	tableAddSymbol(ret, "<-", k_imply, &CO);
+	//tableAddSymbol(ret, "<-", k_imply, &CO);
+		tableAddSymbol(ret, "<-", k_backset, &CO);
 	tableAddSymbol(ret, "create", k_create, &CO);
 	tableAddSymbol(ret, ":", k_anon, &CO);
 
@@ -696,6 +701,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, DATA, c_data, 0, 0);
 	translationAdd(ret, IMPL, c_impl, -1, 0);
 	translationAdd(ret, CREATE, c_create, -1, 0);
+	translationAdd(ret, BKSET, c_backset, 13, 0);
 	
 	return ret;
 }
