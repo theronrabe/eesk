@@ -369,6 +369,8 @@ long compileBackset(Compiler *C, Context *CO, char *tok) {
 	} else {
 		val = tempTable->backset;
 	}
+
+	writeObj(C, CONT, val);
 	writeObj(C, BKSET, val);
 
 	return C->LC - begin;
