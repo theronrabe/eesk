@@ -44,7 +44,7 @@ Table *tableCreate() {
 }
 
 void publicize(Table *node) {
-	int offset;
+	long offset, backset;
 	Context CO;
 		CO.staticFlag = 0;
 		CO.parameterFlag = 0;
@@ -60,9 +60,11 @@ void publicize(Table *node) {
 			if(!node->parent->searchUp) {
 				//This symbol was relatively addressed, remember an offset
 				offset = node->parent->val;
+				backset = node->backset;
 			}
 			node = tableAddSymbol(node->parent, publicToken, node->val + node->offset, &CO);
 			node->offset = offset;
+			node->backset = backset;
 			publicize(node);
 		}
 	}
@@ -97,7 +99,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, Context *CO) {
 			T->left->searchUp = T->searchUp;
 			T->left->parameterFlag = CO->parameterFlag;
 			T->left->offset = 0;
-			T->left->backset = 0;
+			T->left->backset = CO->expectedLength - address;
 			//printf("Inserting %s as %x left of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->left->staticFlag);
 			return T->left;
 		}
@@ -117,7 +119,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, Context *CO) {
 			T->right->searchUp = T->searchUp;
 			T->right->parameterFlag = CO->parameterFlag;
 			T->right->offset = 0;
-			T->right->backset = 0;
+			T->right->backset = CO->expectedLength - address;
 			//printf("Inserting %s as %x right of %s on layer %s. Is static? %d\n", token, address, T->token, T->layerRoot->token, T->right->staticFlag);
 			return T->right;
 		}
