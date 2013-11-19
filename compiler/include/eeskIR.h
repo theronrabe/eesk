@@ -88,10 +88,15 @@ typedef enum {
 	FREE,
 	LOAD,
 
+	//continuation handling
+	STORE,
+	RESTORE,
+
 	//new instructions
 	RPOP,	//2e
 	IMPL,
 	CREATE,
+	BKSET,
 	
 	//convenience keywords
 	DATA,

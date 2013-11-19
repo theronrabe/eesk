@@ -444,6 +444,14 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				compileBackset(C, CO, tok);
 				break;
 
+			case(k_store):
+				writeObj(C, STORE, 0);
+				break;
+
+			case(k_restore):
+				stackPush(operationStack, RESTORE);
+				break;
+
 			default:
 				compileAtom(C, CO, tok);
 				break;
@@ -647,7 +655,9 @@ Table *prepareKeywords() {
 	//tableAddSymbol(ret, "<-", k_imply, &CO);
 		tableAddSymbol(ret, "<-", k_backset, &CO);
 	tableAddSymbol(ret, "create", k_create, &CO);
-	tableAddSymbol(ret, ":", k_anon, &CO);
+	tableAddSymbol(ret, ":", k_store, &CO);
+	tableAddSymbol(ret, "...", k_restore, &CO);
+	tableAddSymbol(ret, "`", k_anon, &CO);
 
 	return ret;
 }
@@ -702,6 +712,8 @@ translation *prepareTranslation() {
 	translationAdd(ret, IMPL, c_impl, -1, 0);
 	translationAdd(ret, CREATE, c_create, -1, 0);
 	translationAdd(ret, BKSET, c_backset, 13, 0);
+	translationAdd(ret, STORE, c_store, -1, 0);
+	translationAdd(ret, RESTORE, c_restore, -1, 0);
 	
 	return ret;
 }

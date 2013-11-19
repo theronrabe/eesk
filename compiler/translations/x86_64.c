@@ -488,3 +488,16 @@ void backset() {
 			"addq %%rax, (%%rsp)\n\t"	//add offset to Set
 			:::);
 }
+
+void store() {
+	asm volatile (
+			"popq %%rax\n\t"		//grab storage address
+			"movq %%rsp, (%%rax)\n\t"	//store rsp there
+			:::);
+}
+
+void restore() {
+	asm volatile (
+			"popq %%rsp\n\t"		//utilize restore address
+			:::);
+}
