@@ -180,7 +180,6 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 
 	//remember sp of anonStack
 	int oldAnon = C->anonStack->sp;
-	printf("compiling anon... start of anonStack = %d\n", oldAnon);
 
 	//count length
 		subCompiler(C, &_C);
@@ -209,7 +208,6 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	nameAddr = C->LC;
 
 	//write , operators for declared symbols
-	printf("Done counting anon... stack sp = %d\n", C->anonStack->sp);
 	Table *sym;
 	int i;
 	for(i=oldAnon; i < C->anonStack->sp; i++) {
@@ -217,12 +215,11 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 		sym->parameterFlag = 1;
 		sym->val = (i-oldAnon+1) * WRDSZ;
 		writeObj(C, APUSH, 0);
-		printf("\t%s: %lx\n", sym->token, sym->val);
 	}
 	C->anonStack->sp = oldAnon;
 
 	//write Set body
-	compileStatement(C, CO, tok);
+	bodyL = compileStatement(C, CO, tok);
 	writeObj(C, RSR, 0);
 
 	//jump here, POPTO anonStack locations

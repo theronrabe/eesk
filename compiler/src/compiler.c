@@ -486,6 +486,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 			//This is an implicitly declared variable
 			if(CO->anonFlag) {
 				writeObj(C, AGET, 0);	//this will be changed to the correct parameter value the second time through (once the symbol table knows)
+				sym->parameterFlag = 1;
 				stackPush(C->anonStack, sym);
 			} else {
 				if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
