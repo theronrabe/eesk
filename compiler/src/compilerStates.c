@@ -174,9 +174,9 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	Context _CO;
 
 	//new namespace
-	CO->symbols = tableAddLayer(CO->symbols, tok, 1);
 	long nameAddr = C->LC + C->dictionary[RPUSH].length + C->dictionary[JMP].length + 2*WRDSZ;
-	CO->symbols = tableAddSymbol(CO->symbols, "this", nameAddr, CO);
+	//CO->symbols = tableAddSymbol(CO->symbols, "this", nameAddr, CO);
+	CO->symbols = tableAddLayer(CO->symbols, "this", 0);
 
 	//remember sp of anonStack
 	int oldAnon = C->anonStack->sp;

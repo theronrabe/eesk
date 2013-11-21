@@ -597,7 +597,6 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "[", k_oBracket, &CO);
 	tableAddSymbol(ret, "]", k_cBracket, &CO);
 	tableAddSymbol(ret, "{", k_oBrace, &CO);
-	tableAddSymbol(ret, "{{", k_anonSet, &CO);
 	tableAddSymbol(ret, "}", k_cBrace, &CO);
 	tableAddSymbol(ret, "(", k_oParen, &CO);
 	tableAddSymbol(ret, ")", k_cParen, &CO);
