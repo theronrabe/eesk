@@ -97,6 +97,7 @@ typedef enum {
 	IMPL,
 	CREATE,
 	BKSET,
+	CHAR,
 	
 	//convenience keywords
 	DATA,

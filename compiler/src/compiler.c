@@ -185,7 +185,7 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 
 
 			case(k_char):
-				stackPush(operationStack, FTOD);
+				stackPush(operationStack, CHAR);
 				break;
 
 
@@ -658,6 +658,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, ":", k_store, &CO);
 	tableAddSymbol(ret, "...", k_restore, &CO);
 	tableAddSymbol(ret, "`", k_anon, &CO);
+	tableAddSymbol(ret, "char", k_char, &CO);
 
 	return ret;
 }
@@ -714,6 +715,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, BKSET, c_backset, 13, 0);
 	translationAdd(ret, STORE, c_store, -1, 0);
 	translationAdd(ret, RESTORE, c_restore, -1, 0);
+	translationAdd(ret, CHAR, c_char, -1, 0);
 	
 	return ret;
 }

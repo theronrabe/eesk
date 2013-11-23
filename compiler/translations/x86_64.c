@@ -501,3 +501,14 @@ void restore() {
 			"popq %%rsp\n\t"		//utilize restore address
 			:::);
 }
+
+void CHAR() {
+	asm volatile (
+			"popq %%rax\n\t"
+			"movb (%%rax), %%al\n\t"
+			"cbw\n\t"
+			"cwde\n\t"
+			"cdqe\n\t"
+			"push %%rax\n\t"
+			:::);
+}
