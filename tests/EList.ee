@@ -1,0 +1,21 @@
+#This tests the E.List library
+{
+	include "E.List" ^
+Begin
+	L1 = List.atomize [`{1 2 3 4 5}];
+	L2 = List.atomize [`{6 7 8 9}];
+	L3 = List.atomize [`{"Hello, World!\n"}];
+
+	L = List.cons [L1$, L2$];
+	L$ [0]
+
+	L = List.cons [L1$, L$];
+	L$ [0]
+
+	L = List.cons [L$, L3$];
+	L$ [0]
+	prints;
+
+	List.destroy [L$]
+End
+}
