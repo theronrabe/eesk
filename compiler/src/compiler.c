@@ -388,7 +388,6 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				_C.src = inc;
 				_C.SC = 0;
 				C->LC += compileStatement(&_C, CO, tok);
-				printf("LC: %lx\t_LC: %lx\n", C->LC, _C.LC);
 				free(inc);
 				break; 
 

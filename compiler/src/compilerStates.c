@@ -77,11 +77,11 @@ long compileWhile(Compiler *C, Context *CO, char *tok) {
 	writeObj(C, RPUSH, condL+loopL+offset);	//end address
 
 	//DC[0] = compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
-	compileStatement(C, CO, tok);
+	condL = compileStatement(C, CO, tok);
 
 	writeObj(C, BNE, 0);	//decide
 
-	compileStatement(C, CO, tok);	//compiled loop
+	loopL = compileStatement(C, CO, tok);	//compiled loop
 
 	offset = C->dictionary[RPUSH].length;
 	writeObj(C, RPUSH, nameAddr - C->LC - offset + 1);	//begin address
@@ -315,7 +315,7 @@ long compileDeclaration(Compiler *C, Context *CO, char *tok) {
 		if(!CO->parameterFlag) {
 			if(CO->publicFlag) publicize(tempTable);
 			if(CO->instructionFlag) writeObj(C, GRAB, 0);
-			writeObj(C, DATA, 0);
+			//writeObj(C, DATA, 0);
 		} else {
 			(C->LC) += WRDSZ;
 		}
