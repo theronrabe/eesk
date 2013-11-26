@@ -28,7 +28,7 @@ char layerChar = '0';
 
 Table *tableCreate() {
 	Table *ret = malloc(sizeof(Table));
-	ret->token = malloc(sizeof(char) * 32);
+	ret->token = malloc(sizeof(char) * TOKSIZE);
 	strcpy(ret->token, "Eesk");
 	ret->parent = NULL;
 	ret->right = NULL;
@@ -52,7 +52,7 @@ void publicize(Table *node) {
 	if(node) {
 		//printf("%s staticity: %d\n", node->token, node->staticFlag);
 		//printf("publicizing node %s\n\n", node->token);
-		char publicToken[128];
+		char publicToken[TOKSIZE];
 		if(node->parent) {
 			strcpy(publicToken, node->parent->token);
 			strcat(publicToken, ".");
@@ -88,7 +88,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, Context *CO) {
 			return tableAddSymbol(T->left, token, address, CO);
 		} else {
 			T->left = malloc(sizeof(Table));
-			T->left->token = malloc(sizeof(char)*32);
+			T->left->token = malloc(sizeof(char)*TOKSIZE);
 			strcpy(T->left->token, token);
 			T->left->val = address;
 			T->left->parent = T->parent;
@@ -108,7 +108,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, Context *CO) {
 			return tableAddSymbol(T->right, token, address, CO);
 		} else {
 			T->right = malloc(sizeof(Table));
-			T->right->token = malloc(sizeof(char)*32);
+			T->right->token = malloc(sizeof(char)*TOKSIZE);
 			strcpy(T->right->token, token);
 			T->right->val = address;
 			T->right->parent = T->parent;
@@ -133,13 +133,14 @@ Table *tableAddLayer(Table *T, char *token, char isObject) {
 	Table *ret = malloc(sizeof(Table));
 	ret->parent = T;
 
-	ret->token = malloc(sizeof(char)*32);
+	ret->token = malloc(sizeof(char)*TOKSIZE);
 	ret->right = NULL;
 	ret->left = NULL;
 	ret->layerRoot = ret;
 	ret->searchUp = !isObject;
 	ret->staticFlag = 0;
 	ret->parameterFlag = 0;
+	ret->val = 0;
 
 	//strcpy(ret->token, token);
 	strcpy(ret->token, "this");
