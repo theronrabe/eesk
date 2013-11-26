@@ -1,0 +1,40 @@
+{
+	public Set List {} {
+		Set node {getThis} {
+			public head ^
+			public tail ^
+
+			if {getThis$} {
+				this
+			} { }
+			if {head$} {
+				head$ [getThis$]
+				tail$ [getThis$]
+			} {
+				if {getThis$!} {tail$ []} {}
+			}
+		} ^
+
+		public Set atomize {elem} {
+			node.head = 0;
+			node.tail = elem$;
+			new node;
+		} ^
+
+		public Set cons {a b} {
+			node.head = a$;
+			node.tail = b$;
+			new node;
+		} ^
+
+		public Set destroy {L} {
+			given now ^
+			given moment0:
+				L$ [1]
+				while {now: now$ < moment0$ - 8} {
+					free
+				}
+			... moment0$;
+		} ^
+	} 
+}
