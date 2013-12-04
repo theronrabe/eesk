@@ -170,7 +170,7 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 
 			case(k_singleQuote):
 				tokLen = getToken(C, tok);	//need to do something to continue counting tokLen in new modular code
-				writeObj(C->dst, PUSH, tok[0]);
+				writeObj(C, PUSH, tok[0]);
 				break;
 
 
@@ -715,6 +715,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, STORE, c_store, -1, 0);
 	translationAdd(ret, RESTORE, c_restore, -1, 0);
 	translationAdd(ret, CHAR, c_char, -1, 0);
+	translationAdd(ret, PRTC, c_prtc, -1, 0);
 	
 	return ret;
 }
