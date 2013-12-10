@@ -334,7 +334,7 @@ long compileRedirection(Compiler *C, Context *CO, char *tok) {
 	getToken(C, tok);
 	tempTable = tableLookup(CO->symbols, tok, &(_C.LC));
 	if(!tempTable) {
-		if(numeric(tok[0])) {
+		if(numeric(tok[0]) || (tok[0] == '-' && numeric(tok[1]))) {
 			val = atoi(tok);
 		} else {
 			printf("%d:\tImplicitly declared offset: %s.\n", C->lineCounter, tok);
@@ -357,7 +357,7 @@ long compileBackset(Compiler *C, Context *CO, char *tok) {
 	getToken(C, tok);		//get backset symbol
 	tempTable = tableLookup(CO->symbols, tok, &val);
 	if(!tempTable) {
-		if(numeric(tok[0])) {
+		if(numeric(tok[0]) || (tok[0] == '-' && numeric(tok[1]))) {
 			val = atoi(tok);
 		} else {
 			printf("%d:\tImplicitly declared backset: %s.\n", C->lineCounter, tok);

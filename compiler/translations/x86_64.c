@@ -444,6 +444,19 @@ void _printf() {
 			:::);
 }
 
+void printc() {
+	asm volatile (
+			"movq $0x25, %%rdi\n\t"
+			"movq %%rsp, %%r13\n\t"
+			"movq %%r15, %%rsp\n\t"
+			"callq *%%r12\n\t"
+			"movq %%rsp, %%r15\n\t"
+			"movq %%r13, %%rsp\n\t"
+			"addq $0x8, %%rsp\n\t"
+			:::);
+}
+
+
 void fadd() {
 	asm volatile (
 			"fld (%%rsp)\n\t"
@@ -467,7 +480,7 @@ void create() {
 			"subq %%r14, %%rax\n\t"	
 			"pushq %%rax\n\t"		//push length 
 
-			"movq $0x30, %%rdi\n\t"
+			"movq $0x32, %%rdi\n\t"
 			"movq %%rsp, %%r13\n\t"
 			"movq %%r15, %%rsp\n\t"
 			"callq *%%r12\n\t"		//place system call for CREATE
@@ -493,12 +506,14 @@ void store() {
 	asm volatile (
 			"popq %%rax\n\t"		//grab storage address
 			"movq %%rsp, (%%rax)\n\t"	//store rsp there
+			"subq $0x8, (%%rax)\n\t"	//one more word
 			:::);
 }
 
 void restore() {
 	asm volatile (
 			"popq %%rsp\n\t"		//utilize restore address
+			"addq $0x8, %%rsp\n\t"		//account for that extra word in STORE
 			:::);
 }
 
