@@ -40,8 +40,9 @@ void brn() {
 }
 
 void bne() {
-	asm volatile (	"popq %%rax\n\t"
+	asm volatile (	
 			"popq %%rbx\n\t"
+			"popq %%rax\n\t"
 			"test %%rax, %%rax\n\t"
 			"jnz _skipbne\n\t"
 			"jmp *%%rbx\n\t"
@@ -505,6 +506,7 @@ void backset() {
 void store() {
 	asm volatile (
 			"popq %%rax\n\t"		//grab storage address
+			//"movq (%%rsp), %%rax\n\t"	//grab storage address, leaving it on stack
 			"movq %%rsp, (%%rax)\n\t"	//store rsp there
 			"subq $0x8, (%%rax)\n\t"	//one more word
 			:::);
@@ -513,6 +515,7 @@ void store() {
 void restore() {
 	asm volatile (
 			"popq %%rsp\n\t"		//utilize restore address
+			//"popq %%rax\n\t"		//remove continuation pointer from stack
 			"addq $0x8, %%rsp\n\t"		//account for that extra word in STORE
 			:::);
 }

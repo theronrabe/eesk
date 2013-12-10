@@ -74,10 +74,12 @@ long compileWhile(Compiler *C, Context *CO, char *tok) {
 	_CO.symbols = tableRemoveLayer(_CO.symbols);
 
 	long offset = C->dictionary[BNE].length + C->dictionary[RPUSH].length + C->dictionary[JMP].length + 1;
-	writeObj(C, RPUSH, condL+loopL+offset);	//end address
+	//writeObj(C, RPUSH, condL+loopL+offset);	//end address
 
 	//DC[0] = compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
 	condL = compileStatement(C, CO, tok);
+
+	writeObj(C, RPUSH, loopL + offset);
 
 	writeObj(C, BNE, 0);	//decide
 
