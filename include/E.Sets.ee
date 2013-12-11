@@ -1,0 +1,40 @@
+#This library contains Set-oriented functions
+{
+	public Set Sets {} {
+		public Set count {S, retain} {
+			given beginning:
+				S$ []
+				given end:
+
+			given ret = (beginning$ - end$;/8);
+
+			if {retain$} {} {
+				... beginning$;
+			}
+			ret$
+		} ^
+
+		public Set foreach {S, OP} {
+			given moment0:
+				S$ []
+				while {given now: now$ < moment0$} {
+					OP$ []
+				}
+			... moment0$;
+		} ^
+
+		public Set pipeline {S, OP} {
+			given beginning:
+				S$ []
+				given end:
+					given i = 0;
+					while {i$ < beginning$ - end$; i=i$+8} {
+						beginning$ - i$;$
+					}
+					while {given now: now$ < end$} {
+						OP$ []
+					}
+			... beginning$;
+		} ^
+	}
+}

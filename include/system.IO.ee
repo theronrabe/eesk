@@ -15,5 +15,18 @@
 			if {libc$!} {init[]} {}
 			Native "puts:v(p)" @ libc$ [str$]
 		}^
+
+		public Set prompt {str, convertFlag} {
+			if {libc$!} {init[]} {}
+			private Set result {} {\given 10 values\} ^
+			puts [str$] ^
+			Native "gets:p(p)" @ libc$ [result] ^
+
+			if {convertFlag$} {
+				Native "atol:d(p)" @ libc$ [result]
+			} {
+				result
+			}
+		}^
 	}
 }
