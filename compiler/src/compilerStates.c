@@ -44,8 +44,8 @@ long compileIf(Compiler *C, Context *CO, char *tok) {
 	CO->symbols = tableRemoveLayer(CO->symbols);
 
 	long offset = C->dictionary[BNE].length + C->dictionary[RPUSH].length + C->dictionary[JMP].length + 1;
-	writeObj(C, RPUSH, conditionLength+clauseLength+offset);	//else address
 	compileStatement(C, CO, tok);					//compiled clause
+	writeObj(C, RPUSH, clauseLength+offset);	//else address
 	writeObj(C, BNE, 0);						//decide
 
 	compileStatement(C, CO, tok);										//compiled statement
