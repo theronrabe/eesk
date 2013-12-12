@@ -1,0 +1,11 @@
+#This library contains common functions that can be applied to continuations
+{
+	public Set Continuations {} {
+		public Set map {beginning, end, foo} {
+			given i = beginning$;
+			while {i = i$ - 8; i$ < end$;!} {
+				foo$ [i$$] => i$;
+			}
+		} ^
+	}
+}
