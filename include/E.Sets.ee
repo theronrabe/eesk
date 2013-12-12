@@ -81,7 +81,7 @@
 					i = i$ + 8;
 				}
 
-				while {now: now$ < intersect$} {
+				while {given now: now$ < intersect$} {
 					,
 				}
 
