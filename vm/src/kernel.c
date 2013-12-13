@@ -53,7 +53,7 @@ void kernel(long eeskir) {
 			printf("%s", *rsp);
 			break;
 		case(PRTC):
-			printf("%c", *rsp);
+			printf("%c", (char) *rsp);
 			break;
 		case(PRTF):
 			printf("%f", *(double *)rsp);

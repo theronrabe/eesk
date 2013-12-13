@@ -24,7 +24,7 @@ This file is part of Eesk.
 #define _jit.h_
 
 #include <assembler.h>
-long *compileSet(int count, long *values);
+long *jitSet(int count, long *values);
 void writeJit(long *SC, int eeskIR, long arg);
 void jitInit(translation *dictionary);
 #endif

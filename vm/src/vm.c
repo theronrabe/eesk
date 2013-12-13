@@ -109,6 +109,8 @@ void main(int argc, char **argv) {
 	*counterStack = activationStack;
 
 	//Prepare registers and go
+//printf("MEM = %p\nPC = %p\n", MEM, PC);
+//printf("ds = %p\nas = %p\tcs = %p\n", dataStack, activationStack, counterStack);
 	asm volatile (
 			"movq %5, %%rsp\n\t"	//start using the data stack
 			"movq %%rsp, %%rbp\n\t"	//save root stack position in rbp
@@ -184,7 +186,7 @@ void loadLib(char **rsp) {
 	a just in time compiler.
 */
 void create(long **rsp, long **aStack) {
-	*rsp = compileSet( ((int)*rsp)/WRDSZ, aStack);
+	*rsp = jitSet( ((int)*rsp)/WRDSZ, aStack);
 	*rsp += 2;
 }
 

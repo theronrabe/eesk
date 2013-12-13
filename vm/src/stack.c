@@ -18,7 +18,7 @@ This file is part of Eesk.
 
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
-*/
+
 #include <stack.h>
 #include <stdlib.h>
 
@@ -46,3 +46,4 @@ long stackPop(Stack *st) {
 		return -1;
 	}
 }
+*/

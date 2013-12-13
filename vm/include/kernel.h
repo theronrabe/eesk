@@ -26,5 +26,5 @@ This file is part of Eesk.
 #ifndef _kernel.h_
 #define _kernel.h_
 
-void kernel(long eeskir, void *returnAddress);
+void kernel(long eeskir);
 #endif

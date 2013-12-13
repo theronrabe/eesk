@@ -28,7 +28,7 @@ This file is part of Eesk.
 
 translation *dictionary;
 
-long *compileSet(int count, long *values) {
+long *jitSet(int count, long *values) {
 	int i;
 	long *SC;
 	long totalBytes = 2*WRDSZ + dictionary[GRAB].length*count + dictionary[CONT].length*count + dictionary[RSR].length;
