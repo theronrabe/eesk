@@ -23,6 +23,8 @@ You should have received a copy of the GNU General Public License
 #include <string.h>
 #include <definitions.h>
 
+#define TOKSIZE 256
+
 
 Table *tableCreate();
 void publicize(Table *node);

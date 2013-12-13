@@ -607,7 +607,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "\'", k_singleQuote, &CO);
 	tableAddSymbol(ret, "\"", k_doubleQuote, &CO);
 	tableAddSymbol(ret, "int", k_int, &CO);
-	tableAddSymbol(ret, "char", k_char, &CO);
+	//tableAddSymbol(ret, "char", k_char, &CO);
 	tableAddSymbol(ret, "given", k_pnt, &CO);
 	tableAddSymbol(ret, "float", k_float, &CO);
 	tableAddSymbol(ret, "Begin", k_begin, &CO);

@@ -93,7 +93,7 @@ typedef enum {
 	RESTORE,
 
 	//new instructions
-	RPOP,	//2e
+	RPOP,	//30
 	IMPL,
 	CREATE,
 	BKSET,

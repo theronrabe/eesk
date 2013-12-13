@@ -22,22 +22,30 @@ This file is part of Eesk.
 
 Stack *stackCreate(int size) {
 	Stack *ret = malloc(sizeof(Stack));
-	ret->array = malloc(sizeof(int) * size);
+	ret->array = malloc(sizeof(long) * size);
 	ret->sp = 0;
 	return ret;
 }
 
 void stackFree(Stack *st) {
-	free(st->array);
-	free(st);
+	if(st) {
+		if(st->array) {
+			free(st->array);
+		} else {
+			printf("bad stack array.\n");
+		}
+		free(st);
+	} else {
+		printf("bad stack.\n");
+	}
 }
 
-void stackPush(Stack *st, int val) {
+void stackPush(Stack *st, long val) {
 	st->array[st->sp++] = val;
 }
 
-int stackPop(Stack *st) {
-	if(st->sp) {
+long stackPop(Stack *st) {
+	if(st->sp > 0) {
 		return st->array[--st->sp];
 	} else {
 		return -1;

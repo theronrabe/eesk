@@ -24,13 +24,13 @@ This file is part of Eesk.
 #include <stdlib.h>
 
 typedef struct Stack {
-	int *array;
+	long *array;
 	int sp;
 } Stack;
 
 Stack *stackCreate(int size);
 void stackFree(Stack *st);
-void stackPush(Stack *st, int val);
-int stackPop(Stack *st);
+void stackPush(Stack *st, long val);
+long stackPop(Stack *st);
 
 #endif
