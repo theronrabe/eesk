@@ -1,0 +1,4 @@
+#This program prints some text
+{
+	prints "Hello, World!\n";
+}

@@ -1,0 +1,10 @@
+{
+	Set multiples {N, K} {
+		given i = 0;
+		while {i$ < N; i=i$+K$} {
+			i$
+		}
+	} [1, 10]
+
+	multiples [5, 4]
+}

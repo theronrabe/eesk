@@ -1,0 +1,11 @@
+#This program uses structured programming elements
+{
+	while {i$ < 20} {
+		if {i$ % 2} {
+			i$
+		} {
+			prints "odd.\n"
+		}
+		i = i$ + 1
+	}
+}

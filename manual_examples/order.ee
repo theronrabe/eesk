@@ -1,0 +1,7 @@
+#This program accumulates operators
+{
+	1 + 2 - 3;
+	+ 1 2 - 3;
+	+ - 1 2 3;
+	1 2 3 + -;
+}
