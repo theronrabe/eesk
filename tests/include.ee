@@ -1,10 +1,7 @@
-include "system"
-
 {
-	given msg
-Begin
-	~system.math.abs[-75];
-	msg = "Hello, World!";
-	~system.IO.puts[msg$]^
-End
+
+	include "system.IO" []
+	Begin
+	IO.puts ["Eesk says hello\n"] ^
+	#system.math.tan [100]
 }

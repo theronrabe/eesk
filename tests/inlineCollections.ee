@@ -1,0 +1,13 @@
+#This program creates on-the-fly objects
+{
+Begin
+	myStuff = new Function stuff {} {
+		public hello;
+		public hello2;
+		public hello3;
+	};
+	myStuff->stuff.hello2 = 19;
+	myStuff->stuff.hello2$;
+	free myStuff$;
+End
+}

@@ -1,0 +1,15 @@
+#This program tests backward pattern matching
+{
+	Set foo {} {
+		public n$ []
+		#...
+		public m$
+	}
+Begin
+	myFoo = new foo;
+		myFoo<-foo.m = 7;
+		myFoo->foo.n = `{100};
+		myFoo$ []
+	free myFoo$;
+End
+}

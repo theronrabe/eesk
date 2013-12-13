@@ -1,0 +1,33 @@
+#This program tests Set deconstruction using continuations
+{
+	
+	Set take {b foo} {
+		continuation:
+			foo$ []
+		... (continuation$ - b$*8);
+	}
+
+	Set listTo {v} {
+		i = 0;
+		while {i$ < v$} {
+			i$
+			i = i$+1;
+		}
+	}
+
+	Set takeBack {N} {
+		continuation:
+			listTo [100]
+			tail:
+		... continuation$;
+		i = 0;
+		while {i$ < N$} {
+			(tail$ + i$*8)$
+			i = i$ + 1;
+		}
+	}
+Begin 
+	take [8, `{listTo [50]} ]
+	takeBack [7]
+End
+}

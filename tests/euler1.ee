@@ -1,14 +1,10 @@
 #This program solves projecteuler's first problem
 {
 	#is multiple of 3 or 5?
-	Function isMul {given n} {} {
+	Set isMul {n} {
 		if {(n$%3)!|(n$%5)!} {return 1} {return 0}
 	}
-	given i;
-	given sum;
 Begin
-	i = 0;
-	sum = 0;
 	while {i$ < 1000} {
 		if {isMul[i$]} {
 			sum = sum$+i$;

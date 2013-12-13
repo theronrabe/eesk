@@ -1,0 +1,6 @@
+#Tests create operator
+{
+	1, 2, 3, create => x;
+	x$ []
+	free x$;
+}

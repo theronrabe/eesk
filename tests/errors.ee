@@ -1,0 +1,28 @@
+#What about rewriting iteration using continuations?
+{
+	Set decide {condition statement} {
+			`{}
+		moment1:
+			Set _ {} {statement$ []}
+		moment2:
+		... continue$ + condition$!! * tail$ - continue$;
+		[]
+	}
+
+	Set repeat {N statement} {
+		repeats = N$;
+		Set recurse {} {
+			statement$ []
+			repeat [repeats$ - 1, statement$]
+		} ^
+		Set evaluate {} {statement$ []} ^
+		
+		decide [(N$ > 0), recurse]
+			prints "here\n";
+		decide [(N$ > 0)!, evaluate]
+	}
+Begin
+	decide [1,`{prints "hi.\n"}]
+	repeat [ 0, `{1} ]
+End
+}

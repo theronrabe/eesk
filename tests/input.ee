@@ -1,0 +1,9 @@
+#This program gets input from a user
+{
+	include "system.IO" []
+
+	val = IO.prompt ["Pick a number.", 1];
+	prints "You picked ";
+	printd val$;
+	prints "You win!\n";
+}

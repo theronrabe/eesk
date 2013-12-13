@@ -1,0 +1,16 @@
+#This program tests anonymous Set building
+{
+	#GOAL:
+	1 2 {{3} {{a$ b$ c$[] (c$[]+1)} new; => S;
+
+	S$ []
+
+	free S$;
+
+	#HOW:
+	#jump over Set definition
+	#while compiling set, push new symbols onto anonStack
+	#POPTO each anonStack.pop
+	#push Set address
+	#new
+}

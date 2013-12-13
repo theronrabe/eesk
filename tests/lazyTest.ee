@@ -1,0 +1,27 @@
+{
+	#The multiples Set produces a list containing the first n multiples of k
+	Set multiples {k n} {
+		i = 0;
+		while {i$ < n$} {
+			i$ * k$;	#Since this value isn't assigned to anything, it's left in the list
+			i = i$ + 1;
+		}
+	}
+	
+	#The cons Set contains a new list comprised of the evaluation of two other lists
+	Set cons {a b} {
+		#The _ Set acts as a template for what cons contains
+		Set _ {} { public head$ [] public tail$ [] }
+			_.head = a$;	#assign head of template
+			_.tail = b$;	#assign tail of template
+		new		#indicate that we aren't referring to the static structure of the template
+	}
+Begin
+	evens = :{ multiples [2, 10] };	#encapsulates the evaluation of evens in an anonymous Set
+	fives = :{ multiples [5, 10] };	#same thing with multiples of five
+
+	lazySet = cons [evens$, fives$]; #construct a new list from them
+	lazySet$ []			#evaluate the new list
+		free lazySet$;		#clean up
+End
+}

@@ -1,0 +1,8 @@
+#Tests scoping to libraries
+{
+	include "system.IO" []
+
+	Set foo {} {
+		IO.puts ["Hello World!\n"]
+	} []
+}

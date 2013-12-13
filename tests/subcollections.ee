@@ -1,0 +1,26 @@
+#This program tests sub-collecting
+{
+	Set outside {} {
+		private Set inside {} {
+			public Set sayHi {} {
+				prints "Hello, World!\n";
+			}
+		} ^
+
+		private given myInside ^
+
+		public Set init {} {
+			myInside = new inside;
+			myInside->inside.sayHi[];
+			free myInside$;
+		} ^
+	}
+Begin
+	myOutside = new outside;
+	myOutside->outside.init []
+
+	free myOutside$;
+
+	outside.inside.sayHi []
+End
+}

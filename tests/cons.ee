@@ -1,0 +1,37 @@
+{
+	Set cons {a b} {
+		Set _ {} {
+			public head$ []
+			public tail$ []
+		}
+		_.head = a$;
+		_.tail = b$;
+		new
+	}
+
+	Set one {} { 1 2 3 4 }
+	Set two {} { 5 6 7 8 }
+	Set inf {} {
+		while {1} {
+			i$
+			i = i$ + 1;
+		}
+	}
+
+	Set list {} {
+		public head$ []
+		public tail$ []
+	}
+	Set sublist {} {
+		#...
+		public lastItem		#what if this offset were measured from the tail?
+	}
+Begin
+	three = cons [inf, two];
+
+	three->list.tail$ []
+	(three->list.tail)<-sublist.lastItem
+
+	free three$;
+End
+}

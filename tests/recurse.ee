@@ -1,20 +1,15 @@
 #This program tests recursion
-
 {
-	public Function fib {given N} {} {
-		if {N$<3} {
+	public Function fib {N} {
+		if {N$<2} {
 			return 1;
 		}{
 			return (fib[N$ - 2]) + (fib[N$ - 1]);
 		}
 	}
-	
-	given loop;
 Begin
-	loop = 1;
-	
-	while {loop$ < 10} {
-		fib[loop$];
+	while {loop$ < 40} {
+		printd fib[loop$];
 		loop = loop$ + 1;
 	}
 End

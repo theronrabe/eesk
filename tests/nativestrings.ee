@@ -3,13 +3,11 @@
 	include "system.IO"
 	include "system.string"
 
-	given i
-
-	public define myString	\"H llo, World!"\
-	given 8 message
+	define myString	\"H llo, World!"\
+	given 8 msg;
 Begin
-	myString+1 set 'e;
-	~strcat[myString, " Does this work?"]^;
-	~puts[myString]^;
+	(myString+1) set 'e;
+	string.strcat[myString, " Does this work?"] ^
+	IO.puts[myString] ^
 End
 }

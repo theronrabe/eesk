@@ -1,0 +1,16 @@
+#This program tests literal operators
+{
+	Function add {x,y} {} {
+		public return x$ y$ \operator\;
+	}
+
+	define plus \+\;
+	define minus \-\;
+Begin
+	add.operator = plus$;
+	add[1,2];
+
+	add.operator = minus$;
+	add[1,2];
+End
+}

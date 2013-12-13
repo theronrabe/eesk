@@ -1,0 +1,16 @@
+#Let's pass an argument to a function that hasn't been defined yet
+{
+	Set getNum {} { 1 } , 					#create a number, use it as a dependency set for:
+		Set decideFoo {num} {				#turn it into a function
+			if {num$} {
+				Set triple {x} {3*x$}
+			} {
+				Set double {x} {2*x$}
+			}
+		} End
+		[] ,
+			Set applyFoo {foo} {			#apply function to value
+				foo$ [getNum [] ]
+			}
+			[]					#evaluate that sucker!
+}

@@ -1,0 +1,15 @@
+{
+	Set parent {} {
+		public data
+
+		public Set child {} {
+			public Set grandchild {x} {
+				data = x$;
+			}
+		}
+	} ^
+
+	parent.child.grandchild [7]
+	
+	parent.data$
+}

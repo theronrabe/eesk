@@ -1,12 +1,19 @@
+#This program calls native functions
+#include "system.IO"
 {
-	Field libc {
-		public define puts	\"puts(p)@libc.so.6:v"\
-		public define cos	\"cos(f)@libm.so:f"\
-		public define abs	\"abs(i)@libm.so:i"\
-	}
+	#Native puts "puts:v(p)";
+	#define libc	\"libc.so.6"\
+	#define msg	\"Hello, World!\n"\
+
+	#Native abs "abs:d(d)";
+	#define math	\"libm.so"\
 Begin
-	#printf ~libc.cos[0.57];
-	~libc.abs[-7];
-	#~libc.puts[libc.abs];
+	Native "puts:v(p)" @ (load "libc.so.6") ["Hello World!"]; ^
+	#libc = load libc;
+	#math = load math;
+
+
+	#abs@math$[-77];
+	#puts@libc$[msg];
 End
 }

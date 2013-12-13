@@ -1,0 +1,18 @@
+#What about rewriting decision using continuations?
+{
+	#The decide Set contains the evaluation of statement, if condition is true
+	Set decide {condition statement} {
+		truthInstructions = statement$;
+
+		moment0:
+			Set false {} {prints "Condition was false\n"}
+			Set true {} {truthInstructions$ []}
+			eval = (moment0$ - 8 + condition$!! * 8)$;
+		... moment0$;
+
+		eval$ []
+	}
+Begin
+	decide [ 10 < 11, `{100 200} ]
+End
+}

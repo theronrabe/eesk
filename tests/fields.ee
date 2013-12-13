@@ -1,0 +1,11 @@
+#This program tests Fields
+{
+	Field F {
+		public given x
+		public given y
+		public given z
+	}
+Begin
+	F.y
+End
+}

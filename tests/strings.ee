@@ -5,11 +5,11 @@ include "system.IO"
 	define message	\"Hello, World!\n\tHello again!"\
 
 	Function hello {} {} {
-		~puts["This works, too.\n"]^;
+		IO.puts["This works, too.\n"]^;
 		return 0;
 	}
 Begin
-	~puts[message];
+	IO.puts[message]^;
 	hello[];
 End
 }

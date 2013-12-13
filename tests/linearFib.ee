@@ -1,0 +1,21 @@
+#This program tests x86 cross-assembly
+{
+	Function fib {x} {} {
+		s1 = 1;
+		s2 = 1;
+		i = 0;
+		while {i$ < x$} {
+			t = s2$ + s1$;
+			s1 = s2$;
+			s2 = t$;
+			i = i$ + 1;
+		}
+		return s2$;
+	}
+Begin
+	while {i$ < 50} { 
+		printd fib[i$];
+		i = i$ + 1;
+	}
+End
+}
