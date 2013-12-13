@@ -1,0 +1,17 @@
+#This is the library full of Eesk features that are best implemented in Eesk
+{
+	public Set E {} {
+		include "eesklang.List"
+		public Set cons {a b} {
+			Set _ {} {
+				head$ []
+				tail$ []
+			}
+				_.head = a$;
+				_.tail = b$;
+			new
+		} ^
+
+		public Set destroyList
+	} ^
+}

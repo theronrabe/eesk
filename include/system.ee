@@ -1,8 +1,8 @@
 {
 	public Set system {} {
 		include "system.IO" []
-		include "system.math" []
-		include "system.mem" []
+		#include "system.math" []
+		#include "system.mem" []
 		include "system.string" []
 	}
 }

@@ -13,5 +13,10 @@
 			if {libc$!} {init[]} {}
 			Native "strcat:p(pp)" @ libc$ [str1$, str2$]
 		}^
+
+		public Set strlen {str} {
+			if {libc$!} {init[]} {}
+			Native "strlen:d(p)" @ libc$ [str$]
+		}^
 	}
 }

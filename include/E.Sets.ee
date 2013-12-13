@@ -60,10 +60,8 @@
 		} ^
 
 		public Set intersection {S1, S2} {
-			given eval1:
-				S1$ []
-			given eval2:
-				S2$ []
+			given eval1: S1$ []
+			given eval2: S2$ []
 
 			given intersect:
 				given i=0;
@@ -81,9 +79,7 @@
 					i = i$ + 8;
 				}
 
-				while {given now: now$ < intersect$} {
-					,
-				}
+				while {given now: now$ < intersect$} { , }
 
 			... eval1$;
 			create
