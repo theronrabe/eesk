@@ -1,5 +1,6 @@
+#This program uses repetition to place a bunch of numbers in the output set
 {
-	while {i$ < 500000} {
+	while {i$ < 500} {
 		i$
 		i = i$ + 1;
 	}

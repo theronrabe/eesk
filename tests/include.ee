@@ -1,7 +1,5 @@
+#This program includes a library, and uses it to print text
 {
-
 	include "system.IO" []
-	Begin
 	IO.puts ["Eesk says hello\n"] ^
-	#system.math.tan [100]
 }

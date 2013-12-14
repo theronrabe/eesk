@@ -1,11 +1,13 @@
-#This program tests Fields
+#This program tests using a Set as a datafield
 {
-	Field F {
+	Set F {} {
 		public given x
 		public given y
 		public given z
 	}
 Begin
-	F.y
+	F.y = 7;
+
+	F.y$
 End
 }

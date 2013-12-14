@@ -1,16 +1,17 @@
 #This program tests dynamic memory allocation
 {
 	Set data {} {
-		public a;
-		public b;
+		public given a$
+		public given b$
 
 		public Set test {} {
-			return a$ + b$;
-		}
+			a$ + b$
+		} ^
+
 		public Set setA {i} {
 			a = i$;
-			return a$;
-		}
+			a$
+		} ^
 	}
 Begin
 	myData = new data;

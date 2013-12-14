@@ -1,7 +1,7 @@
 #This program creates on-the-fly objects
 {
 Begin
-	myStuff = new Function stuff {} {
+	myStuff = new Set stuff {} {
 		public hello;
 		public hello2;
 		public hello3;

@@ -1,12 +1,14 @@
+#This program demonstrates using templates with offset and backset operators
 {
 	Set cons {a b} {
+						#Use _ as a template for generating new Sets
 		Set _ {} {
 			public head$ []
 			public tail$ []
 		}
-		_.head = a$;
+		_.head = a$;			#Set template attributes
 		_.tail = b$;
-		new
+		new				#Set cons contains new _
 	}
 
 	Set one {} { 1 2 3 4 }
@@ -24,14 +26,14 @@
 	}
 	Set sublist {} {
 		#...
-		public lastItem		#what if this offset were measured from the tail?
+		public lastItem			#what if this offset were measured from the tail?
 	}
 Begin
-	three = cons [inf, two];
+	three = cons [inf, two];		#Build a new Set from two others
 
-	three->list.tail$ []
-	(three->list.tail)<-sublist.lastItem
+	three->list.tail$ []			#Evaluate just part of that new list
+	(three->list.tail)<-sublist.lastItem	#Pattern match against the end of a Set
 
-	free three$;
+	free three$;				#Clean up
 End
 }

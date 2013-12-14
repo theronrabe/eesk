@@ -4,10 +4,10 @@
 		private Set node {} {
 			public value
 			public value2
-			private prev
-		}
+			public prev
+		} ^
 
-		private tail
+		private tail ^
 
 		public Set push {X, Y} {
 			next = new node;
@@ -15,26 +15,23 @@
 			next->node.value2 = Y$;
 			next->node.prev = tail$;
 			tail = next$;
-		} 
+		} ^
 
 		public Set pop {} {
-			ret = tail->node.value$;
+			tail->node.value$
 			printd tail->node.value2$;
 			temp = tail->node.prev$;
 			free tail$;
 			tail = temp$;
-			return ret$;
-		} 
+		} ^
 	}
 Begin
-	listStack.push[7, 1]
-	listStack.push[8, 2]
-	listStack.push[9, 3]
+	listStack.push [7, 1]
+	listStack.push [8, 2]
+	listStack.push [9, 3]
 
-	listStack.pop[]
-	listStack.pop[]
-	listStack.pop[]
-
-	#listStack.node.value;
+	listStack.pop []
+	listStack.pop []
+	listStack.pop []
 End
 }

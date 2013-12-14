@@ -1,4 +1,4 @@
-#This program tests sub-collecting
+#This program tests subSets
 {
 	Set outside {} {
 		private Set inside {} {

@@ -1,4 +1,4 @@
-#This program tests backward pattern matching
+#This program tests backward pattern matching using the <- backset operator
 {
 	Set foo {} {
 		public n$ []

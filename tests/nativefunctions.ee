@@ -1,19 +1,4 @@
 #This program calls native functions
-#include "system.IO"
 {
-	#Native puts "puts:v(p)";
-	#define libc	\"libc.so.6"\
-	#define msg	\"Hello, World!\n"\
-
-	#Native abs "abs:d(d)";
-	#define math	\"libm.so"\
-Begin
 	Native "puts:v(p)" @ (load "libc.so.6") ["Hello World!"]; ^
-	#libc = load libc;
-	#math = load math;
-
-
-	#abs@math$[-77];
-	#puts@libc$[msg];
-End
 }

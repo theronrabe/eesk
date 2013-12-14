@@ -17,8 +17,8 @@
 		new		#indicate that we aren't referring to the static structure of the template
 	}
 Begin
-	evens = :{ multiples [2, 10] };	#encapsulates the evaluation of evens in an anonymous Set
-	fives = :{ multiples [5, 10] };	#same thing with multiples of five
+	evens = `{ multiples [2, 10] };	#encapsulates the evaluation of evens in an anonymous Set
+	fives = `{ multiples [5, 10] };	#same thing with multiples of five
 
 	lazySet = cons [evens$, fives$]; #construct a new list from them
 	lazySet$ []			#evaluate the new list

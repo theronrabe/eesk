@@ -1,15 +1,12 @@
 #This program tests strings
-
-include "system.IO"
 {
-	define message	\"Hello, World!\n\tHello again!"\
+	include "system.IO" []
 
-	Function hello {} {} {
-		IO.puts["This works, too.\n"]^;
-		return 0;
-	}
-Begin
-	IO.puts[message]^;
-	hello[];
-End
+	Set hello {} {
+		IO.puts["hello."] ^
+	} []
+
+	IO.puts["Does this string print?"] ^
+
+	hello []
 }

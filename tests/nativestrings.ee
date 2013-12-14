@@ -2,12 +2,10 @@
 {
 	include "system.IO"
 	include "system.string"
-
-	define myString	\"H llo, World!"\
-	given 8 msg;
 Begin
-	(myString+1) set 'e;
-	string.strcat[myString, " Does this work?"] ^
-	IO.puts[myString] ^
+	msg = "H llo, World!";
+	msg$ + 1 set 'e;
+	string.strcat[msg$, " Does this work?"] ^
+	IO.puts[msg$] ^
 End
 }

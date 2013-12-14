@@ -1,3 +1,4 @@
+#This program uses the E.Sets library to calculate a union Set
 {
 	include "E.Sets" ^
 

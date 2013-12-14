@@ -1,3 +1,4 @@
+#This program tests Eesk's lexical scoping
 {
 	Set parent {} {
 		public data

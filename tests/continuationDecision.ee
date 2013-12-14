@@ -7,7 +7,7 @@
 		moment0:
 			Set false {} {prints "Condition was false\n"}
 			Set true {} {truthInstructions$ []}
-			eval = (moment0$ - 8 + condition$!! * 8)$;
+			eval = (moment0$ - condition$!! * 8)$;
 		... moment0$;
 
 		eval$ []

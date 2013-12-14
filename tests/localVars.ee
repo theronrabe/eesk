@@ -1,16 +1,16 @@
 #This test ensures that unprovided function parameters act as local storage, and aren't overwritten by nested calls
 {
-	Function foo {a, b, c} {
-		Function bar {d} {} {
+	Set foo {a, b, c} {
+		Set bar {d} {
 			d = -1;
-		}
-	} {
+		} ^
+
 		c = a$ + b$;
-		bar[]^;		#This call shouldn't overwrite the unprovided c parameter
-		return c$;
+		bar[] ^		#This call shouldn't overwrite the unprovided c parameter
+		c$
 	}
 
 Begin
-	printd foo[3,4];
+	printd foo [3,4]
 End
 }

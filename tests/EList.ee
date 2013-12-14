@@ -2,19 +2,18 @@
 {
 	include "E.List" ^
 Begin
+	#Atomize Sets to be used as Lists
 	L1 = List.atomize [`{1 2 3 4 5}];
 	L2 = List.atomize [`{6 7 8 9}];
 	L3 = List.atomize [`{prints "Hello, World!\n"}];
 
+	#Construct a new List from other Lists, and evaluate it (Pass a non-zero to get references to its sublists, zero for evaluations)
 	L = List.cons [L1$, L2$];
 	L$ [0]
 
-	L = List.cons [L1$, L$];
+	L = List.cons [L$, L3$];	#Extend the tail end of the List
 	L$ [0]
 
-	L = List.cons [L$, L3$];
-	L$ [0]
-
-	List.destroy [L$]
+	List.destroy [L$]		#Clean up
 End
 }

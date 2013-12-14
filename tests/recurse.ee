@@ -1,10 +1,10 @@
 #This program tests recursion
 {
-	public Function fib {N} {
+	public Set fib {N} {
 		if {N$<2} {
-			return 1;
+			1
 		}{
-			return (fib[N$ - 2]) + (fib[N$ - 1]);
+			(fib[N$ - 2]) + (fib[N$ - 1])
 		}
 	}
 Begin
