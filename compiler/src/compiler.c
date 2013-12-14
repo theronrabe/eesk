@@ -489,7 +489,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 				stackPush(C->anonStack, sym);
 			} else {
 				if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
-				if(CO->publicFlag && C->dst && !CO->anonFlag) publicize(sym);
+				if(CO->publicFlag /*&& C->dst*/ && !CO->anonFlag) publicize(sym);
 				if(!CO->literalFlag && CO->instructionFlag) writeObj(C, GRAB, 0);
 				else writeObj(C, DATA, 0);
 			}
