@@ -36,12 +36,12 @@ long compileIf(Compiler *C, Context *CO, char *tok) {
 	long nameAddr = begin;
 
 	//get length of component statements
-	CO->symbols = tableAddLayer(CO->symbols, tok, 0);
+	_CO.symbols = tableAddLayer(_CO.symbols, tok, 0);
 	_C.dst = NULL;
 	long conditionLength = compileStatement(&_C, &_CO, tok);
 	long clauseLength = compileStatement(&_C, &_CO, tok);
 	long elseLength = compileStatement(&_C, &_CO, tok);
-	CO->symbols = tableRemoveLayer(CO->symbols);
+	_CO.symbols = tableRemoveLayer(_CO.symbols);
 
 	long offset = C->dictionary[BNE].length + C->dictionary[RPUSH].length + C->dictionary[JMP].length + 1;
 	compileStatement(C, CO, tok);					//compiled clause
