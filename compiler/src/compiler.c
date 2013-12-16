@@ -66,7 +66,7 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 	while(!endOfStatement && !C->end) {
 		getToken(C, tok);
 //printf("token:\t%s\n", tok);
-		if(!tok[0] && C->dst) {
+		if(!tok[0]/* && C->dst*/) {
 			if(C->dst) printf("%d: Expected } symbol.\n", C->lineCounter);
 			C->end = 1;
 			continue;
@@ -441,9 +441,10 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				break;
 
 			case(k_anon):
+				i = CO->anonFlag;
 				CO->anonFlag = 1;
 				compileAnonSet(C, CO, tok);
-				CO->anonFlag = 0;
+				CO->anonFlag = i;
 				break;
 
 			case(k_backset):

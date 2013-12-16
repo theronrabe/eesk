@@ -192,7 +192,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 		_CO.anonFlag = 1;
 	long bodyL = compileStatement(&_C, &_CO, tok);
 		//_CO.symbols = tableRemoveLayer(_CO.symbols);
-
+	
 	//jump to end
 	long end = C->dictionary[JMP].length + (2*C->dictionary[DATA].length + bodyL + C->dictionary[RSR].length) + 1;
 	long apushes = C->dictionary[APUSH].length * (C->anonStack->sp - oldAnon);
@@ -223,17 +223,6 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	//write Set body
 	bodyL = compileStatement(C, CO, tok);
 	writeObj(C, RSR, 0);
-
-	//jump here, POPTO anonStack locations
-	/*
-	long addr;
-	while(addr = stackPop(C->anonStack)) {
-		if(addr == -1) {break;} else {
-			writeObj(C, RPUSH, addr - C->LC + 1 - WRDSZ);
-			writeObj(C, RPOP, 0);
-		}
-	}
-	*/
 
 	//push beginning
 	writeObj(C, RPUSH, nameAddr - C->LC + 1 - WRDSZ);
