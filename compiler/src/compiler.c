@@ -68,6 +68,13 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 //printf("token:\t%s\n", tok);
 		if(!tok[0] && C->dst) {
 			if(C->dst) printf("%d: Expected } symbol.\n", C->lineCounter);
+			C->end = 1;
+			continue;
+			/*
+			writeObj(C, HALT, 0);
+			stackFree(operationStack);
+			return C->LC - begin;
+			*/
 			//exit(0);
 		}
 		tempTable = tableLookup(C->keyWords, tok, &(_C.LC));

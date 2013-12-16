@@ -102,6 +102,9 @@ int getToken(Compiler *C, char *token) {
 		}
 	
 		token[i] = '\0';
+		if (!i) {
+			C->end = 1;
+		}
 		C->SC += i+ws;
 		return i+ws;
 	} else {
