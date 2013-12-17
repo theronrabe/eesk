@@ -1,0 +1,37 @@
+#Test turing completeness of right-regular Eesk
+{
+	`{
+		given now:
+			true$
+			false$
+			now$ - condition$! * 8;$; => given eval;
+		... now$;
+		eval$ []
+	 } => decide;
+
+	`{
+		given recurse = this;
+		=> given instructions;
+		=> given condition;
+		condition$ [] => given decision;
+
+			`{instructions$ [] condition$ instructions$ recurse$ []}
+			`{}
+			decision$ 
+		decide$ []
+	} => repeat;
+
+	given i ^
+		`{i$ < 10; i = i$+1}
+		`{i$}
+	repeat$ []
+
+		`{i = i$ - 1; i$ > 4}
+		`{printd i$}
+	repeat$ []
+
+		`{prints "I decided true.\n"}
+		`{ `{i$ < 10; i=i$+1} `{prints "I decided false.\n"} repeat$ [] }
+		(10 > 11)
+	decide$ []
+}
