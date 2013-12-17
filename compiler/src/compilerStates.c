@@ -175,8 +175,8 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 
 	//new namespace
 	long nameAddr = C->LC + C->dictionary[RPUSH].length + C->dictionary[JMP].length + 2*WRDSZ;
-	//CO->symbols = tableAddSymbol(CO->symbols, "this", nameAddr, CO);
 	CO->symbols = tableAddLayer(CO->symbols, "this", 0);
+	CO->symbols = tableAddSymbol(CO->symbols, "this", nameAddr, CO);
 
 	//remember sp of anonStack
 	int oldAnon = C->anonStack->sp;
@@ -216,11 +216,16 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 		sym->parameterFlag = 1;
 		sym->val = (i-oldAnon) * WRDSZ;
 		writeObj(C, NPUSH, 0);
+		//printf("AnonSym %s %d\n", sym->token, sym->val);
 	}
 	C->anonStack->sp = oldAnon;
 
 	//write Set body
+		//subCompiler(C, &_C);
+		//_C.LC = 0;
 	bodyL = compileStatement(C, CO, tok);
+		//C->SC = _C.SC;
+		//C->LC += _C.LC;
 	writeObj(C, RSR, 0);
 
 	//push beginning
