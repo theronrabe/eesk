@@ -724,6 +724,7 @@ translation *prepareTranslation() {
 	translationAdd(ret, RESTORE, c_restore, -1, 0);
 	translationAdd(ret, CHAR, c_char, -1, 0);
 	translationAdd(ret, PRTC, c_prtc, -1, 0);
+	translationAdd(ret, NPUSH, c_npush, -1, 0);
 	
 	return ret;
 }

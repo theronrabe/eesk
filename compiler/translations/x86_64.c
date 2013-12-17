@@ -530,3 +530,18 @@ void CHAR() {
 			"push %%rax\n\t"
 			:::);
 }
+
+void npush() {
+	//same as apush, except it also advances the counterStack pointer
+	asm volatile (
+			"popq %%rax\n\t"		//grab value
+			"movq %%rsp, %%r13\n\t"		//set aside stack
+			"movq %%r14, %%rsp\n\t"	//activationStack is active
+			"pushq %%rax\n\t"		//push it
+			"movq %%rsp, %%r14\n\t"	//replace activationStack
+			"movq %%r13, %%rsp\n\t"		//reactivate stack
+			"subq $0x8, (%%r15)\n\t"	//update counterstack
+				//"subq $0x08, (%%r15)\n\t"	//keep up with r14
+			:::
+			);
+}

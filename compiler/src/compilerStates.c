@@ -158,8 +158,6 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		_CO.instructionFlag = CO->instructionFlag;
 	writeObj(C, RSR, 0);
 
-	//instructionFlagged functions should jump to right here
-
 	if(CO->instructionFlag) {
 		//put our calling address atop the stack
 		writeObj(C, RPUSH, nameAddr - C->LC+1 - WRDSZ);
@@ -195,7 +193,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	
 	//jump to end
 	long end = C->dictionary[JMP].length + (2*C->dictionary[DATA].length + bodyL + C->dictionary[RSR].length) + 1;
-	long apushes = C->dictionary[APUSH].length * (C->anonStack->sp - oldAnon);
+	long apushes = C->dictionary[NPUSH].length * (C->anonStack->sp - oldAnon);
 		end += apushes;
 	writeObj(C, RPUSH, end);
 	writeObj(C, JMP, 0);
@@ -204,19 +202,20 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 
 	//write Set data
 	writeObj(C, DATA, 2*WRDSZ + apushes + bodyL + C->dictionary[RSR].length);
-	writeObj(C, DATA, WRDSZ);
+	writeObj(C, DATA, 0); //WRDSZ * (C->anonStack->sp -  oldAnon));
 
 	//set calling address
 	nameAddr = C->LC;
 
 	//write , operators for declared symbols
 	Table *sym;
-	int i;
+	int i, j = 0;
 	for(i=oldAnon; i < C->anonStack->sp; i++) {
-		sym = C->anonStack->array[C->anonStack->sp - i - 1];
+		sym = C->anonStack->array[C->anonStack->sp - j - 1];
+		j++;
 		sym->parameterFlag = 1;
-		sym->val = (i-oldAnon+1) * WRDSZ;
-		writeObj(C, APUSH, 0);
+		sym->val = (i-oldAnon) * WRDSZ;
+		writeObj(C, NPUSH, 0);
 	}
 	C->anonStack->sp = oldAnon;
 

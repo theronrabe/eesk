@@ -98,6 +98,7 @@ typedef enum {
 	CREATE,
 	BKSET,
 	CHAR,
+	NPUSH,
 	
 	//convenience keywords
 	DATA,
