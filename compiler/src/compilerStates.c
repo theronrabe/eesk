@@ -105,19 +105,24 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 	CO->symbols = tableAddSymbol(CO->symbols, name, nameAddr, CO);	//change to this scope
 	if(CO->publicFlag) { publicize(CO->symbols); }
 	CO->symbols = tableAddLayer(CO->symbols, name, 1);
+	int oldAnon = C->anonStack->sp;
 
 	//count length of parameters, data, and statement sections
 		subContext(CO, &_CO);
 		_C.LC = 0;
 		_C.SC = C->SC;
-		_CO.parameterFlag = 1;
+		//_CO.parameterFlag = 1;
 		_CO.instructionFlag = 0;
+		_CO.anonFlag = 1;
 		_C.dst = NULL;
 		_CO.symbols = tableAddLayer(_CO.symbols, name, 1);
 	long paramL = compileStatement(&_C, &_CO, tok);	//param length
+	paramL = (_C.anonStack->sp - oldAnon) * WRDSZ;
+		_C.anonStack->sp = oldAnon;
 		_CO.parameterFlag = 0;
 		_C.LC = 0;	//because parameters don't increment location counter
 		_CO.instructionFlag = 1;
+		_CO.anonFlag = 0;
 	long bodyL = compileStatement(&_C, &_CO, tok);	//body length
 		_CO.symbols = tableRemoveLayer(_CO.symbols);
 		//CO->expectedLength = _C.LC;
@@ -136,12 +141,26 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 
 		_C.LC = 0;
 		_C.SC = C->SC;
-		_CO.parameterFlag = 1;
+		//_CO.parameterFlag = 1;
+		_CO.anonFlag = 1;
 		_CO.instructionFlag = 0;
-		_C.dst = C->dst;
-	paramL = compileStatement(&_C, &_CO, tok);	//compile parameters
+		//_C.dst = C->dst;
+		_C.dst = NULL;
+	compileStatement(&_C, &_CO, tok);	//compile parameters
 		_CO.parameterFlag = 0;
 		_CO.instructionFlag = 1;
+		_CO.anonFlag = 0;
+
+		//prepare argument symbols
+		Table *sym;
+		int i, j = 0;
+		for(i=oldAnon; i < C->anonStack->sp; i++) {
+			sym = C->anonStack->array[oldAnon+j];
+			j++;
+			sym->parameterFlag = 1;
+			sym->val = (i-oldAnon) * WRDSZ;
+		}
+		C->anonStack->sp = oldAnon;
 
 	long totalLength = WRDSZ*2 + bodyL + C->dictionary[RPUSH].length + C->dictionary[RSR].length;
 	writeObj(C, DATA, totalLength);	//a word containing total function length
