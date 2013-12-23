@@ -492,10 +492,12 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 		//if(!CO->parameterFlag) {
 			//This is an implicitly declared variable
 			if(CO->anonFlag) {
+				//printf("declaring anonymous: %s\n", sym->token);
 				writeObj(C, AGET, 0);	//this will be changed to the correct parameter value the second time through (once the symbol table knows)
 				sym->parameterFlag = 1;
 				stackPush(C->anonStack, sym);
 			} else {
+				//printf("declaring non anonymous: %s\n", sym->token);
 				if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
 				if(CO->publicFlag /*&& C->dst*/ && !CO->anonFlag) publicize(sym);
 				if(!CO->literalFlag && CO->instructionFlag) writeObj(C, GRAB, 0);
@@ -509,36 +511,49 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 	}
 
 	int value = sym->val + acc;
+
+	//printf("recognizing symbol: %s\n\t", sym->token);
 	
 	if(sym->parameterFlag) {
 		writeObj(C, AGET, sym->val + WRDSZ);
+		//printf("is a parameter\n");
 	} else {
+		//printf("is not a parameter, ");
 		if(!sym->staticFlag) {
-			if(!acc) {
+			//printf("is not static, ");
+			if(!acc && C->LC) {
+				//printf("is not accumulated, ");
 				//symbol is not being called for within a collection
 				//if(dst) printf("%d:\tto child symbol %s. Val = %x, Offset = %x\n", *lineCount, sym->token, sym->val, sym->offset);
 				if(!CO->literalFlag) {
+					//printf("is not literal, ");
 					writeObj(C, RPUSH, value - C->LC - C->dictionary[RPUSH].length + 1 + sym->offset);
 				} else {
+					//printf("is literal, ");
 					writeObj(C, DATA, value - C->LC + 1);
 				}
 			} else {
-				//if(dst) printf("%d:\tto parent symbol %s. Val = %x, Offset = %x, Backset = %x\n", *lineCount, sym->token, sym->val, sym->offset, fakeLC);
+				//printf("is accumulated, ");
+				//if(C->dst) printf("\tto parent symbol %s. Val = %x, Offset = %x", sym->token, sym->val, sym->offset);
 				writeObj(C, RPUSH, - (C->LC + acc + C->dictionary[RPUSH].length) + 1);
 				writeObj(C, PUSH, sym->val + sym->offset);
 				writeObj(C, ADD, 0);
 			}
 		} else {
+			//printf("is static, ");
 			//if(dst) printf("%d:\t%s to static from somewhere\n", *lineCount, sym->token);
 			if(!CO->literalFlag) {
+				//printf("is not literal, ");
 				writeObj(C, RPUSH, - (C->LC + C->dictionary[RPUSH].length) + 1);
 				writeObj(C, PUSH, value);
 				writeObj(C, ADD, 0);
 			} else {
+				//printf("is literal, ");
 				writeObj(C, DATA, value);
 			}
 		}
 	}
+	//printf("\n");
 	return C->LC - begin;
 }
 

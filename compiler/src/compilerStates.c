@@ -95,19 +95,21 @@ long compileWhile(Compiler *C, Context *CO, char *tok) {
 long compileSet(Compiler *C, Context *CO, char *tok) {
 	long begin = C->LC;
 	char name[256];
-	Compiler _C; subCompiler(C, &_C);
-	Context _CO; subContext(CO, &_CO);
+	Compiler _C;
+	Context _CO;
 	long nameAddr = begin;
 
 	//in a new namespace
 	getToken(C, tok);
 	strcpy(name, tok);
+	//CO->symbols = tableAddSymbol(CO->symbols, "this.dependency", 0, CO);		//add a placeholder for this symbol
 	CO->symbols = tableAddSymbol(CO->symbols, name, nameAddr, CO);	//change to this scope
 	if(CO->publicFlag) { publicize(CO->symbols); }
 	CO->symbols = tableAddLayer(CO->symbols, name, 1);
 	int oldAnon = C->anonStack->sp;
 
 	//count length of parameters, data, and statement sections
+		subCompiler(C, &_C);
 		subContext(CO, &_CO);
 		_C.LC = 0;
 		_C.SC = C->SC;
@@ -128,17 +130,8 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		//CO->expectedLength = _C.LC;
 	long offset;
 
-	if(CO->instructionFlag) {
-		offset = C->dictionary[JMP].length + C->dictionary[DATA].length*2 + C->dictionary[RSR].length + 1;
-		writeObj(C, RPUSH, bodyL+offset);	//this used to be a PUSH
-		writeObj(C, JMP, 0);		//Hop over the definition	//this used to be a HOP
-	}
-
-	//reset calling address
-	nameAddr = C->LC + WRDSZ*2;	//an extra word for total length (for newing), and an extra word for stack request
-	tableAddSymbol(CO->symbols->parent->layerRoot, name, nameAddr, CO);		//overwrite previous definition
-	if(CO->publicFlag) { publicize(CO->symbols->parent); }
-
+	//Prepare dependency Set
+	long depLoc = C->SC;
 		_C.LC = 0;
 		_C.SC = C->SC;
 		_CO.parameterFlag = 1;
@@ -162,7 +155,20 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		}
 		C->anonStack->sp = oldAnon;
 
-	long totalLength = WRDSZ*2 + bodyL + C->dictionary[RPUSH].length + C->dictionary[RSR].length;// + paramL;
+
+	if(CO->instructionFlag) {
+		offset = C->dictionary[JMP].length + C->dictionary[DATA].length*2 + C->dictionary[RSR].length + 1;
+		writeObj(C, RPUSH, bodyL+offset);	//this used to be a PUSH
+		writeObj(C, JMP, 0);		//Hop over the definition	//this used to be a HOP
+	}
+
+	//reset calling address
+	nameAddr = C->LC + WRDSZ*2;	//an extra word for total length (for newing), and an extra word for stack request
+	tableAddSymbol(CO->symbols->parent->layerRoot, name, nameAddr, CO);		//overwrite previous definition
+	if(CO->publicFlag) { publicize(CO->symbols->parent); }
+
+	long totalLength = WRDSZ*2 + bodyL + C->dictionary[RPUSH].length + C->dictionary[RSR].length;
+	//tableAddSymbol(CO->symbols, "this.dependency", totalLength+(2*WRDSZ), CO);
 	writeObj(C, DATA, totalLength);	//a word containing total function length
 	writeObj(C, DATA, paramL);	//write argument number at callAddress-1, extra word for return address no longer needed (kept on r15)
 	//reset calling address to right here
@@ -181,6 +187,9 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		//put our calling address atop the stack
 		writeObj(C, RPUSH, nameAddr - C->LC+1 - WRDSZ);
 	}
+
+		//subCompiler(C, &_C);
+	//compileAnonSet(&_C, CO, tok);
 
 	//no longer in this namespace
 	CO->symbols = tableRemoveLayer(CO->symbols);
