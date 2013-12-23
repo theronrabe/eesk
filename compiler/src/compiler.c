@@ -521,7 +521,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 		//printf("is not a parameter, ");
 		if(!sym->staticFlag) {
 			//printf("is not static, ");
-			if(!acc && C->LC) {
+			if(!acc && sym->val) {
 				//printf("is not accumulated, ");
 				//symbol is not being called for within a collection
 				//if(dst) printf("%d:\tto child symbol %s. Val = %x, Offset = %x\n", *lineCount, sym->token, sym->val, sym->offset);
