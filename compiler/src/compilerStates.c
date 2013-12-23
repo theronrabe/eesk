@@ -111,13 +111,14 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		subContext(CO, &_CO);
 		_C.LC = 0;
 		_C.SC = C->SC;
-		//_CO.parameterFlag = 1;
+		_CO.parameterFlag = 1;
 		_CO.instructionFlag = 0;
 		_CO.anonFlag = 1;
 		_C.dst = NULL;
 		_CO.symbols = tableAddLayer(_CO.symbols, name, 1);
-	long paramL = compileStatement(&_C, &_CO, tok);	//param length
-	paramL = (_C.anonStack->sp - oldAnon) * WRDSZ;
+	long depL = compileStatement(&_C, &_CO, tok);	//dependency set length
+	long paramL = (_C.anonStack->sp - oldAnon) * WRDSZ;		//number of symbols in dependency set
+	//printf("paramL = %lx\n", paramL);
 		_C.anonStack->sp = oldAnon;
 		_CO.parameterFlag = 0;
 		_C.LC = 0;	//because parameters don't increment location counter
@@ -141,8 +142,8 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 
 		_C.LC = 0;
 		_C.SC = C->SC;
-		//_CO.parameterFlag = 1;
-		_CO.anonFlag = 1;
+		_CO.parameterFlag = 1;
+		//_CO.anonFlag = 1;
 		_CO.instructionFlag = 0;
 		//_C.dst = C->dst;
 		_C.dst = NULL;
@@ -152,6 +153,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		_CO.anonFlag = 0;
 
 		//prepare argument symbols
+		/*
 		Table *sym;
 		int i, j = 0;
 		for(i=oldAnon; i < C->anonStack->sp; i++) {
@@ -161,8 +163,9 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 			sym->val = (i-oldAnon) * WRDSZ;
 		}
 		C->anonStack->sp = oldAnon;
+		*/
 
-	long totalLength = WRDSZ*2 + bodyL + C->dictionary[RPUSH].length + C->dictionary[RSR].length;
+	long totalLength = WRDSZ*2 + bodyL + C->dictionary[RPUSH].length + C->dictionary[RSR].length;// + paramL;
 	writeObj(C, DATA, totalLength);	//a word containing total function length
 	writeObj(C, DATA, paramL);	//write argument number at callAddress-1, extra word for return address no longer needed (kept on r15)
 	//reset calling address to right here

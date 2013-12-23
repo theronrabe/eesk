@@ -485,11 +485,11 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 	int acc = 0;
 	Table *sym = tableLookup(CO->symbols, tok, &acc);
 	
-	if(sym == NULL) {	//does the symbol not exist yet?
+	if(sym == NULL || CO->parameterFlag) {	//does the symbol not exist yet? Always add a new symbol for parameterFlagged expressions
 		int offset = (CO->instructionFlag && !CO->literalFlag)? 5: 0;	//TODO: replace that 6 with a means of figuring out the grab offset per translation
 		/*if(dst)*/ tableAddSymbol(CO->symbols, tok, C->LC + offset, CO); //you have to do this with no dst, otherwise fake-compiled sections will grab instead of rpush later
 		sym = tableLookup(CO->symbols, tok, &acc);
-		if(!CO->parameterFlag) {
+		//if(!CO->parameterFlag) {
 			//This is an implicitly declared variable
 			if(CO->anonFlag) {
 				writeObj(C, AGET, 0);	//this will be changed to the correct parameter value the second time through (once the symbol table knows)
@@ -501,11 +501,10 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 				if(!CO->literalFlag && CO->instructionFlag) writeObj(C, GRAB, 0);
 				else writeObj(C, DATA, 0);
 			}
-
-		} else {
+		//} else {
 			//this is a parameter declaration, count it and carry on
-			C->LC += WRDSZ;
-		}
+			//C->LC += WRDSZ;
+		//}
 		return C->LC - begin;
 	}
 
