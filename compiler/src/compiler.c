@@ -474,15 +474,16 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 /*
 	writeAddressCalculation is a function that is used to write the address calculation of a user-defined symbol
 	encountered by compileStatement. If this symbol has never been encountered before, it creates it as a new
-	symbol in the current scope.
+	symbol in the current scope, according to the current context.
 */
 long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
+	char display = 0;
 	//this function figures out what address a non-keyword token should correlate to
 	//and writes that address to the output file
 	long begin = C->LC;
 	Compiler _C; subCompiler(C, &_C);
 
-	int acc = 0;
+	int acc = -1;
 	Table *sym = tableLookup(CO->symbols, tok, &acc);
 	
 	if(sym == NULL || CO->parameterFlag) {	//does the symbol not exist yet? Always add a new symbol for parameterFlagged expressions
@@ -492,12 +493,12 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 		//if(!CO->parameterFlag) {
 			//This is an implicitly declared variable
 			if(CO->anonFlag) {
-				//printf("declaring anonymous: %s\n", sym->token);
+				if(display) printf("declaring anonymous: %s\n", sym->token);
 				writeObj(C, AGET, 0);	//this will be changed to the correct parameter value the second time through (once the symbol table knows)
 				sym->parameterFlag = 1;
 				stackPush(C->anonStack, sym);
 			} else {
-				//printf("declaring non anonymous: %s\n", sym->token);
+				if(display) printf("declaring non anonymous: %s\n", sym->token);
 				if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
 				if(CO->publicFlag /*&& C->dst*/ && !CO->anonFlag) publicize(sym);
 				if(!CO->literalFlag && CO->instructionFlag) writeObj(C, GRAB, 0);
@@ -510,50 +511,51 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 		return C->LC - begin;
 	}
 
-	int value = sym->val + acc;
+	int value = sym->val;// + acc;
+	if(acc != -1) value += acc;
 
-	//printf("recognizing symbol: %s\n\t", sym->token);
+	if(display) printf("recognizing symbol: %s\n\t", sym->token);
 	
 	if(sym->parameterFlag) {
 		writeObj(C, AGET, sym->val + WRDSZ);
-		//printf("is a parameter\n");
+		if(display) printf("is a parameter\n");
 	} else {
-		//printf("is not a parameter, ");
+		if(display) printf("is not a parameter, ");
 		if(!sym->staticFlag) {
-			//printf("is not static, ");
-			if(!acc && sym->val) {
-				//printf("is not accumulated, ");
+			if(display) printf("is not static, ");
+			if(acc == -1) { //!acc && sym->val) {
+				if(display) printf("is not accumulated, ");
 				//symbol is not being called for within a collection
 				//if(dst) printf("%d:\tto child symbol %s. Val = %x, Offset = %x\n", *lineCount, sym->token, sym->val, sym->offset);
 				if(!CO->literalFlag) {
-					//printf("is not literal, ");
+					if(display) printf("is not literal, ");
 					writeObj(C, RPUSH, value - C->LC - C->dictionary[RPUSH].length + 1 + sym->offset);
 				} else {
-					//printf("is literal, ");
+					if(display) printf("is literal, ");
 					writeObj(C, DATA, value - C->LC + 1);
 				}
 			} else {
-				//printf("is accumulated, ");
-				//if(C->dst) printf("\tto parent symbol %s. Val = %x, Offset = %x", sym->token, sym->val, sym->offset);
+				if(display) printf("is accumulated %lx, ", acc);
+				//if(C->dst) printf("\t%lx: to parent symbol %s. Val = %x, Offset = %x", C->LC, sym->token, sym->val, sym->offset);
 				writeObj(C, RPUSH, - (C->LC + acc + C->dictionary[RPUSH].length) + 1);
 				writeObj(C, PUSH, sym->val + sym->offset);
 				writeObj(C, ADD, 0);
 			}
 		} else {
-			//printf("is static, ");
+			if(display) printf("is static, ");
 			//if(dst) printf("%d:\t%s to static from somewhere\n", *lineCount, sym->token);
 			if(!CO->literalFlag) {
-				//printf("is not literal, ");
+				if(display) printf("is not literal, ");
 				writeObj(C, RPUSH, - (C->LC + C->dictionary[RPUSH].length) + 1);
 				writeObj(C, PUSH, value);
 				writeObj(C, ADD, 0);
 			} else {
-				//printf("is literal, ");
+				if(display) printf("is literal, ");
 				writeObj(C, DATA, value);
 			}
 		}
 	}
-	//printf("\n");
+	if(display) printf("\n");
 	return C->LC - begin;
 }
 

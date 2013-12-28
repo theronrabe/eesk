@@ -97,86 +97,98 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 	char name[256];
 	Compiler _C;
 	Context _CO;
-	long nameAddr = begin;
+	long nameAddr = 1; //begin + 2*WRDSZ;
 
-	//in a new namespace
+	//
+	//Set up a new namespace
+	//
 	getToken(C, tok);
 	strcpy(name, tok);
-	//CO->symbols = tableAddSymbol(CO->symbols, "this.dependency", 0, CO);		//add a placeholder for this symbol
-	CO->symbols = tableAddSymbol(CO->symbols, name, nameAddr, CO);	//change to this scope
+	Table *nameSym = tableAddSymbol(CO->symbols, name, nameAddr, CO);	//change to this scope
+	CO->symbols = nameSym;
 	if(CO->publicFlag) { publicize(CO->symbols); }
-	CO->symbols = tableAddLayer(CO->symbols, name, 1);
+	CO->symbols = tableAddLayer(CO->symbols, "this", 1);
+	Table *depSym = tableAddSymbol(CO->symbols, "this.dependency", 0, CO);		//add a placeholder for this symbol
 	int oldAnon = C->anonStack->sp;
+	long depSC = C->SC;
 
-	//count length of parameters, data, and statement sections
+	//
+	//Find symbol names and count body length
+	//
 		subCompiler(C, &_C);
 		subContext(CO, &_CO);
-		_C.LC = 0;
-		_C.SC = C->SC;
 		_CO.parameterFlag = 1;
-		_CO.instructionFlag = 0;
 		_CO.anonFlag = 1;
 		_C.dst = NULL;
-		_CO.symbols = tableAddLayer(_CO.symbols, name, 1);
-	long depL = compileStatement(&_C, &_CO, tok);	//dependency set length
-	long paramL = (_C.anonStack->sp - oldAnon) * WRDSZ;		//number of symbols in dependency set
+		_CO.symbols = tableAddLayer(_CO.symbols, "temp", 1);
+	compileStatement(&_C, &_CO, tok);	//dependency set
+	long paramL = (_C.anonStack->sp - oldAnon);		//number of symbols in dependency set
 		_C.anonStack->sp = oldAnon;
 		_CO.parameterFlag = 0;
 		_C.LC = 0;	//because parameters don't increment location counter
 		_CO.instructionFlag = 1;
 		_CO.anonFlag = 0;
+	long bodySC = _C.SC;
 	long bodyL = compileStatement(&_C, &_CO, tok);	//body length
+	printf("bodyL first = %lx\n", bodyL);
 		_CO.symbols = tableRemoveLayer(_CO.symbols);
 		//CO->expectedLength = _C.LC;
+		depSym->val = bodyL + C->dictionary[RSR].length + C->dictionary[RPUSH].length*2 + C->dictionary[JMP].length + 2*WRDSZ;
 	long offset;
 
-	//Prepare dependency Set
-	long depLoc = C->SC;
-		_C.LC = 0;
-		_C.SC = C->SC;
-		_CO.parameterFlag = 1;
-		_CO.anonFlag = 1;
-		_CO.instructionFlag = 0;
-		//_C.dst = C->dst;
-		_C.dst = NULL;
-	compileStatement(&_C, &_CO, tok);	//compile parameters
-		_CO.parameterFlag = 0;
-		_CO.instructionFlag = 1;
-		_CO.anonFlag = 0;
+	//
+	//Prepare argument symbols
+	//
+	Table *sym;
+	int i;
+	for(i=0; i < paramL; i++) {
+		sym = C->anonStack->array[oldAnon+i];
+		sym->val = i * WRDSZ;
+	}
 
-		//prepare argument symbols
-		Table *sym;
-		int i, j = 0;
-		for(i=oldAnon; i < C->anonStack->sp; i++) {
-			sym = C->anonStack->array[oldAnon+j];
-			j++;
-			sym->parameterFlag = 1;
-			sym->val = (i-oldAnon) * WRDSZ;
-		}
-		C->anonStack->sp = oldAnon;
+	//
+	//Skip over dependency source
+	//
+	C->SC = bodySC;
 
-
+	//
+	//Jump over Set definition
+	//
 	if(CO->instructionFlag) {
 		offset = C->dictionary[JMP].length + C->dictionary[DATA].length*2 + C->dictionary[RSR].length + 1;
 		writeObj(C, RPUSH, bodyL+offset);	//this used to be a PUSH
 		writeObj(C, JMP, 0);		//Hop over the definition	//this used to be a HOP
 	}
 
-	//reset calling address
-	nameAddr = C->LC + WRDSZ*2;	//an extra word for total length (for newing), and an extra word for stack request
-	tableAddSymbol(CO->symbols->parent->layerRoot, name, nameAddr, CO);		//overwrite previous definition
-	if(CO->publicFlag) { publicize(CO->symbols->parent); }
-
+	//
+	//Write Set header
+	//
 	long totalLength = WRDSZ*2 + bodyL + C->dictionary[RPUSH].length + C->dictionary[RSR].length;
 	//tableAddSymbol(CO->symbols, "this.dependency", totalLength+(2*WRDSZ), CO);
 	writeObj(C, DATA, totalLength);	//a word containing total function length
-	writeObj(C, DATA, paramL);	//write argument number at callAddress-1, extra word for return address no longer needed (kept on r15)
+	writeObj(C, DATA, paramL*WRDSZ);	//write argument number at callAddress-1, extra word for return address no longer needed (kept on r15)
 	//reset calling address to right here
 
+	//
+	//Reset calling address
+	//
+	nameAddr = C->LC;	//an extra word for total length (for newing), and an extra word for stack request
+	//tableAddSymbol(CO->symbols->parent->layerRoot, name, nameAddr, CO);		//overwrite previous definition
+	nameSym->val = nameAddr;
+	//CO->symbols->val = nameAddr;
+	//printf("SYMBOLS: %s %lx\n", CO->symbols->token, CO->symbols->val);
+	if(CO->publicFlag) { publicize(nameSym); }
+
+	//
+	//Write Set body
+	//
+//printf("%lx: compiling body %lx\n", C->LC, C->SC);
+		subCompiler(C, &_C);
 		CO->expectedLength = totalLength;
 		_C.LC = 0;
 		_C.dst = C->dst;
 	bodyL = compileStatement(&_C, CO, tok);	//compiled body, relatively addressed
+	printf("bodyL next = %lx\n", bodyL);
 		C->SC = _C.SC;
 		C->LC += _C.LC;
 		CO->expectedLength = 0;
@@ -185,13 +197,24 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 
 	if(CO->instructionFlag) {
 		//put our calling address atop the stack
-		writeObj(C, RPUSH, nameAddr - C->LC+1 - WRDSZ);
+		writeObj(C, RPUSH, nameAddr - C->LC - WRDSZ + 1);
 	}
 
-		//subCompiler(C, &_C);
-	//compileAnonSet(&_C, CO, tok);
+	//
+	//Prepare dependency Set
+	//
+	//tableAddSymbol(CO->symbols->parent->layerRoot, "this.dependency", C->LC+2*WRDSZ, CO);		//reset symbol value
+//printf("compiling depset %lx\n", depSC);
+		subCompiler(C, &_C);
+		_C.SC = depSC;
+	long depL = compileAnonSet(&_C, CO, tok);
+		C->LC += depL;
+		writeObj(C, CLR, 0);
 
+//printf("continuing...\n");
+	//
 	//no longer in this namespace
+	//
 	CO->symbols = tableRemoveLayer(CO->symbols);
 	return C->LC - begin;
 }
@@ -204,7 +227,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	//new namespace
 	long nameAddr = C->LC + C->dictionary[RPUSH].length + C->dictionary[JMP].length + 2*WRDSZ;
 	CO->symbols = tableAddLayer(CO->symbols, "this", 0);
-	CO->symbols = tableAddSymbol(CO->symbols, "this", nameAddr, CO);
+	/*CO->symbols =*/ tableAddSymbol(CO->symbols, "this", nameAddr, CO);
 
 	//remember sp of anonStack
 	int oldAnon = C->anonStack->sp;
@@ -214,10 +237,10 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 		_C.dst = NULL;
 		_C.LC = 0;
 		subContext(CO, &_CO);
-		//_CO.symbols = tableAddLayer(_CO.symbols, tok, 1);
+		_CO.symbols = tableAddLayer(_CO.symbols, tok, 1);
 		_CO.anonFlag = 1;
 	long bodyL = compileStatement(&_C, &_CO, tok);
-		//_CO.symbols = tableRemoveLayer(_CO.symbols);
+		_CO.symbols = tableRemoveLayer(_CO.symbols);
 	
 	//jump to end
 	long end = C->dictionary[JMP].length + (2*C->dictionary[DATA].length + bodyL + C->dictionary[RSR].length) + 1;
@@ -336,7 +359,7 @@ long compileDeclaration(Compiler *C, Context *CO, char *tok) {
 		//create a symbol and a word
 		tempTable = tableAddSymbol(CO->symbols, tok, (C->LC) + ((CO->instructionFlag)?5:0), CO);
 		if(!CO->parameterFlag) {
-			if(CO->publicFlag) publicize(tempTable);
+			if(CO->publicFlag) { publicize(tempTable); }
 			if(CO->instructionFlag) writeObj(C, GRAB, 0);
 			//writeObj(C, DATA, 0);
 		} else {
@@ -360,7 +383,7 @@ long compileRedirection(Compiler *C, Context *CO, char *tok) {
 		if(numeric(tok[0]) || (tok[0] == '-' && numeric(tok[1]))) {
 			val = atoi(tok);
 		} else {
-			printf("%d:\tImplicitly declared offset: %s.\n", C->lineCounter, tok);
+			/*if(C->dst)*/ printf("%d:\tImplicitly declared offset: %s\n", C->lineCounter, tok);
 			val = 0;
 		}
 	} else {

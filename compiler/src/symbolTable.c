@@ -51,7 +51,7 @@ void publicize(Table *node) {
 		CO.expectedLength = 0;
 	if(node) {
 		//printf("%s staticity: %d\n", node->token, node->staticFlag);
-		//printf("publicizing node %s\n\n", node->token);
+		//printf("publicizing node %s\n", node->token);
 		char publicToken[TOKSIZE];
 		if(node->parent) {
 			strcpy(publicToken, node->parent->token);
@@ -196,6 +196,7 @@ Table *tableLookup(Table *T, char *token, int *accOff) {
 			if(T->parent) {
 				if(!T->searchUp) {
 					//build accumulated offset
+					if(*accOff < 0) *accOff = 0;
 					*accOff += T->parent->val;
 				}
 				return tableLookup(T->parent->layerRoot, token, accOff);
@@ -213,6 +214,7 @@ Table *tableLookup(Table *T, char *token, int *accOff) {
 			if(T->parent) {
 				if(!T->searchUp) {
 					//build accumulated offset
+					if(*accOff < 0) *accOff = 0;
 					*accOff += T->parent->val;
 				}
 				return tableLookup(T->parent->layerRoot, token, accOff);
