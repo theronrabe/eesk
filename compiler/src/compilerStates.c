@@ -120,18 +120,17 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		_CO.parameterFlag = 1;
 		_CO.anonFlag = 1;
 		_C.dst = NULL;
-		_CO.symbols = tableAddLayer(_CO.symbols, "temp", 1);
+		_CO.symbols = tableAddLayer(_CO.symbols, "temp", 1);	//Create temporoary symbol layer to catch declarations
+			tableAddSymbol(_CO.symbols, depSym->token, depSym->val, CO);	//Make sure this reference isn't accumulated from temp layer
 	compileStatement(&_C, &_CO, tok);	//dependency set
 	long paramL = (_C.anonStack->sp - oldAnon);		//number of symbols in dependency set
-		_C.anonStack->sp = oldAnon;
 		_CO.parameterFlag = 0;
 		_C.LC = 0;	//because parameters don't increment location counter
 		_CO.instructionFlag = 1;
 		_CO.anonFlag = 0;
 	long bodySC = _C.SC;
 	long bodyL = compileStatement(&_C, &_CO, tok);	//body length
-	printf("bodyL first = %lx\n", bodyL);
-		_CO.symbols = tableRemoveLayer(_CO.symbols);
+	//printf("bodyL first = %lx\n", bodyL);
 		//CO->expectedLength = _C.LC;
 		depSym->val = bodyL + C->dictionary[RSR].length + C->dictionary[RPUSH].length*2 + C->dictionary[JMP].length + 2*WRDSZ;
 	long offset;
@@ -139,12 +138,18 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 	//
 	//Prepare argument symbols
 	//
+	_CO.parameterFlag = 1;
 	Table *sym;
 	int i;
+		//place argument symbols into proper layer
 	for(i=0; i < paramL; i++) {
 		sym = C->anonStack->array[oldAnon+i];
 		sym->val = i * WRDSZ;
+		tableAddSymbol(CO->symbols, sym->token, sym->val, &_CO);
+		//printf("ARGSYM: %s is argument #%x:%x\n", sym->token, i, sym->val);
 	}
+	_CO.symbols = tableRemoveLayer(_CO.symbols);		//Remove temporary symbol layer
+	_C.anonStack->sp = oldAnon;				//Retract stack pointer
 
 	//
 	//Skip over dependency source
@@ -188,7 +193,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		_C.LC = 0;
 		_C.dst = C->dst;
 	bodyL = compileStatement(&_C, CO, tok);	//compiled body, relatively addressed
-	printf("bodyL next = %lx\n", bodyL);
+	//printf("bodyL next = %lx\n", bodyL);
 		C->SC = _C.SC;
 		C->LC += _C.LC;
 		CO->expectedLength = 0;
