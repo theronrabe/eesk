@@ -232,7 +232,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	//new namespace
 	long nameAddr = C->LC + C->dictionary[RPUSH].length + C->dictionary[JMP].length + 2*WRDSZ;
 	CO->symbols = tableAddLayer(CO->symbols, "this", 0);
-	/*CO->symbols =*/ tableAddSymbol(CO->symbols, "this", nameAddr, CO);
+	CO->symbols = tableAddSymbol(CO->symbols, "this", nameAddr, CO);
 
 	//remember sp of anonStack
 	int oldAnon = C->anonStack->sp;
@@ -242,10 +242,10 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 		_C.dst = NULL;
 		_C.LC = 0;
 		subContext(CO, &_CO);
-		_CO.symbols = tableAddLayer(_CO.symbols, tok, 1);
+		//_CO.symbols = tableAddLayer(_CO.symbols, tok, 1);
 		_CO.anonFlag = 1;
 	long bodyL = compileStatement(&_C, &_CO, tok);
-		_CO.symbols = tableRemoveLayer(_CO.symbols);
+		//_CO.symbols = tableRemoveLayer(_CO.symbols);
 	
 	//jump to end
 	long end = C->dictionary[JMP].length + (2*C->dictionary[DATA].length + bodyL + C->dictionary[RSR].length) + 1;
