@@ -6,9 +6,10 @@ Compiler to-do list:
 Virtual Machine to-do list:
 
 Eesk Environment to-do list:
-	-keep making header files to link the standard C library.
-	-continue work on manual
+	-Need a new syntax for *8 for continuation element access
+	-Need a predictable means of applying evaluation to non-Set elements
+		-"100 []" should evaluate to 100, not produce a segfault
+	-Continue work on manual
+	-Add x86-64 support for floating point values
 
 Currently working on:
-	-pattern matching in constant time from both ends of a Set
-	-correct length calculations of nested anonymous Sets
