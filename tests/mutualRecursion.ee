@@ -1,0 +1,21 @@
+#An example of mutual recursion
+{
+	Set isEven {n} {
+		if {n$!} {
+			1
+		} {
+			public isOdd$ [n$ - 1]
+		}
+	} ^
+
+	Set isOdd {n$} {
+		if {n$!} {
+			0
+		} {
+			isEven [n$ - 1]
+		}
+	} => isEven.isOdd;
+
+	isEven [10]
+	isOdd [10]
+}
