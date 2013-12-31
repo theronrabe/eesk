@@ -1,0 +1,8 @@
+#This file proposes an Eesk solution to the upward funarg problem
+{
+	Set compose {f, g} {
+		F = f$;
+		G = g$;
+		`{F$ [G$ []]}
+	} [Set inc {x} {x$+1}, Set dec2 {x} {x$ - 2}] [5]
+}
