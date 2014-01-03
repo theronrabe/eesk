@@ -73,8 +73,10 @@ int getToken(Compiler *C, char *token) {
 
 	int i=0;
 	int ws = 0;
+
+	long len = (long) strlen(src);
 	
-	if(loc < (signed) strlen(src)) {
+	if(loc < len) {
 		//trim whitespace
 		while(src[loc+ws]==' '||src[loc+ws]=='\t'||src[loc+ws]=='\n') {
 			if(src[loc+ws] == '\n') ++(C->lineCounter);
@@ -116,7 +118,7 @@ int getToken(Compiler *C, char *token) {
 int getQuote(Compiler *C, char *tok) {
 	//returns how many 64-bit words the quote consumes
 	int i = 0, j = 0, words = 0;
-	while(C->src[C->SC+i] != '\"') {
+	while(C->src[C->SC+i] != '\"' && C->src[C->SC+i] != '\n') {
 		if(C->src[C->SC+i] == '\\') {
 			switch(C->src[C->SC+i+1]) {
 				case('n'): tok[j++] = '\n'; break;
@@ -135,6 +137,6 @@ int getQuote(Compiler *C, char *tok) {
 	++i;
 
 	C->SC += i;
-	words = (j%8)?j/8+1: j/8;
+	//words = (j%8)?j/8+1: j/8;
 	return j; //words;
 }
