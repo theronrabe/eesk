@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 	CO.parameterFlag = 0;
 	CO.instructionFlag = 1;
 	CO.symbols = tableCreate();
-		CO.symbols = tableAddLayer(CO.symbols, "this", 0);	//Ensures we have a "this" reference at all times
+		CO.symbols = tableAddLayer(CO.symbols, "this", 1);	//Ensures we have a "this" reference at all times
 	
 	compileStatement(&C, &CO, tok);
 	writeObj(&C, HALT, 0);
