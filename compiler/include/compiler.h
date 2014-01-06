@@ -31,7 +31,7 @@ Stack *nameStack;
 long compileStatement(Compiler *C, Context *CO, char *tok);
 long writeAddressCalculation(Compiler *C, Context *CO, char *tok);
 Table *prepareKeywords();
-translation *prepareTranslation();
+translation *prepareTranslation(Context *CO);
 void fillOperations(Compiler *C, Stack *operationStack);
 void subCompiler(Compiler *C1, Compiler *C2);
 void subContext(Context *CO1, Context *CO2);
@@ -68,7 +68,8 @@ typedef enum {
 	k_create,
 	k_anon,
 	k_backset,
-	k_store, k_restore
+	k_store, k_restore,
+	k_typeof
 } KEYWORD;
 
 #endif

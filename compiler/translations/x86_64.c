@@ -110,6 +110,7 @@ void grab() {
 			"callq _grab\n\t"
 			//make sure there is a quadword-aligned 64-bits of data here by preceding callq with nops"
 			"nop;nop;nop;nop;  nop;nop;nop;nop\n\t"
+			"nop;nop;nop;nop;  nop;nop;nop;nop\n\t"
 			"_grab:\n\t"
 			:::
 			);
@@ -168,6 +169,14 @@ void clr() {
 
 void jsr() {
 	asm volatile (
+			//check to see if we can skip this process
+			//consider this portion of jsr a typed pre-jsr
+				"movq (%%r11), %%rax\n\t"	//grab type
+				"test %%rax, %%rax\n\t"		//check type
+				"jz _skipJsr\n\t"		//if value, skip evaluation
+				"addq $0x8, %%r11\n\t"		//otherwise, move top of typeStack and continue
+			//end pre-jsr typing
+
 			//push activationStack onto counterStack, and grab numArgsPassed
 			"movq %%rsp, %%r13\n\t"		//back up stack pointer
 			"movq %%r15, %%rsp\n\t"		//counterStack is the active stack
@@ -193,6 +202,10 @@ void jsr() {
 			"popq %%rax\n\t"		//grab calling address
 				//"movq (%%r15), %%r15\n\t" //crash here
 			"jmp *%%rax\n\t"
+
+			//skip evaluation point
+			"_skipJsr:\n\t"
+			//"popq %%rax\n\t"
 			:::
 			);
 }
@@ -542,6 +555,71 @@ void npush() {
 			"movq %%r13, %%rsp\n\t"		//reactivate stack
 			"subq $0x8, (%%r15)\n\t"	//update counterstack
 				//"subq $0x08, (%%r15)\n\t"	//keep up with r14
+			:::
+			);
+}
+
+void tpush() {
+	//places an explicit value atop typestack
+	asm volatile (
+			"subq $0x8, %%r11\n\t"		//move top of stack
+			//"movq $0x0123456789abcdef, (%%r11)\n\t"	//place value
+			"movq $0x0123456789abcdef, %%rax\n\t"
+			"movq %%rax, (%%r11)\n\t"
+			:::
+			);
+}
+
+void typesym() {
+	//find type of symbol atop datastack
+	asm volatile (
+			"subq $0x8, %%r11\n\t"		//move tope of typeStack
+			"movq (%%rsp), %%rax\n\t"	//grab symbol
+			//"movq 0x8(%%rax), (%%r11)\n\t"	//grab type
+			"movq 0x8(%%rax), %%rbx\n\t"
+			"movq %%rbx, (%%r11)\n\t"
+			:::
+			);
+}
+
+void TYPEOF() {
+	asm volatile (
+			//"popq %%rax\n\t"		//remove argument from dataStack
+			//"movq (%%r11), %%rbx\n\t"	//grab top of typeStack
+			//"addq $0x8, %%r11\n\t"		//decrement typeStack pointer
+			//"pushq %%rbx\n\t"		//push type to dataStack
+			"movq (%%r11), %%rax\n\t"	//grab type
+			"movq %%rax, (%%rsp)\n\t"	//move type to dataStack
+			//"movq $0x0, (%%r11)\n\t"	//type is definitly a value now
+			:::
+			);
+}
+
+void tasgn() {
+	asm volatile (
+			"movq $0x0123456789abcdef, %%rax\n\t"
+			"movq %%rax, (%%r11)\n\t"
+			:::
+			);
+}
+
+void tval() {
+	asm volatile (
+			"movq $0x0, (%%r11)\n\t"
+			:::
+			);
+}
+
+void tset() {
+	asm volatile (
+			"movq $0x1, (%%r11)\n\t"
+			:::
+			);
+}
+
+void tpop() {
+	asm volatile (
+			"addq $0x8, %%r11\n\t"
 			:::
 			);
 }

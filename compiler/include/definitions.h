@@ -20,6 +20,7 @@ typedef struct Table {
 	char staticFlag;
 	char searchUp;
 	char parameterFlag;
+	char type;
 	struct Table *left;
 	struct Table *right;
 	struct Table *parent;
@@ -34,6 +35,7 @@ typedef struct Context {
 	char parameterFlag;
 	char instructionFlag;
 	char anonFlag;
+	char typingFlag;
 	long expectedLength;
 	Table *symbols;
 } Context;

@@ -106,9 +106,11 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 	strcpy(name, tok);
 	Table *nameSym = tableAddSymbol(CO->symbols, name, nameAddr, CO);	//change to this scope
 	CO->symbols = nameSym;
+	nameSym->type = 1;							//make sure this symbol correlates to type set
 	if(CO->publicFlag) { publicize(CO->symbols); }
 	CO->symbols = tableAddLayer(CO->symbols, "this", 1);
 	Table *depSym = tableAddSymbol(CO->symbols, "this.dependency", 0, CO);		//add a placeholder for this symbol
+	depSym->type = 1;							//dependency set is also of type set
 	int oldAnon = C->anonStack->sp;
 	long depSC = C->SC;
 
@@ -221,6 +223,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 	//no longer in this namespace
 	//
 	CO->symbols = tableRemoveLayer(CO->symbols);
+	if(CO->typingFlag) writeObj(C, TPUSH, 1);
 	return C->LC - begin;
 }
 
@@ -289,6 +292,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 
 	//return namespace
 	CO->symbols = tableRemoveLayer(CO->symbols);
+	if(CO->typingFlag) writeObj(C, TPUSH, 1);
 	return C->LC - begin;
 }
 
@@ -365,7 +369,7 @@ long compileDeclaration(Compiler *C, Context *CO, char *tok) {
 		tempTable = tableAddSymbol(CO->symbols, tok, (C->LC) + ((CO->instructionFlag)?5:0), CO);
 		if(!CO->parameterFlag) {
 			if(CO->publicFlag) { publicize(tempTable); }
-			if(CO->instructionFlag) writeObj(C, GRAB, 0);
+			if(CO->instructionFlag) { writeObj(C, GRAB, 0); if(CO->typingFlag) writeObj(C, TSYM, 0); }
 			//writeObj(C, DATA, 0);
 		} else {
 			(C->LC) += WRDSZ;
@@ -488,9 +492,10 @@ long compileAtom(Compiler *C, Context *CO, char *tok) {
 				}
 			}
 		} else {
-			if(!CO->literalFlag) writeObj(C, PUSH, atol(tok));
+			if(!CO->literalFlag) { writeObj(C, PUSH, atol(tok));}
 			else writeObj(C, DATA, atol(tok));	//push its value
 		}
+		if(!CO->literalFlag && CO->typingFlag) writeObj(C, TPUSH, 0);
 	} else {
 		writeAddressCalculation(C, CO, tok);
 	}

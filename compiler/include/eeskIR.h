@@ -99,6 +99,13 @@ typedef enum {
 	BKSET,
 	CHAR,
 	NPUSH,
+	TPUSH,	//36
+	TSYM,
+	TYPEOF,
+	TASGN,
+	TPOP,
+	TVAL,
+	TSET,
 	
 	//convenience keywords
 	DATA,

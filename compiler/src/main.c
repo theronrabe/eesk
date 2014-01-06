@@ -23,13 +23,16 @@ This file is part of Eesk.
 #include <compiler.h>
 #include <eeskIR.h>
 #include <writer.h>
+#include <options.h>
 
 int main(int argc, char **argv) {
 	Context CO;
 	Compiler C;
 	char tok[256];
 
-	C.dictionary = prepareTranslation();
+	contextSetOptions(argc, argv, &CO);
+
+	C.dictionary = prepareTranslation(&CO);
 	C.src = loadFile(argv[1]);
 	C.dst = fopen("e.out", "w");
 	C.SC = 0;
@@ -53,6 +56,7 @@ int main(int argc, char **argv) {
 	CO.symbols = tableCreate();
 		CO.symbols = tableAddLayer(CO.symbols, "this", 1);	//Ensures we have a "this" reference at all times
 	
+	if(!CO.typingFlag) writeObj(&C, TPUSH, 1);
 	compileStatement(&C, &CO, tok);
 	writeObj(&C, HALT, 0);
 	writeObj(&C, DATA, transferAddress);
