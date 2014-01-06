@@ -91,7 +91,7 @@ typedef enum {
 
 long *load(char *fn);
 void execute(long *MEM, Stack *STACK, long *address);
-void quit(long *rsp, long *rbp);
+void quit(long *rsp, long *rbp, long *r11);
 void newCollection(long **rsp);
 void loadLib(char **rsp);
 void create(long **rsp, long **aStack);

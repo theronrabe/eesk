@@ -30,21 +30,22 @@ This file is part of Eesk.
 
 void kernel(long eeskir) {
 	long **rsp, *rbp;
-	long *aStack, *cStack;
+	long *aStack, *cStack, *tStack;
 
 	asm volatile (
 			"movq %%r13, %0\n\t"
 			"movq %%rbp, %1\n\t"
 			"movq %%r14, %2\n\t"
 			"movq %%r15, %3\n\t"
-			:"=m" (rsp), "=m" (rbp), "=m" (aStack), "=m" (cStack)
+			"movq %%r11, %4\n\t"
+			:"=m" (rsp), "=m" (rbp), "=m" (aStack), "=m" (cStack), "=m" (tStack)
 			:
 			:"memory"
 			);
 
 	switch(eeskir) {
 		case(HALT):
-			quit(rsp, rbp);
+			quit(rsp, rbp, tStack);
 			break;
 		case(PRNT):
 			printf("%lx\n", *rsp);
@@ -78,4 +79,11 @@ void kernel(long eeskir) {
 			break;
 	}
 	//printf("kernel returning to address %lx\n", *aStack);
+
+	asm volatile (
+			"movq %0, %%r11\n\t"
+			:
+			:"r" (tStack)
+			:
+			);
 }

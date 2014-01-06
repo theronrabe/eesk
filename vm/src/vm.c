@@ -43,8 +43,8 @@ long SP = 0;
 long LEN = 0;
 char verboseFlag = 0;
 Stack *libStack;
-long *dataStack, *activationStack, *counterStack, *MEM;
-long *oldDStack, *oldAStack, *oldCStack, MEMlength;
+long *dataStack, *activationStack, *counterStack, *MEM, *typeStack;
+long *oldDStack, *oldAStack, *oldCStack, *oldTStack, MEMlength;
 translation *dictionary;
 
 /*
@@ -90,7 +90,8 @@ long *load(char *fn) {
 */
 void main(int argc, char **argv) {
 	//prepare JIT compiler
-	dictionary = prepareTranslation();
+	Context coDummy;
+	dictionary = prepareTranslation(&coDummy);
 	jitInit(dictionary);
 
 	//prepare stacks
@@ -103,6 +104,8 @@ void main(int argc, char **argv) {
 		activationStack = oldAStack+999;
 	oldCStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
 		counterStack = oldCStack+999;
+	oldTStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+		typeStack = oldTStack+1000;
 
 	*counterStack = activationStack;
 	counterStack -= 1;
@@ -118,9 +121,10 @@ void main(int argc, char **argv) {
 			"movq %1, %%r12\n\t"		//remember kernel location
 			"movq %2, %%r14\n\t"		//remember activation stack
 			"movq %3, %%r15\n\t"		//remember counter stack
+			"movq %6, %%r11\n\t"		//remember type stack
 			"callq *%4\n\t"		//pass control to user's program
 			:
-			:"m" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC), "r" (dataStack)
+			:"m" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC), "r" (dataStack), "r" (typeStack)
 			);
 	kernel(HALT);
 }
@@ -131,15 +135,17 @@ void main(int argc, char **argv) {
 	TODO:
 		- fix that memory leak caused by not being able to munmap(oldCStack)
 */
-void quit(long *rsp, long *rbp) {
+void quit(long *rsp, long *rbp, long *r11) {
 	rbp -= 2;
 	//if(verboseFlag) printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
 	printf("\n");
 	
+		//printf("Types: %p to %p\n", oldTStack+1000, r11);
 	for(;rsp < rbp; rsp++){
-		printf("| %12lx |\n", *rsp);
+		printf("| %12lx : %lx |\n", *rsp, *(r11));
+		r11++;
 	}
-		printf("|______________|\n");
+		printf("|__________________|\n");
 	
 	//Unload libStack
 	for(int i=0;i<libStack->sp;i++) {
@@ -148,6 +154,7 @@ void quit(long *rsp, long *rbp) {
 	
 	munmap(oldDStack, 1000*sizeof(long));
 	munmap(oldAStack, 1000*sizeof(long));
+	munmap(oldTStack, 1000*sizeof(long));
 	//munmap(oldCStack, 1000*sizeof(long));
 	munmap(MEM, MEMlength);
 	
