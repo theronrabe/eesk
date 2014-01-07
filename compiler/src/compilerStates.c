@@ -277,6 +277,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 		writeObj(C, NPUSH, 0);
 		//printf("AnonSym %s %d\n", sym->token, sym->val);
 	}
+	//printf("\n");
 	C->anonStack->sp = oldAnon;
 
 	//write Set body
@@ -302,15 +303,16 @@ long compileCall(Compiler *C, Context *CO, char *tok) {
 	Context _CO; subContext(CO, &_CO);
 
 	_CO.instructionFlag = 1;
-	_CO.symbols = tableAddLayer(_CO.symbols, tok, 0);
+	if(!CO->anonFlag) _CO.symbols = tableAddLayer(_CO.symbols, tok, 0);	//because anonymous symbols exist in a flat layer
 	_C.dst = NULL;
 	long argL = compileStatement(&_C, &_CO, tok);	//find argument length
-	_CO.symbols = tableRemoveLayer(_CO.symbols);
+	if(!CO->anonFlag) _CO.symbols = tableRemoveLayer(_CO.symbols);
 
 	//push return address of call
 	writeObj(C, RPUSH, argL+C->dictionary[JSR].length+1);			//push return address
 
 	//compile arguments
+	subContext(CO, &_CO);
 	compileStatement(C, &_CO, tok);
 	_CO.instructionFlag = CO->instructionFlag;
 

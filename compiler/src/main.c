@@ -53,6 +53,7 @@ int main(int argc, char **argv) {
 	CO.staticFlag = 0;
 	CO.parameterFlag = 0;
 	CO.instructionFlag = 1;
+	CO.anonFlag = 0;
 	CO.symbols = tableCreate();
 		CO.symbols = tableAddLayer(CO.symbols, "this", 1);	//Ensures we have a "this" reference at all times
 	

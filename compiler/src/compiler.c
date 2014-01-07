@@ -116,7 +116,6 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 
 			case(k_oParen):
 				_CO.instructionFlag = 1;
-				//compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, lineCount);
 				compileStatement(C, &_CO, tok);
 				_CO.instructionFlag = CO->instructionFlag;
 				break;
@@ -552,7 +551,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 				if(display) printf("declaring anonymous: %s\n", sym->token);
 				writeObj(C, AGET, 0);	//this will be changed to the correct parameter value the second time through (once the symbol table knows)
 				sym->parameterFlag = 1;
-				stackPush(C->anonStack, sym);
+				/*if(C->dst)*/ stackPush(C->anonStack, sym);
 			} else {
 				if(display) printf("declaring non anonymous: %s\n", sym->token);
 				if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
