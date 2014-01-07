@@ -1,0 +1,39 @@
+#How might a type stack help?
+	#All Sets are values
+	#Few values are Sets
+	#Value operators (+, -, *, /, %, etc.) change type to value
+	#$ operator could indicate Set or value when used. Solution?
+		#each user-symbol's space could have an extra word of type
+		#when symbol is assigned, it takes type of top of typestack
+		#when symbol is again encountered, it places most recent type on typestack
+		#$ has no effect on typestack
+	#[] behavior depends on top of typestack
+{
+	Set asdf {} {this}
+Begin
+	3 []
+	asdf []
+	test []
+	asdf
+	(1 + 2) [] ^
+	notASet []
+	1 + asdf; []
+	100 []
+	setPointer$ []
+}
+
+#Type stack instructions:
+	#-	pushType	whenever a term is explicitly stacked
+	#-	popType		clears top of typeStack
+	#-	symType		places symbol's type on typeStack
+	#-	typeof		reads (pops) type from typestack
+	#data operators change top of typestack
+	#-	check top of typestack in [] assembly
+	#assign type to symbol upon = operator
+		#what about assignments to dynamic memory? How is type stored?
+	
+	#Operators that affect type:
+		#+-*/%
+		#^ : ...
+		#= =>
+		#== < > & | !
