@@ -5,12 +5,16 @@
 #include <stdio.h>
 #include <stack.h>
 
+//Following declarations' functions in assembler.c
+
 typedef struct translation {
 	int param;
 	char dWord;
 	int length;
 	unsigned char *code;
 } translation;
+
+//Following declaration's functions in symbolTable.c
 
 typedef struct Table {
 	char *token;
@@ -27,6 +31,8 @@ typedef struct Table {
 	struct Table *layerRoot;
 } Table;
 
+//Following declarations' functions in context.c
+
 typedef struct Context {
 	char publicFlag;
 	char literalFlag;
@@ -36,6 +42,8 @@ typedef struct Context {
 	char instructionFlag;
 	char anonFlag;
 	char typingFlag;
+	char displaySymbols;
+	char verboseFlag;
 	long expectedLength;
 	Table *symbols;
 } Context;

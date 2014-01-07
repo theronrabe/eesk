@@ -22,13 +22,23 @@ This file is part of Eesk.
 #include <definitions.h>
 
 void contextSetOptions(int argc, char **argv, Context *CO) {
+	CO->typingFlag = 0;
+	CO->displaySymbols = 0;
+	CO->verboseFlag = 0;
+
 	if(argc > 2) {
 		int i = 2;
 		for(;i < argc; i++) {
-			switch (argv[i][0]) {
-				case ('t'):
-					CO->typingFlag = 1;
-					break;
+			if(argv[i][0] == '-') {
+				switch (argv[i][1]) {
+					case ('t'):
+						CO->typingFlag = 1;
+						break;
+					case ('s'):
+						CO->displaySymbols = 1;
+					case ('v'):
+						CO->verboseFlag = 1;
+				}
 			}
 		}
 	}

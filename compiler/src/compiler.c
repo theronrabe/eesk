@@ -532,7 +532,7 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 	symbol in the current scope, according to the current context.
 */
 long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
-	char display = 0;
+	char display = CO->displaySymbols;
 	//this function figures out what address a non-keyword token should correlate to
 	//and writes that address to the output file
 	long begin = C->LC;
@@ -656,6 +656,8 @@ void subContext(Context *C1, Context *C2) {
 	C2->anonFlag = C1->anonFlag;
 	C2->symbols = C1->symbols;
 	C2->typingFlag = C1->typingFlag;
+	C2->displaySymbols = C1->displaySymbols;
+	C2->verboseFlag = C1->verboseFlag;
 }
 
 /*
@@ -819,6 +821,7 @@ translation *prepareTranslation(Context *CO) {
 	translationAdd(ret, TPOP, c_tpop, -1, 0);
 	translationAdd(ret, TVAL, c_tval, -1, 0);
 	translationAdd(ret, TSET, c_tset, -1, 0);
+	translationAdd(ret, TDUP, c_tdup, -1, 0);
 	
 	return ret;
 }
