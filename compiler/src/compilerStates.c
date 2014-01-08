@@ -346,10 +346,23 @@ long compileNative(Compiler *C, Context *CO, char *tok) {
 	long begin = C->LC;
 	Compiler _C; subCompiler(C, &_C);
 	Context _CO; subContext(CO, &_CO);
+	
+	//swap stacks
+	if(CO->swapFlag) {
+		writeObj(C, SWAP, 0);
+		++(_CO.swapDepth);
+	}
+
 	//compiled argument section
 	_CO.instructionFlag = 1;
 	compileStatement(C, &_CO, tok);
 	_CO.instructionFlag = CO->instructionFlag;
+
+	//swap back
+	if(CO->swapFlag) {
+		writeObj(C, RESWAP, 0);
+		--(_CO.swapDepth);
+	}
 
 	//make call
 	writeObj(C, NTV, 0);
