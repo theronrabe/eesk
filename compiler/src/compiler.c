@@ -139,7 +139,7 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 			case(k_cBracket):
 				fillOperations(C, operationStack);
 				if(C->LC - begin) {
-					writeObj(C, APUSH, 0);
+					if(!CO->swapFlag) writeObj(C, APUSH, 0);
 				}
 				endOfStatement = 1;
 				break;
@@ -549,6 +549,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 			//This is an implicitly declared variable
 			if(CO->anonFlag) {
 				if(display) printf("declaring anonymous: %s\n", sym->token);
+				writeObj(C, ABASE, 10);	//this is a placeholder for the sake of length-counting
 				writeObj(C, AGET, 0);	//this will be changed to the correct parameter value the second time through (once the symbol table knows)
 				sym->parameterFlag = 1;
 				/*if(C->dst)*/ stackPush(C->anonStack, sym);
@@ -572,6 +573,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 	if(display) printf("recognizing symbol: %s\n\t", sym->token);
 	
 	if(sym->parameterFlag) {
+		writeObj(C, ABASE, (CO->swapDepth+1)*0x10);
 		writeObj(C, AGET, sym->val + WRDSZ);
 		if(display) printf("is a parameter\n");
 	} else {
@@ -658,6 +660,8 @@ void subContext(Context *C1, Context *C2) {
 	C2->typingFlag = C1->typingFlag;
 	C2->displaySymbols = C1->displaySymbols;
 	C2->verboseFlag = C1->verboseFlag;
+	C2->swapDepth = C1->swapDepth;
+	C2->swapFlag = C1->swapFlag;
 }
 
 /*
@@ -783,7 +787,11 @@ translation *prepareTranslation(Context *CO) {
 	translationAdd(ret, BPOP, c_bpop, -1, 0); 
 	translationAdd(ret, CONT, c_cont, -1, 0); 
 	translationAdd(ret, CLR, c_clr, -1, 0); 
-	if(CO->typingFlag) translationAdd(ret, JSR, c_tjsr, -1, 0); else translationAdd(ret, JSR, c_jsr, -1, 0); 
+	if(CO->typingFlag) {
+		translationAdd(ret, JSR, c_tjsr, -1, 0);
+	} else {
+		translationAdd(ret, JSR, c_jsr, -1, 0); 
+	}
 	translationAdd(ret, RSR, c_rsr, -1, 0); 
 	translationAdd(ret, APUSH, c_apush, -1, 0); 
 	translationAdd(ret, AGET, c_aget, 2, 0);
@@ -822,6 +830,9 @@ translation *prepareTranslation(Context *CO) {
 	translationAdd(ret, TVAL, c_tval, -1, 0);
 	translationAdd(ret, TSET, c_tset, -1, 0);
 	translationAdd(ret, TDUP, c_tdup, -1, 0);
+	translationAdd(ret, SWAP, c_swap, -1, 0);
+	translationAdd(ret, RESWAP, c_reswap, -1, 0);
+	translationAdd(ret, ABASE, c_abase, 5, 0);
 	
 	return ret;
 }

@@ -99,6 +99,8 @@ typedef enum {
 	BKSET,
 	CHAR,
 	NPUSH,
+
+	//typing instructions
 	TPUSH,	//36
 	TSYM,
 	TYPEOF,
@@ -106,6 +108,12 @@ typedef enum {
 	TPOP,
 	TVAL,
 	TSET,
+	TDUP,
+
+	//experimental stuff
+	SWAP,	//3e
+	RESWAP,
+	ABASE,
 	
 	//convenience keywords
 	DATA,

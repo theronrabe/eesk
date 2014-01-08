@@ -309,12 +309,31 @@ long compileCall(Compiler *C, Context *CO, char *tok) {
 	if(!CO->anonFlag) _CO.symbols = tableRemoveLayer(_CO.symbols);
 
 	//push return address of call
-	writeObj(C, RPUSH, argL+C->dictionary[JSR].length+1);			//push return address
+	//if(CO->typingFlag) writeObj(C, TDUP, 0);
+	long distance;
+	if(CO->swapFlag) {
+		distance = argL + C->dictionary[SWAP].length + C->dictionary[RESWAP].length + C->dictionary[JSR].length + 1;
+	} else {
+		distance = argL + C->dictionary[JSR].length + 1;
+	}
+	writeObj(C, RPUSH, distance);			//push return address
+
+	//swap stacks
+	if(CO->swapFlag) {
+		writeObj(C, SWAP, 0);
+		++(CO->swapDepth);
+	}
 
 	//compile arguments
 	subContext(CO, &_CO);
 	compileStatement(C, &_CO, tok);
 	_CO.instructionFlag = CO->instructionFlag;
+
+	//swap back
+	if(CO->swapFlag) {
+		writeObj(C, RESWAP, 0);
+		--(CO->swapDepth);
+	}
 
 	//make call
 	writeObj(C, JSR, 0);

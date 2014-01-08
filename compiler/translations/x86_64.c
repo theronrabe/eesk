@@ -172,9 +172,11 @@ void jsr() {
 			//check to see if we can skip this process
 			//consider this portion of jsr a typed pre-jsr
 				"movq (%%r11), %%rax\n\t"	//grab type
+				//"subq $0x8, %%r11\n\t"		//raise stack pointer
+				//"movq %%rax, (%%r11)\n\t"	//duplicate type
 				"test %%rax, %%rax\n\t"		//check type
 				"jz _skipJsr\n\t"		//if value, skip evaluation
-				"addq $0x8, %%r11\n\t"		//otherwise, move top of typeStack and continue
+				//"addq $0x8, %%r11\n\t"		//otherwise, move top of typeStack and continue
 			//end pre-jsr typing
 
 			//push activationStack onto counterStack, and grab numArgsPassed
@@ -201,6 +203,7 @@ void jsr() {
 			//place call
 			"popq %%rax\n\t"		//grab calling address
 				//"movq (%%r15), %%r15\n\t" //crash here
+				"add $0x8, %%r11\n\t"	//lower typeStack pointer 
 			"jmp *%%rax\n\t"
 
 			//skip evaluation point
@@ -251,11 +254,23 @@ void apush() {
 			);
 }
 
+void abase() {
+	//this instruction sets the depth of the counter stack to use for aget-ing a symbol
+	//always use this instruction before aget
+	asm volatile (
+			"movq %%r15, %%rbx\n\t"			//grab counter stack
+			"movq $0x0123456789abcdef, %%rax\n\t"	//grab base index, should be a multiple of 0x10
+			"addq %%rax, %%rbx\n\t"			//set rbx to frame base pointer
+			"movq (%%rbx), %%rbx\n\t"		//resolve pointer, leave in rbx for aget's use
+			:::
+			);
+}
+
 void aget() {
 	asm volatile (
 			"movq $0x0123456789abcdef, %%rax\n\t"	//grab offset parameter
 			//"movq 0x8(%%r15), %%rbx\n\t"		//grab base address (previous activationStack)
-				"movq 0x10(%%r15), %%rbx\n\t"
+				//"movq 0x10(%%r15), %%rbx\n\t"
 			"subq %%rax, %%rbx\n\t"			//combine base with offset
 			"pushq %%rbx\n\t"		//push argument to stack
 			:::
@@ -623,3 +638,49 @@ void tpop() {
 			:::
 			);
 }
+
+void tdup() {
+	asm volatile (
+			"movq (%%r11), %%rax\n\t"	//grab type
+			"subq $0x8, %%r11\n\t"		//raise stack pointer
+			"movq %%rax, (%%r11)\n\t"	//duplicate type
+			:::
+			);
+}
+
+void swap() {
+	asm volatile (
+			//start new counter frame
+			"subq $0x10, %%r15\n\t"		//advance counter stack
+							//return address can be ignored for now
+			"movq %%rsp, (%%r15)\n\t"	//current dataStack is base of newest activation frame
+
+			//swap dataStacks and typeStacks
+			"movq %%rsp, %%r13\n\t"		//back up current stack
+			"movq %%r14, %%rsp\n\t"		//switch to other stack
+			"movq %%r13, %%r14\n\t"		//swap stacks
+
+			"movq %%r10, %%r9\n\t"		//back up other typestack
+			"movq %%r11, %%r10\n\t"		//switch to other typestack
+			"movq %%r9, %%r11\n\t"		//swap typestacks
+			:::
+			);
+}
+
+void reswap() {
+	asm volatile (
+			//reswap stacks and remove extra activation frame
+			"addq $0x10, %%r15\n\t"			//retract counter stack
+
+			//handle swapping
+			"movq %%rsp, %%r13\n\t"			//backup current stack
+			"movq %%r14, %%rsp\n\t"			//hop to other stack
+			"movq %%r13, %%r14\n\t"			//finish stack swap
+
+			"movq %%r10, %%r9\n\t"		//back up other typestack
+			"movq %%r11, %%r10\n\t"		//switch to other typestack
+			"movq %%r9, %%r11\n\t"		//swap typestacks
+			:::
+			);
+}
+

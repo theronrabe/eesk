@@ -44,7 +44,9 @@ typedef struct Context {
 	char typingFlag;
 	char displaySymbols;
 	char verboseFlag;
+	char swapFlag;
 	long expectedLength;
+	long swapDepth;
 	Table *symbols;
 } Context;
 
