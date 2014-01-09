@@ -246,7 +246,7 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 
 			case(k_argument):
 				fillOperations(C, operationStack);
-				if(!CO->parameterFlag) { writeObj(C, NPUSH, 0); if(CO->typingFlag) writeObj(C, TPOP, 0); }
+				if(!CO->parameterFlag) { writeObj(C, APUSH, 0); if(CO->typingFlag) writeObj(C, TPOP, 0); }
 				break;
 
 
