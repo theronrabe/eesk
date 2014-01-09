@@ -191,10 +191,12 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 	//
 //printf("%lx: compiling body %lx\n", C->LC, C->SC);
 		subCompiler(C, &_C);
+		subContext(CO, &_CO);
 		CO->expectedLength = totalLength;
+		_CO.swapDepth = 0;
 		_C.LC = 0;
 		_C.dst = C->dst;
-	bodyL = compileStatement(&_C, CO, tok);	//compiled body, relatively addressed
+	bodyL = compileStatement(&_C, &_CO, tok);	//compiled body, relatively addressed
 	//printf("bodyL next = %lx\n", bodyL);
 		C->SC = _C.SC;
 		C->LC += _C.LC;
@@ -283,7 +285,9 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	//write Set body
 		//subCompiler(C, &_C);
 		//_C.LC = 0;
-	bodyL = compileStatement(C, CO, tok);
+		subContext(CO, &_CO);
+		_CO.swapDepth = 0;
+	bodyL = compileStatement(C, &_CO, tok);
 		//C->SC = _C.SC;
 		//C->LC += _C.LC;
 	writeObj(C, RSR, 0);
@@ -310,6 +314,7 @@ long compileCall(Compiler *C, Context *CO, char *tok) {
 
 	//push return address of call
 	//if(CO->typingFlag) writeObj(C, TDUP, 0);
+	/*
 	long distance;
 	if(CO->swapFlag) {
 		distance = argL + C->dictionary[SWAP].length + C->dictionary[RESWAP].length + C->dictionary[JSR].length + 1;
@@ -317,6 +322,7 @@ long compileCall(Compiler *C, Context *CO, char *tok) {
 		distance = argL + C->dictionary[JSR].length + 1;
 	}
 	writeObj(C, RPUSH, distance);			//push return address
+	*/
 
 	//swap stacks
 	if(CO->swapFlag) {
@@ -334,6 +340,9 @@ long compileCall(Compiler *C, Context *CO, char *tok) {
 		writeObj(C, RESWAP, 0);
 		--(CO->swapDepth);
 	}
+
+	//RESWAP kept call address on top of current stack, now push return address
+	writeObj(C, RPUSH, C->dictionary[JSR].length + 1);
 
 	//make call
 	writeObj(C, JSR, 0);

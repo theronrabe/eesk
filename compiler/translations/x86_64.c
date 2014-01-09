@@ -208,7 +208,7 @@ void jsr() {
 
 			//skip evaluation point
 			"_skipJsr:\n\t"
-			//"popq %%rax\n\t"
+			"popq %%rax\n\t"
 			:::
 			);
 }
@@ -652,7 +652,8 @@ void swap() {
 	asm volatile (
 			//start new counter frame
 			"subq $0x10, %%r15\n\t"		//advance counter stack
-							//return address can be ignored for now
+			"popq %%rax\n\t"		//grab calling address
+			"movq %%rax, 0x8(%%r15)\n\t"	//store calling address
 			"movq %%rsp, (%%r15)\n\t"	//current dataStack is base of newest activation frame
 
 			//swap dataStacks and typeStacks
@@ -669,6 +670,9 @@ void swap() {
 
 void reswap() {
 	asm volatile (
+			//recall calling address
+			"movq 0x8(%%r15), %%rax\n\t"		//grab call address
+
 			//reswap stacks and remove extra activation frame
 			"addq $0x10, %%r15\n\t"			//retract counter stack
 
@@ -680,6 +684,8 @@ void reswap() {
 			"movq %%r10, %%r9\n\t"		//back up other typestack
 			"movq %%r11, %%r10\n\t"		//switch to other typestack
 			"movq %%r9, %%r11\n\t"		//swap typestacks
+
+			"pushq %%rax\n\t"			//put it in correct location
 			:::
 			);
 }
