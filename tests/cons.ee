@@ -29,7 +29,7 @@
 		public lastItem			#what if this offset were measured from the tail?
 	}
 Begin
-	three = cons [inf, two];		#Build a new Set from two others
+	three = cons [inf two];		#Build a new Set from two others
 
 	three->list.tail$ []			#Evaluate just part of that new list
 	(three->list.tail)<-sublist.lastItem	#Pattern match against the end of a Set

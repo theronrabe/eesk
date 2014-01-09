@@ -31,7 +31,7 @@
 		public Set destroy {L} {
 			given moment0:
 				L$ [1]
-				while {given now: now$ - moment0$} {
+				while {given now: now$ < moment0$} {
 					free
 				}
 			... moment0$;

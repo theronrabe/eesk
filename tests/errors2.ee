@@ -1,4 +1,7 @@
 #This program tests the counting skills of anonymous Sets
 {
-	1  2 `{a$ + b$; `{10 - x$} []} []
+	#-1
+	Set foo {} {
+		foo
+	}
 }

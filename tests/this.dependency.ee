@@ -1,0 +1,10 @@
+#Let's test the regularity of this language
+# what if dependecy set were replaced with evaluable anonymous set? (this.dependency maybe?)
+{
+	Set foo {-1 str str2 `{1 2 3}[] } {
+		this.dependency []
+		prints str$;
+		prints str2$;
+	}
+	["hello, world!\n" "I am eesk.\n"]
+}

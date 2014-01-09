@@ -1,4 +1,14 @@
 #Test turing completeness of right-regular Eesk
+#
+#Grammar for right-regular Eesk followed in this file:
+	# S -> rep S | Abs S | enc S | eval S | ')' | ']' | '}' | {}
+	# rep -> *('0'-'9')
+	# Abs -> op | sym
+	# op -> '+' | '-' | 'given' | '$' | '...' | etc.
+	# sym -> *('a'-'z'|'A'-'Z' *('0'-'9'))
+	# enc -> '`'
+	# eval -> '['
+
 {
 	`{
 		given now:
@@ -30,8 +40,8 @@
 		`{printd i$}
 	repeat$ []
 
-		`{prints "I decided true.\n"}
-		`{ `{i$ < 10; i=i$+1} `{prints "I decided false.\n"} repeat$ [] }
-		(10 > 11)
+		`{prints 1}
+		`{ `{i$ < 10; i=i$+1} `{printd 0} repeat$ [] }
+		10 > 11;
 	decide$ []
 }

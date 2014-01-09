@@ -9,18 +9,21 @@
 		#$ has no effect on typestack
 	#[] behavior depends on top of typestack
 {
-	Set asdf {} {this}
+	Set asdf {x} {prints "here\n"; x$}
 Begin
-	3 []
-	asdf []
-	test []
-	asdf
-	(1 + 2) [] ^
-	notASet []
-	1 + asdf; []
-	100 []
-	setPointer$ []
+	#3 []
+	#1 2 3 [End]
+	#asdf [ asdf [ asdf [End 100] ] ]
+	asdf [1 2 3]
+	#test []
+	#asdf
+	#(1 + 2) [] ^
+	#notASet []
+	#1 + asdf; []
+	#100 []
+	#setPointer$ []
 }
+#activationStack requires its own typestack
 
 #Type stack instructions:
 	#-	pushType	whenever a term is explicitly stacked

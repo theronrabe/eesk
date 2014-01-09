@@ -1,0 +1,21 @@
+#This file explores some of the stranger caveats of a spiraled-stack machine
+{
+	Set A {x} {prints "in A with "; printd x$} ^
+	Set B {x} {prints "in B with "; printd x$} ^
+	Set C {x} {prints "in C with "; printd x$} ^
+Begin
+	#10 `{A [arg$] B []} []
+	10, A [] B []
+
+	prints "\n";
+
+	100 `{A [B [C [x$]]]} []	#A and B aren't given a value, but still print 100, because it was the most recent first argument
+	
+	prints "\n";
+
+	7, A [5, C [] B []]		#7 is added to A's dependency set, then spoofed into also being in C's
+
+	prints "\n";
+
+	A [A [A [A [A [A []]]]]]	#Never recieves an actual argument, but doesn't corrupt stacks. Uses garbage as argument value.
+}

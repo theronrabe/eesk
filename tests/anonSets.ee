@@ -1,6 +1,6 @@
 #This program tests anonymous Set building
 {
-	1 2 `{3} `{a$ b$ c$[] (c$[]+1)} new; => S;
+	1 2 `{3} 0 `{a$ b$ c$[d] (c$[]+1)} new; => S;
 
 	S$ []
 

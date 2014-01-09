@@ -5,7 +5,7 @@
 Begin
 	msg = "H llo, World!";
 	msg$ + 1 set 'e;
-	string.strcat[msg$, " Does this work?"] ^
-	IO.puts[msg$] ^
+	string.strcat [msg$ " Does this work?"] ^
+	IO.puts [msg$] ^
 End
 }

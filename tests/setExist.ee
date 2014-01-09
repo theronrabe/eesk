@@ -3,8 +3,8 @@
 	include "E.Sets" ^
 
 	prints "Is 3 inside 1-5?\t";
-	printd Sets.exists [`{1 2 3 4 5}, 3];
+	printd Sets.exists [`{1 2 3 4 5} 3];
 
-	prints "Is 7 inside 1-7?\t";
-	printd Sets.exists [`{1 2 3 4 5}, 7];
+	prints "Is 7 inside 1-5?\t";
+	printd Sets.exists [`{1 2 3 4 5} 7];
 }

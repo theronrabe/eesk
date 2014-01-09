@@ -4,19 +4,19 @@
 	#
 	#This function doubles the first input and adds it to the second input.
 	#
-	Set twoXplusY {A, B} {
-		public Set add {X, Y} {
+	Set twoXplusY {A B} {
+		public Set add {X Y} {
 			(X$ + Y$)
-		} [2*A$, B$]
+		} [2*A$; B$]
 	}
 Begin
 	X = 34;
 	Y = 3;
 
 	if {(X$ < 10) | (X$ > 20)} {
-		twoXplusY [X$, Y$]
+		twoXplusY [X$; Y$]
 	}{
-		twoXplusY.add [X$, Y$]
+		twoXplusY.add [X$; Y$]
 	}
 End
 }

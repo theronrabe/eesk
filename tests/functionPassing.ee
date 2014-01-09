@@ -1,13 +1,14 @@
 #This program passes functions to functions
 {
-	Set exec {foo, x, y} {
-		foo$[x$, y$];
+	Set exec {foo x y} {
+		foo$ [x$ y$]
 		exec
 	}
+	
 Begin
-	exec[
-		Set bar {x,y} {x$ = x$$+y$},
-		x,
+	exec [
+		Set bar {x y} {x$ = x$$+y$}
+		x
 		2
 	][][][][] ^
 	x$

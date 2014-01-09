@@ -2,7 +2,7 @@
 {
 	include "system.IO" []
 
-	val = IO.prompt ["Pick a number.", 1];
+	val = IO.prompt ["Pick a number: " 1];
 	prints "You picked ";
 	printd val$;
 	prints "You win!\n";

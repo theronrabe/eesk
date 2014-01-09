@@ -1,10 +1,10 @@
 #This program accumulates a function
 {
-Begin
+#Begin
 	while {i$ < 6} {
 		Set contAdd {x} { public sum = sum$+x$ } [i$]
 		i = i$+1;
 	}
 	contAdd.sum$;
-End
+#End
 }

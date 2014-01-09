@@ -6,12 +6,12 @@
 	
 		public Set strcpy {dest, src} {
 			if {libc$!} {init[]} {}
-			Native call "strcpy:p(pp)" @ libc$ [dest$, src$]
+			Native call "strcpy:p(pp)" @ libc$ [dest$ src$]
 		}^
 	
 		public Set strcat {str1, str2} {
 			if {libc$!} {init[]} {}
-			Native "strcat:p(pp)" @ libc$ [str1$, str2$]
+			Native "strcat:p(pp)" @ libc$ [str1$ str2$]
 		}^
 
 		public Set strlen {str} {

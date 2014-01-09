@@ -9,7 +9,7 @@
 
 		private tail ^
 
-		public Set push {X, Y} {
+		public Set push {X Y} {
 			next = new node;
 			next->node.value = X$;
 			next->node.value2 = Y$;
@@ -26,9 +26,9 @@
 		} ^
 	}
 Begin
-	listStack.push [7, 1]
-	listStack.push [8, 2]
-	listStack.push [9, 3]
+	listStack.push [7 1]
+	listStack.push [8 2]
+	listStack.push [9 3]
 
 	listStack.pop []
 	listStack.pop []

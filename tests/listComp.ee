@@ -1,0 +1,4 @@
+#This is effectively a list comprehension. List contains all doubles of integers up to 10
+{
+	while {i$<10; i=i$+1} {i$*2}
+}

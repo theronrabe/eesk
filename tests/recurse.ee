@@ -1,6 +1,6 @@
 #This program tests recursion
 {
-	public Set fib {N} {
+	Set fib {N} {
 		if {N$<2} {
 			1
 		}{
@@ -9,7 +9,7 @@
 	}
 Begin
 	while {loop$ < 40} {
-		printd fib[loop$];
+		printd fib [loop$];
 		loop = loop$ + 1;
 	}
 End

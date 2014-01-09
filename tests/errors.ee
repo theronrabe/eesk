@@ -1,11 +1,13 @@
+#This file explores some of the stranger caveats of a spiraled-stack machine
 {
-	Set _ {} {
-		public given val ^
-	}
+	Set A {x} {prints "in A with "; printd x$}
+	Set B {x} {prints "in B with "; printd x$}
+	Set C {x} {prints "in C with "; printd x$}
 Begin
-	myX = new _;
-	myX->_.val = 7;
-	myX->_.val$;
-	free myX$;
-End
+	100 `{A [B [C [x$]]]} []	#A and B aren't given a value, but still print 100, because it was the most recent first argument
+	
+	prints "\n";
+	
+	3, B []				#3 is made B's first argument
+	7, A [, C []]			#7 is added to A's dependency set, then spoofed into also being in C's
 }
