@@ -43,8 +43,8 @@ long SP = 0;
 long LEN = 0;
 char verboseFlag = 0;
 Stack *libStack;
-long *dataStack, *activationStack, *counterStack, *MEM, *typeStack;
-long *oldDStack, *oldAStack, *oldCStack, *oldTStack, MEMlength;
+long *dataStack, *activationStack, *counterStack, *MEM, *typeStack, *otypeStack;
+long *oldDStack, *oldAStack, *oldCStack, *oldTStack, *oldOTStack, MEMlength;
 translation *dictionary;
 
 /*
@@ -105,7 +105,9 @@ void main(int argc, char **argv) {
 	oldCStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
 		counterStack = oldCStack+999;
 	oldTStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-		typeStack = oldTStack+1000;
+		typeStack = oldTStack+999;
+	oldOTStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+		otypeStack = oldOTStack+999;
 
 	*counterStack = activationStack;
 	counterStack -= 1;
@@ -122,9 +124,10 @@ void main(int argc, char **argv) {
 			"movq %2, %%r14\n\t"		//remember activation stack
 			"movq %3, %%r15\n\t"		//remember counter stack
 			"movq %6, %%r11\n\t"		//remember type stack
+			"movq %7, %%r10\n\t"		//remember secondary type stack
 			"callq *%4\n\t"		//pass control to user's program
 			:
-			:"m" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC), "r" (dataStack), "r" (typeStack)
+			:"m" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC), "r" (dataStack), "r" (typeStack), "r" (otypeStack)
 			);
 	kernel(HALT);
 }
@@ -136,16 +139,24 @@ void main(int argc, char **argv) {
 		- fix that memory leak caused by not being able to munmap(oldCStack)
 */
 void quit(long *rsp, long *rbp, long *r11) {
-	rbp -= 2;
+	char swapped = (rbp-rsp >= 1000);
+	rbp -= 3;
 	//if(verboseFlag) printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
 	printf("\n");
 	
-		//printf("Types: %p to %p\n", oldTStack+1000, r11);
-	for(;rsp < rbp; rsp++){
-		printf("| %12lx : %lx |\n", *rsp, *(r11));
-		r11++;
+		//printf("Types: %p to %p\n", oldTStack+999, r11);
+	if(!swapped) {
+		printf("{\n");
+		for(;rbp >= rsp; rbp--) {
+			//printf("| %12lx : %lx|\n", *rsp, *(r11)); //*(oldTStack+999 - (rbp-rsp)), oldTStack+999 - (rbp-rsp));
+			//r11++;
+			printf("\t%ld\n", *rbp);
+		}
+		//printf("|_________________|\n");
+		printf("}\n\n");
+	} else {
+		printf("Stacks are swapped.\n");
 	}
-		printf("|__________________|\n");
 	
 	//Unload libStack
 	for(int i=0;i<libStack->sp;i++) {
@@ -155,6 +166,7 @@ void quit(long *rsp, long *rbp, long *r11) {
 	munmap(oldDStack, 1000*sizeof(long));
 	munmap(oldAStack, 1000*sizeof(long));
 	munmap(oldTStack, 1000*sizeof(long));
+	munmap(oldOTStack, 1000*sizeof(long));
 	//munmap(oldCStack, 1000*sizeof(long));
 	munmap(MEM, MEMlength);
 	
