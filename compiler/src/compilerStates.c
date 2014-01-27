@@ -133,7 +133,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 	long bodySC = _C.SC;
 	long bodyL = compileStatement(&_C, &_CO, tok);	//body length
 	//printf("bodyL first = %lx\n", bodyL);
-		//CO->expectedLength = _C.LC;
+		CO->expectedLength = _C.LC;
 		depSym->val = bodyL + C->dictionary[RSR].length + C->dictionary[RPUSH].length*2 + C->dictionary[JMP].length + 2*WRDSZ;
 	long offset;
 
@@ -192,10 +192,10 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 //printf("%lx: compiling body %lx\n", C->LC, C->SC);
 		subCompiler(C, &_C);
 		subContext(CO, &_CO);
-		CO->expectedLength = totalLength;
+		_CO.expectedLength = totalLength;
 		_CO.swapDepth = 0;
 		_C.LC = 0;
-		_C.dst = C->dst;
+		//_C.dst = C->dst;
 	bodyL = compileStatement(&_C, &_CO, tok);	//compiled body, relatively addressed
 	//printf("bodyL next = %lx\n", bodyL);
 		C->SC = _C.SC;
