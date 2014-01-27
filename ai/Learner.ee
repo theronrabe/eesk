@@ -1,0 +1,115 @@
+{
+	public Set Learner {} {
+		public given knowledge ^
+
+		Set Association {} {
+			#A node in the memory graph
+			public given symbol ^
+			public given persistence ^
+			public given subassociations ^
+			this
+		} ^
+
+		public Set Association.print {} {
+			=> A;
+			prints "Association "; printd A$;
+			prints "\tsymbol = "; printc A->Association.symbol$;
+			prints "\tpersistence = "; printd A->Association.persistence$;
+			prints "\n";
+		} ^
+
+		private Set locate {sublist sym} {
+			given start:
+				0
+				sublist$ [0]
+				while {given now: now$ < start$ - 8} {
+					=> given assoc;
+					if {assoc->Association.symbol$ == sym$$} {
+						given ret = assoc$;
+						... start$;
+						return ret$;
+					} {
+					}
+				}
+			... start$;
+			-1
+		} ^
+
+		public Set learn {struct sym pers} {
+			#This adds a symbol to the memory space, or if it already exists, alters its persistence
+			locate [struct$$; sym$]; => given key;
+			if {key$ == -1} {
+				#this is an unknown symbol
+				if {('A > sym$$;!) & ('z < sym$$;!)} {
+					given newKnowledge = new Association;
+						newKnowledge->Association.symbol = sym$$;
+						newKnowledge->Association.persistence = pers$;
+						newKnowledge->Association.subassociations = List.atomize [`{}];
+					given newNode = List.atomize [newKnowledge$];
+					struct$ = List.cons [struct$$; newNode$];
+				} {}
+			} {
+				key->Association.persistence = key->Association.persistence$ + 1;
+				if {key->Association.persistence$ == 1} {
+					if {struct$$ == knowledge$} {
+						prints "\tI have learned "; printc sym$$;
+					} {
+						prints "\tI have associated "; printc (sym$ + 8)$; prints " -> "; printc sym$$;
+					}
+				} {}
+			}
+		} ^
+
+		private Set see {list sym} {
+			locate [list$; sym$]; => given idea; 
+			if {idea$ == -1} {
+				learn [knowledge; sym$; 0]
+			} {
+				if {idea->Association.persistence$ > 0} {
+					printc sym$$;
+					sym$$
+
+					locate [idea->Association.subassociations$; sym$ - 8]; => given subidea;
+					if {subidea$ == -1} {
+						learn [idea->Association.subassociations; sym$ - 8; 0]
+						#prints "\tI am curious about "; printc sym$$; prints " -> "; printc (sym$ - 8)$;
+					} {
+						if {subidea->Association.persistence$ > 0} {
+							see [knowledge$ sym$ - 8]
+							return
+						} {
+							learn [idea->Association.subassociations sym$ - 8]
+						}
+					}
+				} {}
+
+				learn [list sym$]					#Increase persistence
+			}
+		} ^
+
+		public Set observe {sym} {
+			prints "I am observing\t";
+			given aSym = sym$;
+
+			capture:
+				(Sets.count [`{see [knowledge$ aSym$]} 1]) => given count;
+			... capture$;
+
+			if {count$} {
+				count$
+			} {
+				1
+			}
+			prints "\n";
+		} ^
+
+		public Set cleanup {} {
+			Sets.foreach [`{knowledge$ [0]} `{ List.destroy [X->Association.subassociations$]; free}]
+			List.destroy [knowledge$]
+		} ^
+
+		public Set init {} {
+			knowledge = List.atomize [`{}];
+		} []
+	} 
+}

@@ -1,0 +1,19 @@
+{
+	public Set Teacher {} {
+		#this set needs to get input strings from the user, and turn them into continuations
+		private Set contents {} {
+			given input = system.IO.prompt ["Teach me something:" 0];
+			#prints input$; prints "\n";
+
+			given continuation:
+				given max = system.string.strlen [input$];
+				max$;
+				given i = -1;
+				while {i$ < max$ - 1; i=i$+1} {
+					char (input$+i$);
+				}
+
+			continuation$
+		} []
+	} ^
+}

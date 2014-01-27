@@ -1,0 +1,45 @@
+#This program learns symbls from a user's text input
+{
+	include "system" []
+	include "E.List" []
+	include "E.Sets" []
+	include "E.Continuations" []
+	include "../ai/Learner" []
+	include "../ai/Teacher" []
+
+	Set quit {} {
+		Sets.foreach [`{Learner.knowledge$ [0]}; Learner.Association.print]
+		Learner.cleanup []
+		End
+	} ^
+
+	Set teach {} {
+		Teacher [] => symbols;	#get continuation of symbols' evaluated Set
+
+		if {symbols$ - 8;$ == 'Q} {... symbols$; quit []} {}
+
+		prints "__________________________________\n\n";
+
+		given i = 0;
+		while {i$ < symbols$$} {
+			given symVal = (symbols$ - (i$+1)*8);
+
+			P = Learner.observe [symVal$];
+
+			i = i$+P$;
+		}
+
+		prints "__________________________________\n";
+
+		... symbols$;
+		return 1;
+	} ^
+Begin
+	Learner []		#init Learner
+
+	while {teach []} {}
+
+	#Sets.foreach [`{Learner.knowledge$ [0]}, `{Learner.Association.print []}]
+	Learner.cleanup []
+End
+}

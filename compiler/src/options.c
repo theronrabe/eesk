@@ -25,7 +25,7 @@ void contextSetOptions(int argc, char **argv, Context *CO) {
 	CO->typingFlag = 0;
 	CO->displaySymbols = 0;
 	CO->verboseFlag = 0;
-	CO->swapFlag = 0;
+	CO->swapFlag = 1;
 
 	if(argc > 2) {
 		int i = 2;
@@ -42,7 +42,7 @@ void contextSetOptions(int argc, char **argv, Context *CO) {
 						CO->verboseFlag = 1;
 						break;
 					case ('s'):
-						CO->swapFlag = 1;
+						CO->swapFlag = 0;
 						break;
 				}
 			}
