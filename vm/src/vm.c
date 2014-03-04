@@ -89,15 +89,40 @@ long *load(char *fn) {
 	Eesk is given control.
 */
 void main(int argc, char **argv) {
+	prepMachine();
+	MEM = load(argv[1]);
+	execute(MEM);
+	kernel(HALT);
+}
+
+void execute(long *P) {
+	//Prepare registers and go
+	//printf("MEM = %p\nPC = %p\n", MEM, PC);
+	//printf("ds = %p\nas = %p\tcs = %p\n", dataStack, activationStack, counterStack);
+	asm volatile (
+			"movq %5, %%rsp\n\t"	//start using the data stack
+			"movq %%rsp, %%rbp\n\t"	//save root stack position in rbp
+			"pushq %0\n\t"		//place address space on stack
+			"movq %1, %%r12\n\t"		//remember kernel location
+			"movq %2, %%r14\n\t"		//remember activation stack
+			"movq %3, %%r15\n\t"		//remember counter stack
+			"movq %6, %%r11\n\t"		//remember type stack
+			"movq %7, %%r10\n\t"		//remember secondary type stack
+			"callq *%4\n\t"		//pass control to user's program
+			:
+			:"m" (P), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC), "r" (dataStack), "r" (typeStack), "r" (otypeStack)
+			);
+}
+
+void prepMachine() {
 	//prepare JIT compiler
 	Context coDummy;
 	dictionary = prepareTranslation(&coDummy);
 	jitInit(dictionary);
 
 	//prepare stacks
-	if(argc>2) verboseFlag = 1;
+	//if(argc>2) verboseFlag = 1;
 	libStack = stackCreate(100);
-	MEM = load(argv[1]);
 	oldDStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
 		dataStack = oldDStack+999;
 	oldAStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
@@ -112,24 +137,6 @@ void main(int argc, char **argv) {
 	*counterStack = activationStack;
 	counterStack -= 1;
 	*counterStack = activationStack;
-
-	//Prepare registers and go
-//printf("MEM = %p\nPC = %p\n", MEM, PC);
-//printf("ds = %p\nas = %p\tcs = %p\n", dataStack, activationStack, counterStack);
-	asm volatile (
-			"movq %5, %%rsp\n\t"	//start using the data stack
-			"movq %%rsp, %%rbp\n\t"	//save root stack position in rbp
-			"pushq %0\n\t"		//place address space on stack
-			"movq %1, %%r12\n\t"		//remember kernel location
-			"movq %2, %%r14\n\t"		//remember activation stack
-			"movq %3, %%r15\n\t"		//remember counter stack
-			"movq %6, %%r11\n\t"		//remember type stack
-			"movq %7, %%r10\n\t"		//remember secondary type stack
-			"callq *%4\n\t"		//pass control to user's program
-			:
-			:"m" (MEM), "r" (kernel), "r" (activationStack), "r" (counterStack), "r" (PC), "r" (dataStack), "r" (typeStack), "r" (otypeStack)
-			);
-	kernel(HALT);
 }
 
 /*
@@ -145,12 +152,13 @@ void quit(long *rsp, long *rbp, long *r11) {
 	printf("\n");
 	
 		//printf("Types: %p to %p\n", oldTStack+999, r11);
+	long *typeTop = r11+(rbp-rsp);
+	//printf("r11 = %lx, top = %lx, old = %lx\n", r11, typeTop, oldTStack+998);
 	if(!swapped) {
 		printf("{\n");
 		for(;rbp >= rsp; rbp--) {
-			//printf("| %12lx : %lx|\n", *rsp, *(r11)); //*(oldTStack+999 - (rbp-rsp)), oldTStack+999 - (rbp-rsp));
-			//r11++;
-			printf("\t%ld\n", *rbp);
+			printf("\t%ld\t:\t%lx\t%p\n", *rbp, *typeTop, typeTop);
+			typeTop--;
 		}
 		//printf("|_________________|\n");
 		printf("}\n\n");
