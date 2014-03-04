@@ -23,5 +23,5 @@ This file is part of Eesk.
 
 #include <definitions.h>
 
-void contextSetOptions(int argc, char **argv, Context *CO);	//Sets options defined in argv into provided context
+void contextSetOptions(int argc, char **argv, Context *CO, Compiler *C);	//Sets options defined in argv into provided context
 #endif
