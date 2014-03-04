@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
 	Context CO;
 	Compiler C;
 	char tok[256];
+	C.src = NULL;
 
 	contextSetOptions(argc, argv, &CO, &C);
 
