@@ -30,11 +30,11 @@ int main(int argc, char **argv) {
 	Compiler C;
 	char tok[256];
 
-	contextSetOptions(argc, argv, &CO);
+	contextSetOptions(argc, argv, &CO, &C);
 
 	C.dictionary = prepareTranslation(&CO);
+	C.dst = (C.src)? fopen(C.src, "w") : fopen("e.out", "w");	//contextSetOptions may have indicated output file by setting C.src
 	C.src = loadFile(argv[1]);
-	C.dst = fopen("e.out", "w");
 	C.SC = 0;
 	C.LC = 0;
 	C.lineCounter = 0;

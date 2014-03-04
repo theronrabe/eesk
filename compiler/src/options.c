@@ -21,7 +21,7 @@ This file is part of Eesk.
 #include <options.h>
 #include <definitions.h>
 
-void contextSetOptions(int argc, char **argv, Context *CO) {
+void contextSetOptions(int argc, char **argv, Context *CO, Compiler *C) {
 	CO->typingFlag = 0;
 	CO->displaySymbols = 0;
 	CO->verboseFlag = 0;
@@ -43,6 +43,9 @@ void contextSetOptions(int argc, char **argv, Context *CO) {
 						break;
 					case ('s'):
 						CO->swapFlag = 0;
+						break;
+					case ('o'):
+						C->src = argv[++i];
 						break;
 				}
 			}
