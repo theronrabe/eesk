@@ -1,0 +1,19 @@
+#This library contains common functions that can be applied to continuations
+{
+	public Set Sequences {} {
+		public Set map {beginning, end, foo} {
+			given i = beginning$;
+			while {i = i$ - 8; i$ < end$;!} {
+				foo$ [i$$] => i$;
+			}
+		} ^
+
+		public Set getIndex {start index} {
+			start$ - (index$ * 8); $
+		} ^
+
+		public Set getLength {start} {
+			given now: start$ - now$; /8; - 1;
+		} ^
+	}
+}

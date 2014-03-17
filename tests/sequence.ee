@@ -1,0 +1,21 @@
+#This program uses the E.Sequences library
+{
+	include "E.Sequences" []
+
+	Set data {} {
+		while {given i$ < 10} {
+			i$
+			i = i$+1;
+		}
+	} ^
+
+Begin
+	now:	data []
+		count = Sequences.getLength [now$];
+		id = Sequences.getIndex [now$ 6];
+	... now$;
+
+	count$
+	id$
+End
+}
