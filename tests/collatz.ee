@@ -1,0 +1,37 @@
+#This program calculuates the longest collatz sequence for an input below 1000000
+{
+	Set collatz {x} {
+		x$
+		if {x$ < 2} {
+			return
+		} {
+			if {x$%2} {
+				collatz [3*x$; + 1]
+			} {
+				collatz [x$/2]
+			}
+		}
+	} ^
+Begin
+	output = 1;
+	while {i$ < 1000000} {
+		head:
+			collatz [i$]
+			tail:
+				if {head$ - tail$; > maxlength$} {
+					maxlength = (head$ - tail$);
+					output = i$;
+
+					printd i$;
+					printd head$ - tail$;
+					prints "\n";
+				} {}
+		... head$;
+
+		i = i$ + 1;
+	}
+
+	output$
+	maxlength$
+End
+}
