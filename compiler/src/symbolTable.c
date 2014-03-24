@@ -44,6 +44,17 @@ Table *tableCreate() {
 	return ret;
 }
 
+void tableDestroy(Table *T) {
+	if (T) {
+		///tableDestroy(T->left);
+		//tableDestroy(T->right);
+		//if(T->parent) tableDestroy(T->parent->layerRoot);
+		//free(T->token);
+		//free(T);
+		while(T = tableRemoveLayer(T));
+	}
+}
+
 void publicize(Table *node) {
 	long offset, backset;
 	char type;
@@ -174,7 +185,7 @@ Table *tableRemoveLayer(Table *T) {
 		tableRemoveLayer(right);
 	}
 
-	return ret->layerRoot;
+	return (ret)? ret->layerRoot: NULL;
 }
 
 Table *tableLookup(Table *T, char *token, int *accOff) {

@@ -64,6 +64,8 @@ int main(int argc, char **argv) {
 	writeObj(&C, HALT, 0);
 	writeObj(&C, DATA, transferAddress);
 
+	translationFree(C.dictionary);
+	tableDestroy(CO.symbols);
 	free(C.src);
 	fclose(C.dst);
 	return 0;

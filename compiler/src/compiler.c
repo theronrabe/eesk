@@ -576,6 +576,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 		writeObj(C, ABASE, (CO->swapDepth+1)*0x10);
 		writeObj(C, AGET, sym->val + WRDSZ);
 		if(display) printf("is a parameter\n");
+		if(CO->typingFlag) writeObj(C, TPUSH, 0);
 	} else {
 		if(display) printf("is not a parameter, ");
 		if(!sym->staticFlag) {
@@ -628,6 +629,36 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 	}
 	if(display) printf("\n");
 	return C->LC - begin;
+}
+
+/*
+	compilerCreate returns a brand new Compiler
+*/
+Compiler *compilerCreate(char *src) {
+	Compiler *C = (Compiler *) malloc(sizeof(Compiler));
+	Context *CO = contextNew(0, 0, 0, 0, 0, 0);
+	C->dictionary = prepareTranslation(CO);
+	C->dst = fopen("j.out", "w");
+	C->src = src;
+	C->SC = 0;
+	C->LC = 0;
+	C->lineCounter = 0;
+	C->keyWords = prepareKeywords();
+	C->end = 0;
+	C->anonStack = stackCreate(32);
+	contextDestroy(CO);
+
+	return C;
+}
+
+/*
+	compilerDestroy destroys a Compiler
+*/
+void compilerDestroy(Compiler *C) {
+	translationFree(C->dictionary);
+	tableDestroy(C->keyWords);
+	stackFree(C->anonStack);
+	free(C);
 }
 
 /*
@@ -789,10 +820,11 @@ translation *prepareTranslation(Context *CO) {
 	translationAdd(ret, CLR, c_clr, -1, 0); 
 	if(CO->typingFlag) {
 		translationAdd(ret, JSR, c_tjsr, -1, 0);
+		translationAdd(ret, RSR, c_trsr, -1, 0);
 	} else {
 		translationAdd(ret, JSR, c_jsr, -1, 0); 
+		translationAdd(ret, RSR, c_rsr, -1, 0); 
 	}
-	translationAdd(ret, RSR, c_rsr, -1, 0); 
 	translationAdd(ret, APUSH, c_apush, -1, 0); 
 	translationAdd(ret, AGET, c_aget, 2, 0);
 	translationAdd(ret, ADD, c_add, -1, 0);

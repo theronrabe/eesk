@@ -36,6 +36,9 @@ void fillOperations(Compiler *C, Stack *operationStack);
 void subCompiler(Compiler *C1, Compiler *C2);
 void subContext(Context *CO1, Context *CO2);
 
+Compiler *compilerCreate(char *src);
+void compilerDestroy(Compiler *C);
+
 typedef enum {
 	//language keywords
 	k_if, k_while,
