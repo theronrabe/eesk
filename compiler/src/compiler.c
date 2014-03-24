@@ -658,6 +658,7 @@ void compilerDestroy(Compiler *C) {
 	translationFree(C->dictionary);
 	tableDestroy(C->keyWords);
 	stackFree(C->anonStack);
+	fclose(C->dst);
 	free(C);
 }
 
