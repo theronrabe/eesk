@@ -84,8 +84,7 @@ void kernel(long eeskir) {
 			create(rsp, (long **)aStack);
 			break;
 		case(EVAL):
-			res = jitCompile((char *)*rsp);	//compile and load
-			printf("2 %p = lx\n", res);
+			res = jitCompile((char *)*rsp) + 16;	//compile and load
 			*rsp = res;
 			break;
 			

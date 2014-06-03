@@ -85,7 +85,6 @@ long *load(char *fn) {
 	if(MEM) {
 		stackPush(loadStack, (long *) i);		//push length of JIT memory
 		stackPush(loadStack, (long *) ret);		//push JIT loaded address
-		printf("loaded at: %p = %lx\n", ret, *(long *) ret);
 		return ret;
 	}
 
@@ -168,7 +167,7 @@ void quit(long *rsp, long *rbp, long *r11) {
 	if(!swapped) {
 		printf("{\n");
 		for(;rbp >= rsp; rbp--) {
-			printf("\t%lx\t:\t%lx\t%p\n", *rbp, *typeTop, typeTop);
+			printf("\t%ld\t:\t%lx\t%p\n", *rbp, *typeTop, typeTop);
 			typeTop--;
 		}
 		//printf("|_________________|\n");

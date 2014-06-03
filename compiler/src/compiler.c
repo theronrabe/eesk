@@ -526,6 +526,7 @@ if(CO->verboseFlag) printf("token:\t%s\n", tok);
 		}
 	}
 	
+	//fillOperations(C, operationStack);
 	stackFree(operationStack);
 	if(tokVal == -1) writeObj(C, HALT, 0);
 
@@ -797,7 +798,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "`", k_anon, &CO);
 	tableAddSymbol(ret, "char", k_char, &CO);
 	tableAddSymbol(ret, "isSet", k_typeof, &CO);
-	tableAddSymbol(ret, "eval", k_eval, &CO);
+	tableAddSymbol(ret, "read", k_eval, &CO);
 
 	return ret;
 }

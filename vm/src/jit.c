@@ -75,6 +75,5 @@ void *jitCompile(char *src) {
 	compilerDestroy(C);
 
 	long *ret = load("j.out");
-	printf("same? %p = %lx\n", ret, *ret);
 	return ret;
 }
