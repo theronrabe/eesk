@@ -19,8 +19,8 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _fileIO.h_
-#define _fileIO.h_ 
+#ifndef _fileIO_h_
+#define _fileIO_h_ 
 
 char *loadFile(char *fn);
 

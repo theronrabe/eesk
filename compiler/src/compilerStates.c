@@ -33,12 +33,12 @@ long compileIf(Compiler *C, Context *CO, char *tok) {
 	long begin = C->LC;
 	Context _CO; subContext(CO, &_CO);
 	Compiler _C; subCompiler(C, &_C);
-	long nameAddr = begin;
+	//long nameAddr = begin;
 
 	//get length of component statements
-	_CO.symbols = tableAddLayer(_CO.symbols, tok, 0);
+	_CO.symbols = tableAddLayer(_CO.symbols, 0);
 	_C.dst = NULL;
-	long conditionLength = compileStatement(&_C, &_CO, tok);
+	/*long conditionLength = */compileStatement(&_C, &_CO, tok);
 	long clauseLength = compileStatement(&_C, &_CO, tok);
 	long elseLength = compileStatement(&_C, &_CO, tok);
 	_CO.symbols = tableRemoveLayer(_CO.symbols);
@@ -68,8 +68,8 @@ long compileWhile(Compiler *C, Context *CO, char *tok) {
 	//get section lengths
 	_C.LC = 0;
 	_C.dst = NULL;
-	_CO.symbols = tableAddLayer(_CO.symbols, tok, 0);
-	long condL = compileStatement(&_C, &_CO, tok);	//condition length
+	_CO.symbols = tableAddLayer(_CO.symbols, 0);
+	/*long condL = */compileStatement(&_C, &_CO, tok);	//condition length
 	long loopL = compileStatement(&_C, &_CO, tok);	//loop length
 	_CO.symbols = tableRemoveLayer(_CO.symbols);
 
@@ -77,7 +77,7 @@ long compileWhile(Compiler *C, Context *CO, char *tok) {
 	//writeObj(C, RPUSH, condL+loopL+offset);	//end address
 
 	//DC[0] = compileStatement(keyWords, symbols, dictionary, src, SC, dst, LC, &subContext, (dst)?lineCount:&i);		//compiled condtion
-	condL = compileStatement(C, CO, tok);
+	/*condL = */compileStatement(C, CO, tok);
 
 	writeObj(C, RPUSH, loopL + offset);
 
@@ -108,7 +108,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 	CO->symbols = nameSym;
 	nameSym->type = 1;							//make sure this symbol correlates to type set
 	if(CO->publicFlag) { publicize(CO->symbols); }
-	CO->symbols = tableAddLayer(CO->symbols, "this", 1);
+	CO->symbols = tableAddLayer(CO->symbols, 1);
 	Table *depSym = tableAddSymbol(CO->symbols, "this.dependency", 0, CO);		//add a placeholder for this symbol
 	depSym->type = 1;							//dependency set is also of type set
 	int oldAnon = C->anonStack->sp;
@@ -122,7 +122,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 		_CO.parameterFlag = 1;
 		_CO.anonFlag = 1;
 		_C.dst = NULL;
-		_CO.symbols = tableAddLayer(_CO.symbols, "temp", 1);	//Create temporoary symbol layer to catch declarations
+		_CO.symbols = tableAddLayer(_CO.symbols, 1);	//Create temporoary symbol layer to catch declarations
 			tableAddSymbol(_CO.symbols, depSym->token, depSym->val, CO);	//Make sure this reference isn't accumulated from temp layer
 	compileStatement(&_C, &_CO, tok);	//dependency set
 	long paramL = (_C.anonStack->sp - oldAnon);		//number of symbols in dependency set
@@ -145,7 +145,7 @@ long compileSet(Compiler *C, Context *CO, char *tok) {
 	int i;
 		//place argument symbols into proper layer
 	for(i=0; i < paramL; i++) {
-		sym = C->anonStack->array[oldAnon+i];
+		sym = (Table *) C->anonStack->array[oldAnon+i];
 		sym->val = i * WRDSZ;
 		tableAddSymbol(CO->symbols, sym->token, sym->val, &_CO);
 		//printf("ARGSYM: %s is argument #%x:%x\n", sym->token, i, sym->val);
@@ -236,7 +236,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 
 	//new namespace
 	long nameAddr = C->LC + C->dictionary[RPUSH].length + C->dictionary[JMP].length + 2*WRDSZ;
-	CO->symbols = tableAddLayer(CO->symbols, "this", 0);
+	CO->symbols = tableAddLayer(CO->symbols, 0);
 	CO->symbols = tableAddSymbol(CO->symbols, "this", nameAddr, CO);
 
 	//remember sp of anonStack
@@ -272,7 +272,7 @@ long compileAnonSet(Compiler *C, Context *CO, char *tok) {
 	Table *sym;
 	int i, j = 0;
 	for(i=oldAnon; i < C->anonStack->sp; i++) {
-		sym = C->anonStack->array[C->anonStack->sp - j - 1];
+		sym = (Table *) C->anonStack->array[C->anonStack->sp - j - 1];
 		j++;
 		sym->parameterFlag = 1;
 		sym->val = (i-oldAnon) * WRDSZ;
@@ -307,9 +307,9 @@ long compileCall(Compiler *C, Context *CO, char *tok) {
 	Context _CO; subContext(CO, &_CO);
 
 	_CO.instructionFlag = 1;
-	if(!CO->anonFlag) _CO.symbols = tableAddLayer(_CO.symbols, tok, 0);	//because anonymous symbols exist in a flat layer
+	if(!CO->anonFlag) _CO.symbols = tableAddLayer(_CO.symbols, 0);	//because anonymous symbols exist in a flat layer
 	_C.dst = NULL;
-	long argL = compileStatement(&_C, &_CO, tok);	//find argument length
+	/*long argL = */compileStatement(&_C, &_CO, tok);	//find argument length
 	if(!CO->anonFlag) _CO.symbols = tableRemoveLayer(_CO.symbols);
 
 	//push return address of call
@@ -506,7 +506,7 @@ long compileNativeStructure(Compiler *C, Context *CO, char *tok) {
 	//argument information
 	writeObj(C, DATA, strlen(argTypes));	//write argument count
 				
-	for(int i=0;i<strlen(argTypes);i++) {
+	for(int i=0;i<(int)strlen(argTypes);i++) {
 		writeObj(C, DATA, (long) argTypes[i]);
 	}
 

@@ -27,10 +27,15 @@ This file is part of Eesk.
 #include <eeskIR.h>
 #include <kernel.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <jit.h>
+#include <string.h>
+#include <sys/mman.h>
 
 void kernel(long eeskir) {
 	long **rsp, *rbp;
-	long *aStack, *cStack, *tStack;
+	void *res;
+	long *aStack, *cStack, *tStack, *otStack;
 
 	asm volatile (
 			"movq %%r13, %0\n\t"
@@ -38,14 +43,15 @@ void kernel(long eeskir) {
 			"movq %%r14, %2\n\t"
 			"movq %%r15, %3\n\t"
 			"movq %%r11, %4\n\t"
-			:"=m" (rsp), "=m" (rbp), "=m" (aStack), "=m" (cStack), "=m" (tStack)
+			"movq %%r10, %5\n\t"
+			:"=m" (rsp), "=m" (rbp), "=m" (aStack), "=m" (cStack), "=m" (tStack), "=m" (otStack)
 			:
 			:"memory"
 			);
 
 	switch(eeskir) {
 		case(HALT):
-			quit(rsp, rbp, tStack);
+			quit((long *)rsp, rbp, tStack);
 			break;
 		case(PRNT):
 			printf("%lx\n", *rsp);
@@ -54,13 +60,13 @@ void kernel(long eeskir) {
 			printf("%s", *rsp);
 			break;
 		case(PRTC):
-			printf("%c", (char) *rsp);
+			printf("%c", *(char *) rsp);
 			break;
 		case(PRTF):
 			printf("%f", *(double *)rsp);
 			break;
 		case(ALOC):
-			*rsp = malloc(*rsp);
+			*rsp = malloc((int)*rsp);
 			break;
 		case(NEW):
 			newCollection(rsp);
@@ -69,21 +75,28 @@ void kernel(long eeskir) {
 			munmap((*rsp)-2, *((*rsp)-2));
 			break;
 		case(NTV):
-			*(rsp+1) = nativeCall(*(rsp+1), *rsp, aStack);
+			*(long *)(rsp+1) = nativeCall(*(rsp+1), *rsp, aStack);
 			break;
 		case(LOAD):
-			loadLib(rsp);
+			loadLib((char **)rsp);
 			break;
 		case(CREATE):
-			create(rsp, aStack);
+			create(rsp, (long **)aStack);
 			break;
+		case(EVAL):
+			res = jitCompile((char *)*rsp);	//compile and load
+			printf("2 %p = lx\n", res);
+			*rsp = res;
+			break;
+			
 	}
 	//printf("kernel returning to address %lx\n", *aStack);
 
 	asm volatile (
 			"movq %0, %%r11\n\t"
+			"movq %1, %%r10\n\t"
 			:
-			:"r" (tStack)
+			:"r" (tStack), "r" (otStack)
 			:
 			);
 }

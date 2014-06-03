@@ -23,8 +23,8 @@ This file is part of Eesk.
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _kernel.h_
-#define _kernel.h_
+#ifndef _kernel_h_
+#define _kernel_h_
 
 void kernel(long eeskir);
 #endif

@@ -19,11 +19,18 @@ This file is part of Eesk.
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <stack.h>
+#include <stdio.h>
 
 Stack *stackCreate(int size) {
 	Stack *ret = malloc(sizeof(Stack));
-	ret->array = malloc(sizeof(long) * size);
-	ret->sp = 0;
+	if(ret != NULL) {
+		void *test = malloc(sizeof(long) * size);
+		ret->array = test;
+		ret->sp = 0;
+	} else {
+		printf("Could not allocate stack space.\n");
+		exit(1);
+	}
 	return ret;
 }
 
@@ -40,8 +47,8 @@ void stackFree(Stack *st) {
 	}
 }
 
-void stackPush(Stack *st, long val) {
-	st->array[st->sp++] = val;
+void stackPush(Stack *st, long *val) {
+	st->array[st->sp++] = (long) val;
 }
 
 long stackPop(Stack *st) {

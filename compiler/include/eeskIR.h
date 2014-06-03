@@ -20,8 +20,8 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _eeskIR.h_
-#define _eeskIR.h_
+#ifndef _eeskIR_h_
+#define _eeskIR_h_
 
 #define WRDSZ 8
 
@@ -114,6 +114,9 @@ typedef enum {
 	SWAP,	//3e
 	RESWAP,
 	ABASE,
+
+	//dynamic evaluation
+	EVAL,	//41
 	
 	//convenience keywords
 	DATA,

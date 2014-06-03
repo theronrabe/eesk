@@ -1,6 +1,6 @@
 
-#ifndef _definitions.h_
-#define _definitions.h_
+#ifndef _definitions_h_
+#define _definitions_h_
 
 #include <stdio.h>
 #include <stack.h>

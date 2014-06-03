@@ -36,8 +36,9 @@ char *loadFile(char *fn) {
 	fseek(fp, 0, SEEK_END);
 	i = ftell(fp);
 	rewind(fp);
-	ret = (char *)malloc(sizeof(char) * (i));
+	ret = (char *)malloc(sizeof(char) * (i+1));
 	fread(ret,sizeof(char),i,fp);
 	fclose(fp);
+	ret[i] = '\0';
 	return ret;
 }

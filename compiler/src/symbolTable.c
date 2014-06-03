@@ -51,13 +51,13 @@ void tableDestroy(Table *T) {
 		//if(T->parent) tableDestroy(T->parent->layerRoot);
 		//free(T->token);
 		//free(T);
-		while(T = tableRemoveLayer(T));
+		while((T = tableRemoveLayer(T)));
 	}
 }
 
 void publicize(Table *node) {
-	long offset, backset;
-	char type;
+	long offset = 0, backset = 0;
+	char type = 0;
 	Context CO;
 		CO.staticFlag = 0;
 		CO.parameterFlag = 0;
@@ -144,7 +144,7 @@ Table *tableAddSymbol(Table *T, char *token, int address, Context *CO) {
 	return NULL; //this should be unreachable
 }
 
-Table *tableAddLayer(Table *T, char *token, char isObject) {
+Table *tableAddLayer(Table *T, char isObject) {
 	//Probably gonna have to change the way this works, seeing as adding another layer
 	//doesn't always mean adding another symbol
 	Table *ret = malloc(sizeof(Table));
@@ -188,7 +188,7 @@ Table *tableRemoveLayer(Table *T) {
 	return (ret)? ret->layerRoot: NULL;
 }
 
-Table *tableLookup(Table *T, char *token, int *accOff) {
+Table *tableLookup(Table *T, char *token, long *accOff) {
 	if(!T) {
 		//printf("\tdidn't find %s.\n", token);
 		return NULL;

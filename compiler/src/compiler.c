@@ -36,6 +36,7 @@ This file is part of Eesk.
 #include <writer.h>
 #include <eeskIR.h>
 #include <translations.h>
+#include <context.h>
 
 /*
 	This function is our recursive finite state machine. It switches to a state (which writes instructions through the writer,
@@ -52,20 +53,20 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 	Context _CO; subContext(CO, &_CO);
 
 	int endOfStatement = 0;		//tells us whether or not to unstack operators
-	char string[256];		//additional string space
-	char *charPtr, *charPtr2, *charPtr3;
-	long nameAddr;			//for marking important working addresses
-	long DC[3];			//data counters
+	//char string[256];		//additional string space
+	//char *charPtr, *charPtr2, *charPtr3;
+	//long nameAddr;			//for marking important working addresses
+	//long DC[3];			//data counters
 	int i;				//iterator
-	double tempFloat;		//for working floating point values
-	long tokVal;			//value of current token
-	int tokLen;			//length of current token
+	//double tempFloat;		//for working floating point values
+	long tokVal = -1;		//value of current token
+	//int tokLen;			//length of current token
 	Table *tempTable;		//for working symbol tables
 	Stack *operationStack = stackCreate(128);	//for stacking operators
 
 	while(!endOfStatement && !C->end) {
 		getToken(C, tok);
-//printf("token:\t%s\n", tok);
+if(CO->verboseFlag) printf("token:\t%s\n", tok);
 		if(!tok[0]/* && C->dst*/) {
 			if(C->dst) printf("%d: Expected } symbol.\n", C->lineCounter);
 			C->end = 1;
@@ -147,39 +148,39 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 
 			case(k_prnt):
 				fillOperations(C,operationStack);
-				stackPush(operationStack, PRNT);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) PRNT);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_prtf):
 				fillOperations(C,operationStack);
-				stackPush(operationStack, PRTF);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) PRTF);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_prtc):
 				fillOperations(C, operationStack);
-				stackPush(operationStack, PRTC);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) PRTC);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_prts):
 				fillOperations(C, operationStack);
-				stackPush(operationStack, PRTS);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) PRTS);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_goto):
-				stackPush(operationStack, JMP);
+				stackPush(operationStack, (long *) JMP);
 				break;
 
 
 			case(k_singleQuote):
-				tokLen = getToken(C, tok);	//need to do something to continue counting tokLen in new modular code
+				/*tokLen = */getToken(C, tok);	//need to do something to continue counting tokLen in new modular code
 				writeObj(C, PUSH, tok[0]);
 				if(CO->typingFlag) writeObj(C, TPUSH, 0);
 				break;
@@ -192,14 +193,14 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 
 
 			case(k_int):
-				stackPush(operationStack, FTOD);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
+				stackPush(operationStack, (long *) FTOD);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
 				break;
 
 
 			case(k_char):
-				stackPush(operationStack, CHAR);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
+				stackPush(operationStack, (long *) CHAR);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
 				break;
 
 
@@ -209,8 +210,8 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 
 
 			case(k_float):
-				stackPush(operationStack, DTOF);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
+				stackPush(operationStack, (long *) DTOF);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
 				break;
 
 
@@ -262,132 +263,132 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 
 
 			case(k_shift):
-				stackPush(operationStack, SHIFT);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
+				stackPush(operationStack, (long *) SHIFT);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
 				break;
 
 
 			case(k_is):
 				//TODO: take care of assigning symbol type
 				fillOperations(C, operationStack);
-				stackPush(operationStack, POP);
+				stackPush(operationStack, (long *) POP);
 				break;
 
 			case(k_isr):
 				//TODO: take care of assigning symbol type
 				fillOperations(C, operationStack);
-				stackPush(operationStack, RPOP);
+				stackPush(operationStack, (long *) RPOP);
 				break;
 
 			case(k_set):
 				fillOperations(C, operationStack);
-				stackPush(operationStack, BPOP);
+				stackPush(operationStack, (long *) BPOP);
 				break;
 
 
 			case(k_eq):
 				fillOperations(C, operationStack);
-				stackPush(operationStack, EQ);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) EQ);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_gt):
 				fillOperations(C, operationStack);
-				stackPush(operationStack, GT);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) GT);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_lt):
 				fillOperations(C, operationStack);
-				stackPush(operationStack, LT);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) LT);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_add):
-				stackPush(operationStack, ADD);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) ADD);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_sub):
-				stackPush(operationStack, SUB);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) SUB);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_mul):
-				stackPush(operationStack, MUL);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) MUL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_div):
-				stackPush(operationStack, DIV);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) DIV);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_mod):
-				stackPush(operationStack, MOD);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) MOD);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_and):
-				stackPush(operationStack, AND);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) AND);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_or):
-				stackPush(operationStack, OR);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) OR);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_fadd):
-				stackPush(operationStack, FADD);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) FADD);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_fsub):
-				stackPush(operationStack, FSUB);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) FSUB);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_fmul):
-				stackPush(operationStack, FMUL);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) FMUL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_fdiv):
-				stackPush(operationStack, FDIV);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) FDIV);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
 			case(k_return):
-				stackPush(operationStack, RSR);
+				stackPush(operationStack, (long *) RSR);
 				break;
 
 
@@ -409,20 +410,20 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				break;
 
 			case(k_alloc):
-				stackPush(operationStack, ALOC);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
+				stackPush(operationStack, (long *) ALOC);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
 				break;
 
 
 			case(k_new):
 				//TODO: this should be made type-safe
-				stackPush(operationStack, NEW);
+				stackPush(operationStack, (long *) NEW);
 				break;
 
 
 			case(k_free):
-				stackPush(operationStack, FREE);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) FREE);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 
@@ -470,15 +471,15 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				break;
 
 			case(k_load):
-				stackPush(operationStack, LOAD);
+				stackPush(operationStack, (long *) LOAD);
 				break;
 
 			case(k_imply):
-				stackPush(operationStack, IMPL);
+				stackPush(operationStack, (long *) IMPL);
 				break;
 
 			case(k_create):
-				stackPush(operationStack, CREATE);
+				stackPush(operationStack, (long *) CREATE);
 				//TODO: push a TPUSH 1 instruction
 				break;
 
@@ -504,14 +505,19 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 				break;
 
 			case(k_restore):
-				stackPush(operationStack, RESTORE);
-				if(CO->typingFlag) stackPush(operationStack, TPOP);
+				stackPush(operationStack, (long *) RESTORE);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TPOP);
 				break;
 
 			case(k_typeof):
 				//stackPush(operationStack, TPOP);
-				if(CO->typingFlag) stackPush(operationStack, TVAL);
-				if(CO->typingFlag) stackPush(operationStack, TYPEOF);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TVAL);
+				if(CO->typingFlag) stackPush(operationStack, (long *) TYPEOF);
+				break;
+
+			case(k_eval):
+				//stackPush(operationStack, JSR);
+				stackPush(operationStack, (long *) EVAL);
 				break;
 
 			default:
@@ -538,7 +544,7 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 	long begin = C->LC;
 	Compiler _C; subCompiler(C, &_C);
 
-	int acc = -1;
+	long acc = -1;
 	Table *sym = tableLookup(CO->symbols, tok, &acc);
 	
 	if(sym == NULL || CO->parameterFlag) {	//does the symbol not exist yet? Always add a new symbol for parameterFlagged expressions
@@ -552,10 +558,10 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 				writeObj(C, ABASE, 10);	//this is a placeholder for the sake of length-counting
 				writeObj(C, AGET, 0);	//this will be changed to the correct parameter value the second time through (once the symbol table knows)
 				sym->parameterFlag = 1;
-				/*if(C->dst)*/ stackPush(C->anonStack, sym);
+				/*if(C->dst)*/ stackPush(C->anonStack, (long *) sym);
 			} else {
 				if(display) printf("declaring non anonymous: %s\n", sym->token);
-				if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%x, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
+				if(C->dst && !CO->parameterFlag) printf("%d:\tImplicitly declared symbol: %s:%lx, %d\n", C->lineCounter, sym->token, sym->val, sym->staticFlag);
 				if(CO->publicFlag /*&& C->dst*/ && !CO->anonFlag) publicize(sym);
 				if(!CO->literalFlag && CO->instructionFlag) { writeObj(C, GRAB, 0); if (CO->typingFlag) writeObj(C, TSYM, 0); }
 				else writeObj(C, DATA, 0);
@@ -791,6 +797,7 @@ Table *prepareKeywords() {
 	tableAddSymbol(ret, "`", k_anon, &CO);
 	tableAddSymbol(ret, "char", k_char, &CO);
 	tableAddSymbol(ret, "isSet", k_typeof, &CO);
+	tableAddSymbol(ret, "eval", k_eval, &CO);
 
 	return ret;
 }
@@ -866,6 +873,7 @@ translation *prepareTranslation(Context *CO) {
 	translationAdd(ret, SWAP, c_swap, -1, 0);
 	translationAdd(ret, RESWAP, c_reswap, -1, 0);
 	translationAdd(ret, ABASE, c_abase, 5, 0);
+	translationAdd(ret, EVAL, c_eval, -1, 0);
 	
 	return ret;
 }

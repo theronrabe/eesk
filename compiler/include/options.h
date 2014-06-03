@@ -18,8 +18,8 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _options.h_
-#define _options.h_
+#ifndef _options_h_
+#define _options_h_
 
 #include <definitions.h>
 

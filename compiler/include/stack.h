@@ -18,8 +18,8 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _stack.h_
-#define _stack.h_ 
+#ifndef _stack_h_
+#define _stack_h_ 
 
 #include <stdlib.h>
 
@@ -30,7 +30,7 @@ typedef struct Stack {
 
 Stack *stackCreate(int size);
 void stackFree(Stack *st);
-void stackPush(Stack *st, long val);
+void stackPush(Stack *st, long *val);
 long stackPop(Stack *st);
 
 #endif

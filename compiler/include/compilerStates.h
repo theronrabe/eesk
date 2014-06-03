@@ -19,8 +19,8 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _compilerStates.h_
-#define _compilerStates.h_
+#ifndef _compilerStates_h_
+#define _compilerStates_h_
 
 #include <compiler.h>
 long compileIf(Compiler *C, Context *context, char *tok);

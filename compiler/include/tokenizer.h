@@ -20,8 +20,8 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _tokenizer.h_
-#define _tokenizer.h_
+#ifndef _tokenizer_h_
+#define _tokenizer_h_
 
 #include <compiler.h>
 

@@ -18,13 +18,13 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _writer.h_
-#define _writer.h_
+#ifndef _writer_h_
+#define _writer_h_
 
 #include <stdio.h>
 #include <compiler.h>
 
 void writeVals(FILE *file, char *vals, int length);		//writes length number of bytes from vals[]
 void writeObj(Compiler *C, long instr, long param);			//writes an eesk instruction
-void writeStr(FILE *fn, char *str, int *LC);			//writes an eesk string
+void writeStr(FILE *fn, char *str, long *LC);			//writes an eesk string
 #endif

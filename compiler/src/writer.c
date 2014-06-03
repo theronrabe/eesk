@@ -32,7 +32,7 @@ void writeObj(Compiler *C, long instr, long param) {
 	//if we have a file, write to it
 	if (C->dst) {
 		if(instr == RPUSH) {
-			int rip = C->LC + C->dictionary[RPUSH].param + (C->dictionary[RPUSH].dWord?WRDSZ/2:WRDSZ);	//because RIP contains the next instruction, but LC contains the current instruction
+			//int rip = C->LC + C->dictionary[RPUSH].param + (C->dictionary[RPUSH].dWord?WRDSZ/2:WRDSZ);	//because RIP contains the next instruction, but LC contains the current instruction
 			//printf("\n%lx:\t%lx, %lx\t[%lx]\n", C->LC, instr, param, param+rip);
 		} else {
 			//printf("\n%lx:\t%lx, %lx\n", C->LC, instr, param);
@@ -51,13 +51,13 @@ void writeObj(Compiler *C, long instr, long param) {
 	C->LC += len;
 }
 
-void writeStr(FILE *fn, char *str, int *LC) {
+void writeStr(FILE *fn, char *str, long *LC) {
 	//write a string of characters to the output file, padding null characters to align words
 	int len = strlen(str) + 1;	//+1 to account for \0
-	int words = (len%WRDSZ)?len/WRDSZ+1:len/WRDSZ;
-	int padding = (len%WRDSZ)?WRDSZ - len%WRDSZ:0;
-	char pad = '\0';
-	int i;
+	//int words = (len%WRDSZ)?len/WRDSZ+1:len/WRDSZ;
+	//int padding = (len%WRDSZ)?WRDSZ - len%WRDSZ:0;
+	//char pad = '\0';
+	//int i;
 
 	if(fn) {
 		//write the string

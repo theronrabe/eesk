@@ -21,6 +21,7 @@ This file is part of Eesk.
 */
 #include <context.h>
 #include <stdlib.h>
+#include <symbolTable.h>
 
 Context *contextNew(char literalFlag, char anonFlag, char typingFlag, char displayFlag, char verboseFlag, char swapFlag) {
 	Context *ret = (Context *) malloc(sizeof(Context));
@@ -31,11 +32,13 @@ Context *contextNew(char literalFlag, char anonFlag, char typingFlag, char displ
 	ret->parameterFlag = 0;
 	ret->instructionFlag = 1;
 	ret->anonFlag = anonFlag;
+	ret->verboseFlag = verboseFlag;
 	ret->swapDepth = 0;
 	ret->swapFlag = swapFlag;
 	ret->displaySymbols = displayFlag;
 	ret->symbols = tableCreate();
-	ret->symbols = tableAddLayer(ret->symbols, "this", 1);
+	ret->symbols = tableAddLayer(ret->symbols, 1);
+	ret->typingFlag = typingFlag;
 	return ret;
 }
 

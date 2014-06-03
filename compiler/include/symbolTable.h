@@ -17,8 +17,8 @@ This file is part of Eesk.
 You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _symbolTable.h_
-#define _symbolTable.h_ 
+#ifndef _symbolTable_h_
+#define _symbolTable_h_ 
 
 #include <string.h>
 #include <definitions.h>
@@ -29,9 +29,9 @@ You should have received a copy of the GNU General Public License
 Table *tableCreate();
 void publicize(Table *node);
 Table *tableAddSymbol(Table *T, char *token, int val, Context *CO);
-Table *tableAddLayer(Table *T, char *token, char isObject);
+Table *tableAddLayer(Table *T, char isObject);
 Table *tableRemoveLayer(Table *T);
-Table *tableLookup(Table *T, char *token, int *accOff);
+Table *tableLookup(Table *T, char *token, long *accOff);
 void tableDestroy(Table *T);
 
 #endif

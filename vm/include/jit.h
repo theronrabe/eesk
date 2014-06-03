@@ -20,11 +20,12 @@ This file is part of Eesk.
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _jit.h_
-#define _jit.h_
+#ifndef _jit_h_
+#define _jit_h_
 
 #include <assembler.h>
 long *jitSet(int count, long *values);
 void writeJit(long *SC, int eeskIR, long arg);
 void jitInit(translation *dictionary);
+void *jitCompile(char *src);
 #endif

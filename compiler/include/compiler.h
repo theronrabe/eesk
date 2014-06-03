@@ -15,8 +15,8 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _compiler.h_
-#define _compiler.h_ 
+#ifndef _compiler_h_
+#define _compiler_h_ 
 
 #include <stack.h>
 #include <definitions.h>
@@ -72,7 +72,8 @@ typedef enum {
 	k_anon,
 	k_backset,
 	k_store, k_restore,
-	k_typeof
+	k_typeof,
+	k_eval
 } KEYWORD;
 
 #endif

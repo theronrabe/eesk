@@ -117,7 +117,7 @@ int getToken(Compiler *C, char *token) {
 
 int getQuote(Compiler *C, char *tok) {
 	//returns how many 64-bit words the quote consumes
-	int i = 0, j = 0, words = 0;
+	int i = 0, j = 0;//, words = 0;
 	while(C->src[C->SC+i] != '\"' && C->src[C->SC+i] != '\n') {
 		if(C->src[C->SC+i] == '\\') {
 			switch(C->src[C->SC+i+1]) {

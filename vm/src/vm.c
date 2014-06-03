@@ -42,6 +42,7 @@ char *PC = 0;
 long SP = 0;
 long LEN = 0;
 char verboseFlag = 0;
+Stack *loadStack;
 Stack *libStack;
 long *dataStack, *activationStack, *counterStack, *MEM, *typeStack, *otypeStack;
 long *oldDStack, *oldAStack, *oldCStack, *oldTStack, *oldOTStack, MEMlength;
@@ -79,6 +80,13 @@ long *load(char *fn) {
 			if((j%8)==7) printf("\n");
 		}
 		printf("\n");
+	}
+
+	if(MEM) {
+		stackPush(loadStack, (long *) i);		//push length of JIT memory
+		stackPush(loadStack, (long *) ret);		//push JIT loaded address
+		printf("loaded at: %p = %lx\n", ret, *(long *) ret);
+		return ret;
 	}
 
 	return ret;
@@ -121,6 +129,7 @@ void prepMachine() {
 	jitInit(dictionary);
 
 	//prepare stacks
+	loadStack = stackCreate(1000);
 	//if(argc>2) verboseFlag = 1;
 	libStack = stackCreate(100);
 	oldDStack = mmap(NULL, 1000*sizeof(long), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
@@ -146,7 +155,9 @@ void prepMachine() {
 		- fix that memory leak caused by not being able to munmap(oldCStack)
 */
 void quit(long *rsp, long *rbp, long *r11) {
+	void *jitload;
 	char swapped = (rbp-rsp >= 1000);
+
 	rbp -= 3;
 	//if(verboseFlag) printf("rsp = %lx\nrbp = %lx\n", rsp, rbp);
 	printf("\n");
@@ -157,7 +168,7 @@ void quit(long *rsp, long *rbp, long *r11) {
 	if(!swapped) {
 		printf("{\n");
 		for(;rbp >= rsp; rbp--) {
-			printf("\t%ld\t:\t%lx\t%p\n", *rbp, *typeTop, typeTop);
+			printf("\t%lx\t:\t%lx\t%p\n", *rbp, *typeTop, typeTop);
 			typeTop--;
 		}
 		//printf("|_________________|\n");
@@ -171,6 +182,11 @@ void quit(long *rsp, long *rbp, long *r11) {
 		dlclose(libStack->array[i]);
 	}
 	
+	while ((jitload = stackPop(loadStack)) != -1) {
+		munmap(jitload, stackPop(loadStack));
+	}
+	stackFree(loadStack);
+
 	munmap(oldDStack, 1000*sizeof(long));
 	munmap(oldAStack, 1000*sizeof(long));
 	munmap(oldTStack, 1000*sizeof(long));
@@ -186,7 +202,7 @@ void quit(long *rsp, long *rbp, long *r11) {
 */
 void newCollection(long **rsp) {
 	long *old = (*rsp)-2;	//two words behind the calling address is the length of the symbol
-	long i, len = (*old) + WRDSZ;
+	long len = (*old) + WRDSZ;
 	*rsp = mmap(0, len, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
 	mprotect(rsp, len, PROT_READ|PROT_WRITE|PROT_EXEC);
 	memcpy(*rsp, old, len);
@@ -213,7 +229,7 @@ void loadLib(char **rsp) {
 	a just in time compiler.
 */
 void create(long **rsp, long **aStack) {
-	*rsp = jitSet( ((int)*rsp)/WRDSZ, aStack);
+	*rsp = jitSet( ((long)*rsp)/WRDSZ, aStack);
 	*rsp += 2;
 }
 
@@ -301,21 +317,21 @@ long nativeCall(long *call, void *handle, long *aStack) {
 		}
 	} else {
 		//if(verboseFlag) printf("Calling native function %s\n", functionName);
-		function = *call;
+		function = *(void **)call;
 	}
 	error = dlerror();
 	if(error) printf("%s\n", dlerror());
 
-	if(ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argc, *(call+1), (call+3)) == FFI_OK) {
+	if(ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argc, *(ffi_type**)(call+1), (ffi_type**)(call+3)) == FFI_OK) {
 			if(returnChar == 'v') {
-				ffi_call(&cif, function, NULL, argv);
+				ffi_call(&cif, function, NULL, (void **)argv);
 			} else {
-				ffi_call(&cif, function, &result, argv);
+				ffi_call(&cif, function, &result, (void **)argv);
 			}
 	} else {
 		printf("Failure in CIF preparation.\n");
 		exit(1);
-		return NULL;
+		return -1;
 	}
 
 	//Clean up

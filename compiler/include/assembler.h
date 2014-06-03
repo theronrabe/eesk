@@ -17,8 +17,8 @@ This file is part of Eesk.
     You should have received a copy of the GNU General Public License
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _assembler.h_
-#define _assembler.h_
+#ifndef _assembler_h_
+#define _assembler_h_
 
 #include <definitions.h>
 
