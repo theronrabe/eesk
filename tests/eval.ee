@@ -1,0 +1,12 @@
+#This program tests integration of JIT compiler
+{
+	Set getFoo {} {
+		read "Set foo {} {100}"
+	}
+
+	[] [] []
+}
+
+#Suggests VM needs to remember to destroy JIT memory and j.out
+#on each 'read', load() j.out and remember load() location on stack
+#on HALT, free that stack's contents
