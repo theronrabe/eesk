@@ -1,0 +1,6 @@
+#This program provides an Eesk REPL interface
+{
+	include "system.IO" []
+	
+	while {1} {read IO.prompt ["> " 0]; []}
+}

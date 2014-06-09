@@ -27,7 +27,7 @@ This file is part of Eesk.
 #include <stdio.h>
 
 translation *translationCreate() {
-	translation *ret = malloc(sizeof(translation) * TRANSLATION_SIZE);
+	translation *ret = calloc(TRANSLATION_SIZE, sizeof(translation));
 	translationExtend(ret);
 	return ret;
 }
@@ -53,7 +53,8 @@ void translationExtend(translation *m) {
 
 void translationFree(translation *m) {
 	for(int i=0; i<TRANSLATION_SIZE; i++) {
-		free(m[i].code);
+		if(m[i].code)
+			free(m[i].code);
 	}
 	free(m);
 }

@@ -167,7 +167,8 @@ void quit(long *rsp, long *rbp, long *r11) {
 	if(!swapped) {
 		printf("{\n");
 		for(;rbp >= rsp; rbp--) {
-			printf("\t%ld\t:\t%lx\t%p\n", *rbp, *typeTop, typeTop);
+			//printf("\t%ld\t:\t%lx\t%p\n", *rbp, *typeTop, typeTop);
+			printf("\t%ld\n", *rbp);
 			typeTop--;
 		}
 		//printf("|_________________|\n");

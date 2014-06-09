@@ -65,8 +65,8 @@ long compileStatement(Compiler *C, Context *CO, char *tok) {
 	Stack *operationStack = stackCreate(128);	//for stacking operators
 
 	while(!endOfStatement && !C->end) {
-		getToken(C, tok);
-if(CO->verboseFlag) printf("token:\t%s\n", tok);
+		if(getToken(C, tok) == -1) { continue; }				//grab next token to parse
+		if(CO->verboseFlag) printf("token:\t%s\n", tok);			//print it, if verbose mode
 		if(!tok[0]/* && C->dst*/) {
 			if(C->dst) printf("%d: Expected } symbol.\n", C->lineCounter);
 			C->end = 1;
@@ -526,9 +526,9 @@ if(CO->verboseFlag) printf("token:\t%s\n", tok);
 		}
 	}
 	
-	//fillOperations(C, operationStack);
+	fillOperations(C, operationStack);
 	stackFree(operationStack);
-	if(tokVal == -1) writeObj(C, HALT, 0);
+	//if(tokVal == -1) writeObj(C, HALT, 0);
 
 	return C->LC - begin;
 }
