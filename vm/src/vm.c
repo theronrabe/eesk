@@ -100,6 +100,7 @@ void main(int argc, char **argv) {
 	MEM = load(argv[1]);
 	execute(MEM);
 	kernel(HALT);
+	jitEnd();
 }
 
 void execute(long *P) {

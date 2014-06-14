@@ -23,7 +23,7 @@ This file is part of Eesk.
 #include <stdlib.h>
 #include <symbolTable.h>
 
-Context *contextNew(char literalFlag, char anonFlag, char typingFlag, char displayFlag, char verboseFlag, char swapFlag) {
+Context *contextNew(Table *symbols, char literalFlag, char anonFlag, char typingFlag, char displayFlag, char verboseFlag, char swapFlag) {
 	Context *ret = (Context *) malloc(sizeof(Context));
 	ret->publicFlag = 0;
 	ret->literalFlag = literalFlag;
@@ -36,13 +36,17 @@ Context *contextNew(char literalFlag, char anonFlag, char typingFlag, char displ
 	ret->swapDepth = 0;
 	ret->swapFlag = swapFlag;
 	ret->displaySymbols = displayFlag;
-	ret->symbols = tableCreate();
-	ret->symbols = tableAddLayer(ret->symbols, 1);
+	if (symbols == NULL) {
+		ret->symbols = tableCreate();
+		ret->symbols = tableAddLayer(ret->symbols, 1);
+	} else {
+		ret->symbols = symbols;
+	}
 	ret->typingFlag = typingFlag;
 	return ret;
 }
 
 void contextDestroy(Context *CO) {
-	tableDestroy(CO->symbols);
+	//tableDestroy(CO->symbols);
 	free(CO);
 }

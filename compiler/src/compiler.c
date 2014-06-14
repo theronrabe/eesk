@@ -641,14 +641,14 @@ long writeAddressCalculation(Compiler *C, Context *CO, char *tok) {
 /*
 	compilerCreate returns a brand new Compiler
 */
-Compiler *compilerCreate(char *src) {
+Compiler *compilerCreate(char *src, long LC) {
 	Compiler *C = (Compiler *) malloc(sizeof(Compiler));
-	Context *CO = contextNew(0, 0, 0, 0, 0, 0);
+	Context *CO = contextNew(NULL, 0, 0, 0, 0, 0, 0);
 	C->dictionary = prepareTranslation(CO);
 	C->dst = fopen("j.out", "w");
 	C->src = src;
 	C->SC = 0;
-	C->LC = 0;
+	C->LC = LC;
 	C->lineCounter = 0;
 	C->keyWords = prepareKeywords();
 	C->end = 0;

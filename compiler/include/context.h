@@ -20,5 +20,7 @@ This file is part of Eesk.
     along with Eesk.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <definitions.h>
-Context *contextNew(char literalFlag, char anonFlag, char typingFlag, char displayFlag, char verboseFlag, char swapFlag);
+#include <symbolTable.h>
+
+Context *contextNew(Table *symbols, char literalFlag, char anonFlag, char typingFlag, char displayFlag, char verboseFlag, char swapFlag);
 void contextDestroy(Context *CO);

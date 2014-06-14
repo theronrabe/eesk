@@ -17,6 +17,13 @@ This file is part of Eesk.
 */
 #include <stack.h>
 #define WRDSZ 8
+
+typedef struct LoadedCode {
+	void **location;
+	long size;
+} LoadedCode;
+
+
 long *load(char *fn);
 //void execute(long *MEM, Stack *STACK, long *address);
 void execute(long *P);

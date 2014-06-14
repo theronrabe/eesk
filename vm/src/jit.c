@@ -30,10 +30,14 @@ This file is part of Eesk.
 #include <stdlib.h>
 #include <string.h>
 #include <writer.h>
+#include <symbolTable.h>
 
 translation *dictionary;
 Compiler *C;
 Context *CO;
+Table *symbols;
+long LC = 0;
+extern Stack *loadStack;
 
 long *jitSet(int count, long *values) {
 	int i;
@@ -61,12 +65,18 @@ void writeJit(long *SC, int eeskIR, long arg) {
 
 void jitInit(translation *eesk) {
 	dictionary = eesk;
+	symbols = tableCreate();
+	symbols = tableAddLayer(symbols, 1);
+}
+
+void jitEnd() {
+	tableDestroy(symbols);
 }
 
 void *jitCompile(char *src) {
 	char buffer[100];
-	C = compilerCreate(src);
-	CO = contextNew(0, 0, 0, 0, 0, 1);
+	C = compilerCreate(src, LC);
+	CO = contextNew(symbols, 0, 0, 0, 0, 0, 1);
 	writeObj(C, DATA, 0);
 	writeObj(C, DATA, 0);
 	compileStatement(C, CO, buffer);
@@ -75,5 +85,7 @@ void *jitCompile(char *src) {
 	compilerDestroy(C);
 
 	long *ret = load("j.out");
+	LC += loadStack->array[loadStack->sp-2] - 0x1000;
+	printf("loaded: %ld @ %p, %ld\n", loadStack->array[loadStack->sp-2], ret, ret - loadStack->array[1]);
 	return ret;
 }
